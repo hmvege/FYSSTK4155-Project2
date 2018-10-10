@@ -1,0 +1,16 @@
+# LaTeX junk
+*.aux
+*.fdb_latexmk
+*.log
+*.fls
+*.out
+*.synctex.gz
+*.toc
+*.xdv
+
+# Data files to ignore
+*.dat
+*.txt
+
+# OS junk
+*.DS_Store
