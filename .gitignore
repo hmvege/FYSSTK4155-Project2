@@ -14,3 +14,10 @@
 
 # OS junk
 *.DS_Store
+
+# Python binaries
+*__pycache__
+*.pyc
+
+# Sublime stuff
+*.sublime-*
