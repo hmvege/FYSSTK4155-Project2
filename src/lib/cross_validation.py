@@ -515,6 +515,8 @@ def SKLearnkFoldCV(x, y, design_matrix, reg, k=4, test_percent=0.4,
             "coef_var": np.asarray(beta_coefs).mean(axis=1)}
 
 
+# TODO: implement MC-CV wrapper.
+
 def MCCVWrapper(x, y, design_matrix, reg, N_bs, k=4, test_percent=0.4):
     pass
 
@@ -690,8 +692,6 @@ def __test_cross_validation_methods():
     plt.legend()
     # plt.show()
 
-
-# TODO: double check that my CV gives the same as the built in CV
 
 
 if __name__ == '__main__':

@@ -368,12 +368,16 @@ def __test_ols_regression(x, y, deg):
     reg = OLSRegression()
     reg.fit(X, y)
     print("Manual OLS regression")
-    print("R^2: {}".format(reg.score(X, y)))
+    print("R^2: {:.16f}".format(reg.score(X, y)))
 
-    sk_reg = sk_model.LinearRegression(fit_intercept=False)
+    print(reg.coef_)
+
+    sk_reg = sk_model.LinearRegression(fit_intercept=False, n_jobs=4)
     sk_reg.fit(X, y)
     print("SciKit OLS regression")
-    print("R^2: {}".format(sk_reg.score(X, y)))
+    print("R^2: {:.16f}".format(sk_reg.score(X, y)))
+
+    print(sk_reg.coef_)
 
 
 def __test_ridge_regression(x, y, deg, alpha=1.0):
@@ -387,12 +391,12 @@ def __test_ridge_regression(x, y, deg, alpha=1.0):
     reg = RidgeRegression(alpha=alpha)
     reg.fit(X, y)
     print("Manual Ridge regression")
-    print("R^2: {}".format(reg.score(X, y)))
+    print("R^2: {:.16f}".format(reg.score(X, y)))
 
     sk_reg = sk_model.Ridge(alpha=alpha, fit_intercept=False)
     sk_reg.fit(X, y)
     print("SciKit Ridge regression")
-    print("R^2: {}".format(sk_reg.score(X, y)))
+    print("R^2: {:.16f}".format(sk_reg.score(X, y)))
 
 
 def __test_regresssions():
