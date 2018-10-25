@@ -23,7 +23,7 @@ def mse(y_excact, y_predict, axis=0):
 
     assert y_excact.shape == y_predict.shape
 
-    return np.mean((y_excact - y_predict)**2, axis=axis)[0]
+    return np.mean((y_excact - y_predict)**2, axis=axis)
 
 
 def r2(y_excact, y_predict, axis=None):

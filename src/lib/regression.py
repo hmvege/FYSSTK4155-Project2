@@ -108,9 +108,9 @@ class __RegBackend:
     def _inv(self, M):
         """Method for taking derivatives with either numpy or scipy."""
 
-        raise DeprecationWarning(("Standard matrix inversion method has "
-                                  "been set to numpy.linalg.svd, as that is "
-                                  "compatible with numpy's nopython flag."))
+        # raise DeprecationWarning(("Standard matrix inversion method has "
+        #                           "been set to numpy.linalg.svd, as that is "
+        #                           "compatible with numpy's nopython flag."))
 
         if self.linalg_backend == "numpy":
 
@@ -238,38 +238,38 @@ class OLSRegression(__RegBackend):
             X_train (ndarray): design matrix, (N, p - 1), 
             y_train (ndarray): (N),
         """
-        # self.X_train = X_train
-        # self.y_train = y_train
+        self.X_train = X_train
+        self.y_train = y_train
 
-        # # N samples, P features
-        # self.N, self.P = X_train.shape
+        # N samples, P features
+        self.N, self.P = X_train.shape
 
-        # # X^T * X
-        # self.XTX = self.X_train.T @ self.X_train
+        # X^T * X
+        XTX = self.X_train.T @ self.X_train
 
-        # # (X^T * X)^{-1}
-        # self.XTX_inv = self._inv(self.XTX)
+        # (X^T * X)^{-1}
+        XTX_inv = self._inv(XTX)
 
-        # # Beta fit values: beta = (X^T * X)^{-1} @ X^T @ y
-        # self.coef = self.XTX_inv @ self.X_train.T @ self.y_train
+        # Beta fit values: beta = (X^T * X)^{-1} @ X^T @ y
+        self.coef = XTX_inv @ self.X_train.T @ self.y_train
 
-        # # y approximate. X @ beta
-        # self.y_approx = self.X_train @ self.coef
+        # y approximate. X @ beta
+        self.y_approx = self.X_train @ self.coef
 
-        # # Residues.
-        # self.eps = self.y_train - self.y_approx
+        # Residues.
+        self.eps = self.y_train - self.y_approx
 
-        # # Variance of y approximate values. sigma^2, unbiased
-        # # self.y_variance = np.sum(self.eps**2) / float(self.N)
-        # self.y_variance = np.sum(self.eps**2) / (self.N - self.P - 1)
+        # Variance of y approximate values. sigma^2, unbiased
+        # self.y_variance = np.sum(self.eps**2) / float(self.N)
+        self.y_variance = np.sum(self.eps**2) / (self.N - self.P - 1)
 
-        # # Beta fit covariance/variance. (X^T * X)^{-1} * sigma^2
-        # self.coef_cov = self.XTX_inv * self.y_variance
-        # self.coef_var = np.diag(self.coef_cov)
+        # Beta fit covariance/variance. (X^T * X)^{-1} * sigma^2
+        self.coef_cov = XTX_inv * self.y_variance
+        self.coef_var = np.diag(self.coef_cov)
 
-        self.N, self.P, _, _, self.coef, self.y_approx, self.y_approx, \
-            self.eps, self.y_variance, self.coef_cov, self.coef_var = \
-            _ols_base(X_train, y_train)
+        # self.N, self.P, _, _, self.coef, self.y_approx, self.y_approx, \
+        #     self.eps, self.y_variance, self.coef_cov, self.coef_var = \
+        #     _ols_base(X_train, y_train)
 
         self._fit_performed = True
 
@@ -297,42 +297,42 @@ class RidgeRegression(__RegBackend):
             X_train (ndarray): design matrix, (N, p - 1), 
             y_train (ndarray): (N, 1),
         """
-        # self.X_train = X_train
-        # self.y_train = y_train
+        self.X_train = X_train
+        self.y_train = y_train
 
-        # # N samples, P features
-        # self.N, self.P = X_train.shape
+        # N samples, P features
+        self.N, self.P = X_train.shape
 
-        # # X^T * X
-        # self.XTX = self.X_train.T @ self.X_train
+        # X^T * X
+        XTX = self.X_train.T @ self.X_train
 
-        # # (X^T * X)^{-1}
-        # self.XTX_aI = self.XTX + self.alpha*np.eye(self.XTX.shape[0])
-        # self.XTX_aI_inv = self._inv(self.XTX_aI)
+        # (X^T * X)^{-1}
+        XTX_aI = XTX + self.alpha*np.eye(XTX.shape[0])
+        XTX_aI_inv = self._inv(XTX_aI)
 
-        # # Beta fit values: beta = (X^T * X)^{-1} @ X^T @ y
-        # self.coef = self.XTX_aI_inv @ self.X_train.T @ self.y_train
+        # Beta fit values: beta = (X^T * X)^{-1} @ X^T @ y
+        self.coef = XTX_aI_inv @ self.X_train.T @ self.y_train
 
-        # # y approximate. X @ beta
-        # self.y_approx = self.X_train @ self.coef
+        # y approximate. X @ beta
+        self.y_approx = self.X_train @ self.coef
 
-        # # Residues.
-        # self.eps = self.y_train - self.y_approx
+        # Residues.
+        self.eps = self.y_train - self.y_approx
 
-        # # Variance of y approximate values. sigma^2, unbiased
-        # # self.y_variance = metrics.mse(self.y_train, self.y_approx)
-        # self.y_variance = np.sum(self.eps**2) / (self.N - self.P - 1)
+        # Variance of y approximate values. sigma^2, unbiased
+        # self.y_variance = metrics.mse(self.y_train, self.y_approx)
+        self.y_variance = np.sum(self.eps**2) / (self.N - self.P - 1)
 
-        # # Beta fit covariance/variance.
-        # # See page 10 section 1.4 in https://arxiv.org/pdf/1509.09169.pdf
-        # # **REMEMBER TO CITE THIS/DERIVE THIS YOURSELF!**
-        # self.coef_cov = self.XTX_aI_inv @ self.XTX @ self.XTX_aI_inv.T
-        # self.coef_cov *= self.y_variance
-        # self.coef_var = np.diag(self.coef_cov)
+        # Beta fit covariance/variance.
+        # See page 10 section 1.4 in https://arxiv.org/pdf/1509.09169.pdf
+        # **REMEMBER TO CITE THIS/DERIVE THIS YOURSELF!**
+        self.coef_cov = XTX_aI_inv @ XTX @ XTX_aI_inv.T
+        self.coef_cov *= self.y_variance
+        self.coef_var = np.diag(self.coef_cov)
 
-        self.N, self.P, _, _, self.coef, self.y_approx, self.y_approx, \
-            self.eps, self.y_variance, self.coef_cov, self.coef_var = \
-            _ridge_base(X_train, y_train, self.alpha)
+        # self.N, self.P, _, _, self.coef, self.y_approx, self.y_approx, \
+        #     self.eps, self.y_variance, self.coef_cov, self.coef_var = \
+        #     _ridge_base(X_train, y_train, self.alpha)
 
         self._fit_performed = True
 

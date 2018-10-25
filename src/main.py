@@ -1,8 +1,15 @@
 import numpy as np
 import copy as cp
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import seaborn
+
 from lib import ising_1d as ising
 from lib import regression as reg
+from lib import metrics
+from lib import bootstrap as bs
+from lib import cross_validation as cv
 
 import sklearn.model_selection as sk_modsel
 import sklearn.preprocessing as sk_preproc
@@ -12,16 +19,15 @@ import sklearn.utils as sk_utils
 
 
 def task1b():
-    # Polynomial degree
-    deg = 3
 
     # Number of samples to generate
-    N_samples = 10
+    N_samples = 10000
+    training_size = 0.1
 
     np.random.seed(12)
 
     # system size
-    L = 10
+    L = 40
 
     # create 10000 random Ising states
     states = np.random.choice([-1, 1], size=(N_samples, L))
@@ -29,38 +35,123 @@ def task1b():
     # calculate Ising energies
     energies = ising.ising_energies(states, L)
 
-    print(states.shape, energies.shape)
-
+    # reshape Ising states into RL samples: S_iS_j --> X_p
     states=np.einsum('...i,...j->...ij', states, states)
-    print(states.shape, energies.shape)
 
-    print (states[0])
+    # Reshaping to correspond to energies.
+    # Shamelessly stolen a lot of from:
+    # https://physics.bu.edu/~pankajm/ML-Notebooks/HTML/NB_CVI-linreg_ising.html
+    # E.g. why did no-one ever tell me about einsum? 
+    # That's awesome - no way I would have discovered that by myself.
+    shape=states.shape
+    states=states.reshape((shape[0],shape[1]*shape[2]))
 
-    exit("Exits @ 37")
+    # # build final data set
+    # Data=[states,energies]
 
+    # # # define number of samples
+    # n_samples=400
+
+    # # define train and test data sets
+    # X_train=Data[0][:n_samples]
+    # y_train=Data[1][:n_samples] #+ np.random.normal(0,4.0,size=X_train.shape[0])
+    # X_test=Data[0][n_samples:3*n_samples//2]
+    # y_test=Data[1][n_samples:3*n_samples//2] #+ np.random.normal(0,4.0,size=X_test.shape[0])
+
+    # # define error lists
+    # train_errors_leastsq = []
+    # test_errors_leastsq = []
+
+    # train_errors_ridge = []
+    # test_errors_ridge = []
+
+    # train_errors_lasso = []
+    # test_errors_lasso = []
+
+    # #Initialize coeffficients for ridge regression and Lasso
+    # coefs_leastsq = []
+    # coefs_ridge = []
+    # coefs_lasso=[]
+
+    X_train, X_test, y_train, y_test = \
+        sk_modsel.train_test_split(states, energies, test_size=1-training_size)
+
+    lambda_values = np.logspace(-4,5,10)
 
     # Linear regression
-    poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
-    X = poly.fit_transform(cp.deepcopy(states), energies.ravel())
-    
-    print (X.shape)
-
     linreg = reg.OLSRegression()
-    linreg.fit(X, cp.deepcopy(energies.ravel()))
-    y_pred = linreg.predict(X).ravel()
+    linreg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
+    y_pred_linreg = linreg.predict(cp.deepcopy(X_test))
 
-    print("R2:  {:-20.16f}".format(metrics.R2(energies.ravel(), y_pred)))
-    print("MSE: {:-20.16f}".format(metrics.mse(energies.ravel(), y_pred)))
-    print("Bias: {:-20.16f}".format(metrics.bias2(energies.ravel(), y_pred)))
+    print("LINREG:")
+    print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_linreg)))
+    print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_linreg)))
+    print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_linreg)))
     print("Beta coefs: {}".format(linreg.coef_))
     print("Beta coefs variances: {}".format(linreg.coef_var))
 
+    J_leastsq = np.asarray(linreg.coef_).reshape((L,L))
 
-    # Lasso regression
+    BootstrapWrapper(x, y, design_matrix, reg, N_bs, test_percent=0.4)
+
+    for lmbda in lambda_values:
+
+        # Ridge regression
+        ridge_reg = reg.RidgeRegression(lmbda)
+        ridge_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
+        y_pred_ridge = ridge_reg.predict(cp.deepcopy(X_test))
+
+        print("\nRIDGE:")
+        print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_ridge)))
+        print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_ridge)))
+        print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_ridge)))
+        print("Beta coefs: {}".format(ridge_reg.coef_))
+        print("Beta coefs variances: {}".format(ridge_reg.coef_var))
 
 
-    # Ridge regression
+        # Lasso regression
+        lasso_reg = sk_model.Lasso(alpha=lmbda)
+        lasso_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
+        y_pred_lasso = lasso_reg.predict(cp.deepcopy(X_test))
 
+        print("\nLASSO:")
+        print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_lasso)))
+        print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_lasso)))
+        print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_lasso)))
+        print("Beta coefs: {}".format(lasso_reg.coef_))
+
+        J_ridge = np.asarray(ridge_reg.coef_).reshape((L,L))
+        J_lasso = np.asarray(lasso_reg.coef_).reshape((L,L))
+
+
+        cmap_args=dict(vmin=-1., vmax=1., cmap='seismic')
+
+        fig, axarr = plt.subplots(nrows=1, ncols=3)
+        
+        axarr[0].imshow(J_leastsq,**cmap_args)
+        # axarr[0].set_title(r'$\mathrm{OLS}$',fontsize=16)
+        # axarr[0].tick_params(labelsize=16)
+
+        axarr[1].imshow(J_ridge,**cmap_args)
+        # axarr[1].set_title(r'$\mathrm{Ridge}, \lambda=%.4f$' %(lmbda),fontsize=16)
+        # axarr[1].tick_params(labelsize=16)
+
+        im=axarr[2].imshow(J_lasso,**cmap_args)
+        # axarr[2].set_title(r'$\mathrm{LASSO}, \lambda=%.4f$' %(lmbda),fontsize=16)
+        # axarr[2].tick_params(labelsize=16)
+
+        # divider = make_axes_locatable(axarr[2])
+        # cax = divider.append_axes("right", size="5%", pad=0.05)
+        # cbar=fig.colorbar(im, cax=cax)
+
+        # cbar.ax.set_yticklabels(np.arange(-1.0, 1.0+0.25, 0.25),fontsize=14)
+        # cbar.set_label(r'$J_{i,j}$',labelpad=-40, y=1.12,fontsize=16,rotation=0)
+
+        # fig.subplots_adjust(right=2.0)
+
+        plt.show()
+
+        plt.close(fig)
 
 
 def main():
