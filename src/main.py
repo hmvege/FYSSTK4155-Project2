@@ -21,30 +21,33 @@ import sklearn.utils as sk_utils
 def task1b():
 
     # Number of samples to generate
-    N_samples = 10000
+    N_samples = 1000
     training_size = 0.1
+
+    N_bs = 200
 
     np.random.seed(12)
 
     # system size
-    L = 40
+    L = 20
 
     # create 10000 random Ising states
     states = np.random.choice([-1, 1], size=(N_samples, L))
 
     # calculate Ising energies
     energies = ising.ising_energies(states, L)
+    energies = energies.reshape((energies.shape[0], 1))
 
     # reshape Ising states into RL samples: S_iS_j --> X_p
-    states=np.einsum('...i,...j->...ij', states, states)
+    states = np.einsum('...i,...j->...ij', states, states)
 
     # Reshaping to correspond to energies.
     # Shamelessly stolen a lot of from:
     # https://physics.bu.edu/~pankajm/ML-Notebooks/HTML/NB_CVI-linreg_ising.html
-    # E.g. why did no-one ever tell me about einsum? 
+    # E.g. why did no-one ever tell me about einsum?
     # That's awesome - no way I would have discovered that by myself.
-    shape=states.shape
-    states=states.reshape((shape[0],shape[1]*shape[2]))
+    stat_shape = states.shape
+    states = states.reshape((stat_shape[0], stat_shape[1]*stat_shape[2]))
 
     # # build final data set
     # Data=[states,energies]
@@ -74,9 +77,13 @@ def task1b():
     # coefs_lasso=[]
 
     X_train, X_test, y_train, y_test = \
-        sk_modsel.train_test_split(states, energies, test_size=1-training_size)
+        sk_modsel.train_test_split(states, energies, test_size=1-training_size,
+                                   shuffle=False)
 
-    lambda_values = np.logspace(-4,5,10)
+    lambda_values = np.logspace(-4, 5, 10)
+
+    # y_pred_list (80, 10000)
+    # y_test (80, 1)
 
     # Linear regression
     linreg = reg.OLSRegression()
@@ -87,12 +94,16 @@ def task1b():
     print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_linreg)))
     print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_linreg)))
     print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_linreg)))
-    print("Beta coefs: {}".format(linreg.coef_))
-    print("Beta coefs variances: {}".format(linreg.coef_var))
+    # print("Beta coefs: {}".format(linreg.coef_))
+    # print("Beta coefs variances: {}".format(linreg.coef_var))
 
-    J_leastsq = np.asarray(linreg.coef_).reshape((L,L))
+    J_leastsq = np.asarray(linreg.coef_).reshape((L, L))
 
-    BootstrapWrapper(x, y, design_matrix, reg, N_bs, test_percent=0.4)
+    linreg_bs_results = bs.BootstrapWrapper(X_train, y_train,
+                              linreg, N_bs, X_test=X_test, y_test=y_test)
+    linreg_cvkf_results = cv.kFoldCVWrapper(X_train, y_train, linreg, k=4,
+        X_test=X_test, y_test=y_test)
+
 
     for lmbda in lambda_values:
 
@@ -105,9 +116,8 @@ def task1b():
         print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_ridge)))
         print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_ridge)))
         print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_ridge)))
-        print("Beta coefs: {}".format(ridge_reg.coef_))
-        print("Beta coefs variances: {}".format(ridge_reg.coef_var))
-
+        # print("Beta coefs: {}".format(ridge_reg.coef_))
+        # print("Beta coefs variances: {}".format(ridge_reg.coef_var))
 
         # Lasso regression
         lasso_reg = sk_model.Lasso(alpha=lmbda)
@@ -118,25 +128,24 @@ def task1b():
         print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_lasso)))
         print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_lasso)))
         print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_lasso)))
-        print("Beta coefs: {}".format(lasso_reg.coef_))
+        # print("Beta coefs: {}".format(lasso_reg.coef_))
 
-        J_ridge = np.asarray(ridge_reg.coef_).reshape((L,L))
-        J_lasso = np.asarray(lasso_reg.coef_).reshape((L,L))
+        J_ridge = np.asarray(ridge_reg.coef_).reshape((L, L))
+        J_lasso = np.asarray(lasso_reg.coef_).reshape((L, L))
 
-
-        cmap_args=dict(vmin=-1., vmax=1., cmap='seismic')
+        cmap_args = dict(vmin=-1., vmax=1., cmap='seismic')
 
         fig, axarr = plt.subplots(nrows=1, ncols=3)
-        
-        axarr[0].imshow(J_leastsq,**cmap_args)
+
+        axarr[0].imshow(J_leastsq, **cmap_args)
         # axarr[0].set_title(r'$\mathrm{OLS}$',fontsize=16)
         # axarr[0].tick_params(labelsize=16)
 
-        axarr[1].imshow(J_ridge,**cmap_args)
+        axarr[1].imshow(J_ridge, **cmap_args)
         # axarr[1].set_title(r'$\mathrm{Ridge}, \lambda=%.4f$' %(lmbda),fontsize=16)
         # axarr[1].tick_params(labelsize=16)
 
-        im=axarr[2].imshow(J_lasso,**cmap_args)
+        im = axarr[2].imshow(J_lasso, **cmap_args)
         # axarr[2].set_title(r'$\mathrm{LASSO}, \lambda=%.4f$' %(lmbda),fontsize=16)
         # axarr[2].tick_params(labelsize=16)
 
@@ -156,7 +165,7 @@ def task1b():
 
 def main():
     task1b()
-
+    task1c()
 
 
 if __name__ == '__main__':

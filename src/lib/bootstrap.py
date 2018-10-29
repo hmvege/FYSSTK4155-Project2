@@ -33,26 +33,29 @@ def boot(*data):
 class BootstrapRegression:
     """Bootstrap class intended for use together with regression."""
     _reg = None
-    _design_matrix = None
 
-    def __init__(self, x_data, y_data, reg, design_matrix_func):
+    def __init__(self, X_data, y_data, reg, X_test=None, y_test=None):
         """
         Initialises an bootstrap regression object.
+
         Args:
+            X_data (ndarray): Design matrix, on shape (N, p)
+            y_data (ndarray): y data, observables, shape (N, 1)
+            reg: regression method object. Must have method fit, predict 
+                and coef_.
         """
-        assert len(x_data) == len(y_data), "x and y data not of equal lengths"
-        self.x_data = x_data
+
+        assert X_data.shape[0] == len(y_data), ("x and y data not of equal"
+                                                " lengths")
+
+        assert hasattr(reg, "fit"), ("regression method must have "
+                                     "attribute fit()")
+        assert hasattr(reg, "predict"), ("regression method must have "
+                                         "attribute predict()")
+
+        self.X_data = X_data
         self.y_data = y_data
         self._reg = reg
-        self._design_matrix = design_matrix_func
-
-    @property
-    def design_matrix(self):
-        return self._design_matrix
-
-    @design_matrix.setter
-    def design_matrix(self, f):
-        self._design_matrix = f
 
     @property
     def reg(self):
@@ -79,7 +82,7 @@ class BootstrapRegression:
         return self.beta_coefs_var
 
     @metrics.timing_function
-    def bootstrap(self, N_bs, test_percent=0.25):
+    def bootstrap(self, N_bs, test_percent=0.25, X_test=None, y_test=None):
         """
         Performs a bootstrap for a given regression type, design matrix 
         function and excact function.
@@ -87,46 +90,48 @@ class BootstrapRegression:
         Args:
             N_bs (int): number of bootstraps to perform
             test_percent (float): what percentage of data to reserve for 
-                testing.
+                testing. optional, default is 0.25.
+            X_test (ndarray): design matrix for test values, shape (N, p), 
+                optional. Will use instead of splitting dataset by test 
+                percent.
+            y_test (ndarray): y test data on shape (N, 1), optional. Will 
+                use instead of splitting dataset by test percent.
         """
 
         assert not isinstance(self._reg, type(None))
-        assert not isinstance(self._design_matrix, type(None))
 
         assert test_percent < 1.0, "test_percent must be less than one."
 
-        N = len(self.x_data)
+        N = len(self.X_data)
 
-        # Splits into test and train set.
-        # test_size = int(np.floor(N * test_percent))
-
-        x = self.x_data
+        X = self.X_data
         y = self.y_data
 
-        # # Splits into training and test set.
-        # x_test, x_train = np.split(x, [test_size], axis=0)
-        # y_test, y_train = np.split(y, [test_size], axis=0)
+        # Checks if we have provided test data or not
+        if isinstance(X_test, type(None)) and \
+                isinstance(y_test, type(None)):
 
-        # Splits X data and design matrix data
-        x_train, x_test, y_train, y_test = \
-            sk_modsel.train_test_split(self.x_data, self.y_data,
-                                       test_size=test_percent, shuffle=False)
-        test_size = x_test.shape[0]
+            # Splits X data and design matrix data
+            X_train, X_test, y_train, y_test = \
+                sk_modsel.train_test_split(self.X_data, self.y_data,
+                                           test_size=test_percent,
+                                           shuffle=False)
+
+        else:
+            # If X_test and y_test is provided, we simply use those as test
+            # values.
+            X_train = self.X_data
+            y = self.y_data
+
+        self.x_pred_test = X_test[:, 1]
+
+        test_size = X_test.shape[0]
 
         # Sets up emtpy lists for gathering the relevant scores in
         r2_list = np.empty(N_bs)
-        # mse_list = np.empty(N_bs)
-        # bias_list = np.empty(N_bs)
-        # var_list = np.empty(N_bs)
         beta_coefs = []
 
-        # Sets up design matrix to test for
-        X_test = self._design_matrix(x_test)
-
         y_pred_list = np.empty((test_size, N_bs))
-
-        # Sets up the X_tra
-        X_train = self._design_matrix(x_train)
 
         # Bootstraps
         for i_bs in tqdm(range(N_bs), desc="Bootstrapping"):
@@ -161,8 +166,9 @@ class BootstrapRegression:
         # Mean Square Error, mean((y - y_approx)**2)
         # _mse = np.mean((y_test.ravel() - y_pred_list)**2,
         #                axis=0, keepdims=True)
+
         _mse = np.mean((y_test - y_pred_list)**2,
-                   axis=1, keepdims=True)
+                       axis=1, keepdims=True)
         self.mse = np.mean(_mse)
 
         # Bias, (y - mean(y_approx))^2
@@ -178,58 +184,56 @@ class BootstrapRegression:
         self.beta_coefs_var = np.asarray(beta_coefs).var(axis=0)
         self.beta_coefs = np.asarray(beta_coefs).mean(axis=0)
 
-        self.x_pred_test = x_test
-        self.y_pred = y_pred_list.mean(axis=0)
-        self.y_pred_var = y_pred_list.var(axis=0)
-
-        # print("r2:    ", r2_list.mean())
-        # print("mse:   ", mse_list.mean())
-        # print("bias: ", bias_list.mean())
-        # print("var:   ", var_list.mean())
+        self.y_pred = y_pred_list.mean(axis=1)
+        self.y_pred_var = y_pred_list.var(axis=1)
 
 
-def BootstrapWrapper(x, y, design_matrix, reg, N_bs, test_percent=0.4):
+def BootstrapWrapper(X, y, reg, N_bs, test_percent=0.4, X_test=None,
+                     y_test=None):
     """
     Wrapper for manual bootstrap method.
     """
-    bs_reg = BootstrapRegression(x, y, reg, design_matrix)
+
+    bs_reg = BootstrapRegression(X, y, reg, X_test=X_test, y_test=y_test)
     bs_reg.bootstrap(N_bs, test_percent=test_percent)
 
     return {
         "r2": bs_reg.r2, "mse": bs_reg.mse, "bias": bs_reg.bias,
-        "var": bs_reg.var, "coef": bs_reg.beta_coefs,
+        "var": bs_reg.var, "diff": bs_reg.mse - bs_reg.bias - bs_reg.var,
+        "coef": bs_reg.beta_coefs,
         "coef_var": bs_reg.beta_coefs_var, "x_pred": bs_reg.x_pred_test,
         "y_pred": bs_reg.y_pred, "y_pred_var": bs_reg.y_pred_var}
 
 
-def SKLearnBootstrap(x, y, design_matrix, reg, N_bs, test_percent=0.4):
+def SKLearnBootstrap(X, y, reg, N_bs, test_percent=0.4, X_test=None,
+                     y_test=None):
     """
     A wrapper for the Scikit-Learn Bootstrap method.
     """
-    x_train, x_test, y_train, y_test = sk_modsel.train_test_split(
-        x, y, test_size=test_percent, shuffle=False)
 
-    # # Ensures we are on axis shape (N_observations, N_predictors)
-    # y_test = y_test.reshape(-1, 1)
-    # y_train = y_train.reshape(-1, 1)
+    # Checks if we have provided test data or not
+    if ((isinstance(X_test, type(None))) and
+            (isinstance(y_test, type(None)))):
 
-    X_test = design_matrix(x_test)
-    X_train = design_matrix(x_train)
+        # Splits X data and design matrix data
+        X_train, X_test, y_train, y_test = \
+            sk_modsel.train_test_split(X, y, test_size=test_percent,
+                                       shuffle=False)
+
+    else:
+        # If X_test and y_test is provided, we simply use those as test values
+        X_train = X
+        y = y
 
     # Storage containers for results
     y_pred_array = np.empty((y_test.shape[0], N_bs))
     r2_array = np.empty(N_bs)
     mse_array = np.empty(N_bs)
-    # bias_array = np.empty(N_bs)
 
     beta_coefs = []
 
-    # Using SKLearn to set up indexes
-    # bs = sk_cv.Bootstrap(x_train.shape[0], N_bs, n_train=1-test_percent)
-
     # for i_bs, val_ in enumerate(bs):
     for i_bs in tqdm(range(N_bs), desc="SKLearnBootstrap"):
-        # train_index, test_index = val_
         X_boot, y_boot = sk_utils.resample(X_train, y_train)
         # X_boot, y_boot = X_train[train_index], y_train[train_index]
 
@@ -254,7 +258,6 @@ def SKLearnBootstrap(x, y, design_matrix, reg, N_bs, test_percent=0.4):
                    axis=1, keepdims=True)
     mse = np.mean(_mse)
 
-
     # Bias, (y - mean(y_approx))^2
     _y_pred_mean = np.mean(y_pred_array, axis=1, keepdims=True)
     bias = np.mean((y_test - _y_pred_mean)**2)
@@ -267,62 +270,57 @@ def SKLearnBootstrap(x, y, design_matrix, reg, N_bs, test_percent=0.4):
     coef_var = np.asarray(beta_coefs).var(axis=0)
     coef_ = np.asarray(beta_coefs).mean(axis=0)
 
-    x_pred_test = x_test
+    X_pred_test = X_test
     y_pred = y_pred_array.mean(axis=1)
     y_pred_var = y_pred_array.var(axis=1)
 
     return {
         "r2": r2, "mse": mse, "bias": bias,
-        "var": var, "coef": coef_,
-        "coef_var": coef_var, "x_pred": x_test,
+        "var": var, "diff": mse - bias - var,
+        "coef": coef_, "coef_var": coef_var, "x_pred": X_test,
         "y_pred": y_pred, "y_pred_var": y_pred_var}
 
 
 def __test_bootstrap_fit():
-        # A small implementation of a test case
+    """A small implementation of a test case."""
     from regression import OLSRegression
     import sklearn.preprocessing as sk_preproc
 
-    deg = 2
-    poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
-
-    N_bs = 1000
-
     # Initial values
-    n = 200
-    noise = 0.2
-    # np.random.seed(1234)
+    deg = 2
+    N_bs = 1000
+    n = 100
     test_percent = 0.35
+    noise = 0.3
+    np.random.seed(1234)
 
     # Sets up random matrices
     x = np.random.rand(n, 1)
+
+    poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
 
     def func_excact(_x): return 2*_x*_x + np.exp(-2*_x) + noise * \
         np.random.randn(_x.shape[0], _x.shape[1])
 
     y = func_excact(x)
 
-    def design_matrix(_x):
-        return poly.fit_transform(_x)
-
     # Sets up design matrix
-    X = design_matrix(x)
+    X = poly.fit_transform(x)
 
     # Performs regression
     reg = OLSRegression()
     reg.fit(X, y)
-    y = y.ravel()
     y_predict = reg.predict(X).ravel()
     print("Regular linear regression")
-    print("r2:  {:-20.16f}".format(reg.score(y_predict, y)))
-    print("mse: {:-20.16f}".format(metrics.mse(y, y_predict)))
+    print("r2:  {:-20.16f}".format(reg.score(X, y)))
+    print("mse: {:-20.16f}".format(metrics.mse(y, reg.predict(X))))
     print("Beta:      ", reg.coef_.ravel())
     print("var(Beta): ", reg.coef_var.ravel())
     print("")
 
     # Performs a bootstrap
     print("Bootstrapping")
-    bs_reg = BootstrapRegression(x, y, OLSRegression(), design_matrix)
+    bs_reg = BootstrapRegression(X, y, OLSRegression())
     bs_reg.bootstrap(N_bs, test_percent=test_percent)
 
     print("r2:    {:-20.16f}".format(bs_reg.r2))
@@ -339,8 +337,7 @@ def __test_bootstrap_fit():
     import matplotlib.pyplot as plt
     plt.plot(x.ravel(), y, "o", label="Data")
     plt.plot(x.ravel(), y_predict, "o",
-             label=r"Pred, R^2={:.4f}".format(reg.score(y_predict, y)))
-    print(bs_reg.y_pred.shape, bs_reg.y_pred_var.shape)
+             label=r"Pred, R^2={:.4f}".format(reg.score(X, y)))
     plt.errorbar(bs_reg.x_pred_test, bs_reg.y_pred,
                  yerr=np.sqrt(bs_reg.y_pred_var), fmt="o",
                  label=r"Bootstrap Prediction, $R^2={:.4f}$".format(bs_reg.r2))
@@ -350,10 +347,52 @@ def __test_bootstrap_fit():
     plt.legend()
     # plt.show()
 
-    # TODO: recreate plot as shown on piazza
 
+# TODO: recreate plot as shown on piazza
+def __test_bias_variance_bootstrap():
+    """Checks bias-variance relation."""
+    from regression import OLSRegression
+    import sklearn.preprocessing as sk_preproc
 
-def __test_bootstrap():
+    # Initial values
+    deg_list = np.linspace(1,30,30,dtype=int)
+    N_bs = 1000
+    n = 100
+    test_percent = 0.35
+    noise = 0.3
+    np.random.seed(1234)
+
+    # Sets up random matrices
+    x = np.random.rand(n, 1)
+
+    def func_excact(_x): return 2*_x*_x + np.exp(-2*_x) + noise * \
+        np.random.randn(_x.shape[0], _x.shape[1])
+
+    y = func_excact(x)
+
+    mse_list = []
+    var_list = []
+    bias_list = []
+    r2_list = []
+
+    for deg in deg_list:
+        # Sets up design matrix
+        poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
+        X = poly.fit_transform(x)
+
+        # Performs regression
+        reg = OLSRegression()
+        reg.fit(X, y)
+        y_predict = reg.predict(X).ravel()
+
+        BootstrapWrapper(X, y, fortset her!!)
+
+        mse_list.append()
+        var_list.append()
+        bias_list.append()
+        r2_list.append()
+
+def __test_basic_bootstrap():
     import matplotlib.pyplot as plt
     # Data to load and analyse
     data = np.random.normal(0, 2, 100)
@@ -379,7 +418,7 @@ def __test_bootstrap():
     plt.show()
 
 
-def __test_compare_bootstraps():
+def __test_compare_bootstrap_manual_sklearn():
     # Compare SK learn bootstrap and manual bootstrap
     from regression import OLSRegression
     import sklearn.preprocessing as sk_preproc
@@ -393,24 +432,25 @@ def __test_compare_bootstraps():
     # Initial values
     n = 200
     # noise = 0.1
-    # np.random.seed(1234)
+    np.random.seed(1234)
     test_percent = 0.4
 
     # Sets up random matrices
     x = np.random.rand(n, 1)
 
-    def func_excact(_x): return 2*_x*_x + np.exp(-2*_x) #+ noise * \
-        # np.random.randn(_x.shape[0], _x.shape[1])
-
-    def design_matrix(_x):
-        return poly.fit_transform(_x)
+    def func_excact(_x): return 2*_x*_x + np.exp(-2*_x)  # + noise * \
+    # np.random.randn(_x.shape[0], _x.shape[1])
 
     y = func_excact(x)
 
+    X = poly.fit_transform(x)
+
     bs_my = BootstrapWrapper(
-        cp.deepcopy(x), cp.deepcopy(y), design_matrix, OLSRegression(), N_bs, test_percent=test_percent)
+        cp.deepcopy(X), cp.deepcopy(y), OLSRegression(), N_bs,
+        test_percent=test_percent)
     bs_sk = SKLearnBootstrap(
-        cp.deepcopy(x), cp.deepcopy(y), design_matrix, OLSRegression(), N_bs, test_percent=test_percent)
+        cp.deepcopy(X), cp.deepcopy(y), OLSRegression(), N_bs,
+        test_percent=test_percent)
 
     print("r2:", bs_my["r2"], "mse:", bs_my["mse"], "var:", bs_my["var"],
           "bias:", bs_my["bias"], bs_my["mse"] - bs_my["var"] - bs_my["bias"])
@@ -420,5 +460,6 @@ def __test_compare_bootstraps():
 
 if __name__ == '__main__':
     # __test_bootstrap_fit()
-    # __test_bootstrap()
-    __test_compare_bootstraps()
+    __test_bias_variance_bootstrap()
+    # __test_basic_bootstrap()
+    # __test_compare_bootstrap_manual_sklearn()
