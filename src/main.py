@@ -1,5 +1,8 @@
 import numpy as np
 import copy as cp
+import os
+import pickle
+import sys
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -18,7 +21,20 @@ import sklearn.metrics as sk_metrics
 import sklearn.utils as sk_utils
 
 
+def read_t(t="all", root="."):
+    """Loads an ising model data set."""
+    if t == "all":
+        data = pickle.load(open(os.path.join(
+            root, "Ising2DFM_reSample_L40_T=All.pkl"), "rb"))
+    else:
+        data = pickle.load(open(os.path.join(
+            root, "Ising2DFM_reSample_L40_T=%.2f.pkl".format(t)), "rb"))
+
+    return np.unpackbits(data).astype(int).reshape(-1, 1600)
+
+
 def task1b():
+    """Task b of project 2"""
 
     # Number of samples to generate
     N_samples = 1000
@@ -49,33 +65,6 @@ def task1b():
     stat_shape = states.shape
     states = states.reshape((stat_shape[0], stat_shape[1]*stat_shape[2]))
 
-    # # build final data set
-    # Data=[states,energies]
-
-    # # # define number of samples
-    # n_samples=400
-
-    # # define train and test data sets
-    # X_train=Data[0][:n_samples]
-    # y_train=Data[1][:n_samples] #+ np.random.normal(0,4.0,size=X_train.shape[0])
-    # X_test=Data[0][n_samples:3*n_samples//2]
-    # y_test=Data[1][n_samples:3*n_samples//2] #+ np.random.normal(0,4.0,size=X_test.shape[0])
-
-    # # define error lists
-    # train_errors_leastsq = []
-    # test_errors_leastsq = []
-
-    # train_errors_ridge = []
-    # test_errors_ridge = []
-
-    # train_errors_lasso = []
-    # test_errors_lasso = []
-
-    # #Initialize coeffficients for ridge regression and Lasso
-    # coefs_leastsq = []
-    # coefs_ridge = []
-    # coefs_lasso=[]
-
     X_train, X_test, y_train, y_test = \
         sk_modsel.train_test_split(states, energies, test_size=1-training_size,
                                    shuffle=False)
@@ -100,17 +89,28 @@ def task1b():
     J_leastsq = np.asarray(linreg.coef_).reshape((L, L))
 
     linreg_bs_results = bs.BootstrapWrapper(X_train, y_train,
-                              linreg, N_bs, X_test=X_test, y_test=y_test)
-    linreg_cvkf_results = cv.kFoldCVWrapper(X_train, y_train, linreg, k=4,
-        X_test=X_test, y_test=y_test)
+                                            sk_model.LinearRegression(
+                                                fit_intercept=False),
+                                            N_bs, X_test=X_test,
+                                            y_test=y_test)
 
+    linreg_cvkf_results = cv.kFoldCVWrapper(X_train, y_train,
+                                            sk_model.LinearRegression(
+                                                fit_intercept=False), k=4,
+                                            X_test=X_test, y_test=y_test)
+
+    ridge_bs_results = []
+    ridge_cvkf_results = []
+
+    lasso_bs_results = []
+    lasso_cvkf_results = []
 
     for lmbda in lambda_values:
 
         # Ridge regression
         ridge_reg = reg.RidgeRegression(lmbda)
         ridge_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
-        y_pred_ridge = ridge_reg.predict(cp.deepcopy(X_test))
+        y_pred_ridge = ridge_reg.predict(cp.deepcopy(X_test)).reshape(-1, 1)
 
         print("\nRIDGE:")
         print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_ridge)))
@@ -119,16 +119,36 @@ def task1b():
         # print("Beta coefs: {}".format(ridge_reg.coef_))
         # print("Beta coefs variances: {}".format(ridge_reg.coef_var))
 
+        ridge_bs_results.append(
+            bs.BootstrapWrapper(X_train, y_train,
+                                reg.RidgeRegression(lmbda),
+                                N_bs, X_test=X_test, y_test=y_test))
+
+        ridge_cfkf_results.append(
+            bs.BootstrapWrapper(X_train, y_train,
+                                reg.RidgeRegression(lmbda),
+                                N_bs, X_test=X_test, y_test=y_test))
+
         # Lasso regression
         lasso_reg = sk_model.Lasso(alpha=lmbda)
         lasso_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
-        y_pred_lasso = lasso_reg.predict(cp.deepcopy(X_test))
+        y_pred_lasso = lasso_reg.predict(cp.deepcopy(X_test)).reshape(-1, 1)
 
         print("\nLASSO:")
         print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_lasso)))
         print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_lasso)))
         print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_lasso)))
         # print("Beta coefs: {}".format(lasso_reg.coef_))
+
+        lasso_bs_results.append(
+            bs.BootstrapWrapper(X_train, y_train,
+                                reg.LassoRegression(lmbda),
+                                N_bs, X_test=X_test, y_test=y_test))
+
+        lasso_cvkf_results.append(
+            bs.BootstrapWrapper(X_train, y_train,
+                                reg.LassoRegression(lmbda),
+                                N_bs, X_test=X_test, y_test=y_test))
 
         J_ridge = np.asarray(ridge_reg.coef_).reshape((L, L))
         J_lasso = np.asarray(lasso_reg.coef_).reshape((L, L))
@@ -138,35 +158,53 @@ def task1b():
         fig, axarr = plt.subplots(nrows=1, ncols=3)
 
         axarr[0].imshow(J_leastsq, **cmap_args)
-        # axarr[0].set_title(r'$\mathrm{OLS}$',fontsize=16)
-        # axarr[0].tick_params(labelsize=16)
+        axarr[0].set_title(r'$\mathrm{OLS}$', fontsize=16)
+        axarr[0].tick_params(labelsize=16)
 
         axarr[1].imshow(J_ridge, **cmap_args)
-        # axarr[1].set_title(r'$\mathrm{Ridge}, \lambda=%.4f$' %(lmbda),fontsize=16)
-        # axarr[1].tick_params(labelsize=16)
+        axarr[1].set_title(
+            r'$\mathrm{Ridge}, \lambda=%.4f$' % (lmbda), fontsize=16)
+        axarr[1].tick_params(labelsize=16)
 
         im = axarr[2].imshow(J_lasso, **cmap_args)
-        # axarr[2].set_title(r'$\mathrm{LASSO}, \lambda=%.4f$' %(lmbda),fontsize=16)
-        # axarr[2].tick_params(labelsize=16)
+        axarr[2].set_title(
+            r'$\mathrm{LASSO}, \lambda=%.4f$' % (lmbda), fontsize=16)
+        axarr[2].tick_params(labelsize=16)
 
-        # divider = make_axes_locatable(axarr[2])
-        # cax = divider.append_axes("right", size="5%", pad=0.05)
-        # cbar=fig.colorbar(im, cax=cax)
+        divider = make_axes_locatable(axarr[2])
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = fig.colorbar(im, cax=cax)
 
-        # cbar.ax.set_yticklabels(np.arange(-1.0, 1.0+0.25, 0.25),fontsize=14)
-        # cbar.set_label(r'$J_{i,j}$',labelpad=-40, y=1.12,fontsize=16,rotation=0)
+        cbar.ax.set_yticklabels(np.arange(-1.0, 1.0+0.25, 0.25), fontsize=14)
+        cbar.set_label(r'$J_{i,j}$', labelpad=-40,
+                       y=1.12, fontsize=16, rotation=0)
 
-        # fig.subplots_adjust(right=2.0)
-
-        plt.show()
+        # plt.show()
+        fig.savefig("../fig/ising_1d_heatmap_lambda{}.pdf".format(lmbda))
 
         plt.close(fig)
 
+    # Plot different bias/variance values
+
+
+def task1c():
+    """Task c) of project 2."""
+
+    print("Logistic regression")
+
+    data_path = "../datafiles/MehtaIsingData"
+    input_data = read_t("all", data_path)
+
+    labels_data = pickle.load(open(os.path.join(
+            data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
+
+    print("Data shape: {} Bytes: {} MB".format(input_data.shape, input_data.nbytes / (1024*1024)))
+    print("Data label shape: {} Bytes: {} MB".format(labels_data.shape, labels_data.nbytes / (1024*1024)))
+
 
 def main():
-    task1b()
+    # task1b()
     task1c()
-
 
 if __name__ == '__main__':
     main()

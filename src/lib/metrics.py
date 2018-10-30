@@ -21,7 +21,8 @@ def mse(y_exact, y_predict, axis=None):
         float: mean square error
     """
 
-    assert y_exact.shape == y_predict.shape
+    assert y_exact.shape == y_predict.shape, ("y_exact.shape = {} y_predict"
+        ".shape = {}".format(y_exact.shape, y_predict.shape))
 
     return np.mean((y_exact - y_predict)**2, axis=axis)
 

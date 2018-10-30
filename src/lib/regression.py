@@ -2,6 +2,8 @@
 import numpy as np
 import scipy.linalg
 import numba as nb
+import copy as cp
+
 try:
     import lib.metrics as metrics
 except ModuleNotFoundError:
@@ -238,8 +240,9 @@ class OLSRegression(__RegBackend):
             X_train (ndarray): design matrix, (N, p - 1), 
             y_train (ndarray): (N),
         """
-        self.X_train = X_train
-        self.y_train = y_train
+
+        self.X_train = cp.deepcopy(X_train)
+        self.y_train = cp.deepcopy(y_train)
 
         # N samples, P features
         self.N, self.P = X_train.shape
@@ -248,7 +251,13 @@ class OLSRegression(__RegBackend):
         XTX = self.X_train.T @ self.X_train
 
         # (X^T * X)^{-1}
-        XTX_inv = self._inv(XTX)
+        # XTX_inv = self._inv(XTX)
+        # print("DET:",np.linalg.det(XTX))
+        # XTX_inv = np.linalg.inv(XTX)
+
+        U, S, VH = scipy.linalg.svd(XTX)  # Using numpys svd method
+        S = scipy.diag(1.0/S)
+        XTX_inv = U @ S @ VH
 
         # Beta fit values: beta = (X^T * X)^{-1} @ X^T @ y
         self.coef = XTX_inv @ self.X_train.T @ self.y_train
@@ -297,8 +306,9 @@ class RidgeRegression(__RegBackend):
             X_train (ndarray): design matrix, (N, p - 1), 
             y_train (ndarray): (N, 1),
         """
-        self.X_train = X_train
-        self.y_train = y_train
+
+        self.X_train = cp.deepcopy(X_train)
+        self.y_train = cp.deepcopy(y_train)
 
         # N samples, P features
         self.N, self.P = X_train.shape
@@ -370,14 +380,15 @@ def __test_ols_regression(x, y, deg):
     print("Manual OLS regression")
     print("R^2: {:.16f}".format(reg.score(X, y)))
 
-    print(reg.coef_)
-
     sk_reg = sk_model.LinearRegression(fit_intercept=False, n_jobs=4)
     sk_reg.fit(X, y)
     print("SciKit OLS regression")
     print("R^2: {:.16f}".format(sk_reg.score(X, y)))
 
-    print(sk_reg.coef_)
+    c1, c2 = reg.coef_, sk_reg.coef_.T
+    for i in range(reg.coef_.shape[0]):
+        print("COEFF DIFF: {} - {} = {}".format(
+            c1[i][0], c2[i][0], c1[i][0]-c2[i][0]))
 
 
 def __test_ridge_regression(x, y, deg, alpha=1.0):

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import numpy as np
+import copy as cp
+from tqdm import tqdm
+
 try:
     import lib.metrics as metrics
 except ModuleNotFoundError:
     import metrics
-from tqdm import tqdm
+
 import sklearn.model_selection as sk_modsel
+import sklearn.metrics as sk_metrics
 
 __all__ = ["kFoldCrossValidation", "MCCrossValidation"]
 
@@ -31,8 +35,8 @@ class __CV_core:
         assert hasattr(reg, "predict"), ("regression method must have "
                                          "attribute predict()")
 
-        self.X_data = X_data
-        self.y_data = y_data
+        self.X_data = cp.deepcopy(X_data)
+        self.y_data = cp.deepcopy(y_data)
 
         self._reg = reg
 
@@ -97,6 +101,8 @@ class kFoldCrossValidation(__CV_core):
             # values.
             X_train = self.X_data
             y_train = self.y_data
+            X_test = cp.deepcopy(X_test)
+            y_test = cp.deepcopy(y_test)
 
         test_size = y_test.shape[0]
 
@@ -139,8 +145,9 @@ class kFoldCrossValidation(__CV_core):
         self.bias = np.mean(_bias**2)
 
         # R^2 score, 1 - sum(y-y_approx)/sum(y-mean(y))
-        _r2 = metrics.r2(y_test, self.y_pred_list, axis=1)
-        self.r2 = np.mean(_r2)
+        # _r2 = metrics.r2(y_test, self.y_pred_list, axis=1)
+        # self.r2 = np.mean(_r2)
+        self.r2 = sk_metrics.r2_score(y_test, self.y_pred_list.mean(axis=1))
 
         # Variance, var(y_predictions)
         self.var = np.mean(np.var(self.y_pred_list, axis=1, keepdims=True))
@@ -149,7 +156,7 @@ class kFoldCrossValidation(__CV_core):
         self.beta_coefs_var = np.asarray(beta_coefs).var(axis=1)
         self.beta_coefs = np.asarray(beta_coefs).mean(axis=1)
 
-        self.x_pred_test = X_test[:,1]
+        self.x_pred_test = X_test[:, 1]
         self.y_pred = np.mean(self.y_pred_list, axis=1)
         self.y_pred_var = np.var(self.y_pred_list, axis=1)
 
@@ -182,10 +189,13 @@ class kkFoldCrossValidation(__CV_core):
                                            shuffle=shuffle)
 
         else:
-            # If X_test and y_test is provided, we simply use those as test 
+            # If X_test and y_test is provided, we simply use those as test
             # values.
             X_train = self.X_data
             y_train = self.y_data
+            X_test = cp.deepcopy(X_test)
+            y_test = cp.deepcopy(y_test)
+
 
         N_total_size = X_train.shape[0]
 
@@ -273,8 +283,8 @@ class kkFoldCrossValidation(__CV_core):
             bias_arr[i_holdout] = np.mean(_bias**2)
 
             # R^2 score, 1 - sum(y-y_approx)/sum(y-mean(y))
-            _r2 = metrics.r2(y_test, y_pred_list, axis=1)
-            r2_arr[i_holdout] = np.mean(_r2)
+            r2_arr[i_holdout] = metrics.r2(
+                y_test, y_pred_list.mean(axis=1, keepdims=True))
 
             # Variance, var(y_predictions)
             _var = np.var(y_pred_list, axis=1, keepdims=True)
@@ -286,12 +296,13 @@ class kkFoldCrossValidation(__CV_core):
         self.var = np.mean(var_arr)
         self.bias = np.mean(bias_arr)
         self.r2 = np.mean(r2_arr)
+        # self.r2 = sk_metrics.r2_score(y_test, y_predict.mean(axis=1))
         self.mse = np.mean(mse_arr)
         beta_coefs = np.asarray(beta_coefs)
         self.beta_coefs_var = np.asarray(beta_coefs).var(axis=0)
         self.beta_coefs = np.asarray(beta_coefs).mean(axis=0)
 
-        self.x_pred_test = X_test[:,1]
+        self.x_pred_test = X_test[:, 1]
         self.y_pred = np.array(y_pred_mean_list).mean(axis=0)
         self.y_pred_var = np.array(y_pred_var_list).mean(axis=0)
 
@@ -301,8 +312,8 @@ class MCCrossValidation(__CV_core):
     https://stats.stackexchange.com/questions/51416/k-fold-vs-monte-carlo-cross-validation
     """
 
-    def cross_validate(self, N_mc, k_splits=4, test_percent=0.2, X_test=None, 
-        y_test=None, shuffle=False):
+    def cross_validate(self, N_mc, k_splits=4, test_percent=0.2, X_test=None,
+                       y_test=None, shuffle=False):
         """
         Args:
             N_mc (int): Number of cross validations to perform
@@ -328,31 +339,23 @@ class MCCrossValidation(__CV_core):
                                            shuffle=shuffle)
 
         else:
-            # If X_test and y_test is provided, we simply use those as test 
+            # If X_test and y_test is provided, we simply use those as test
             # values.
             X_train = self.X_data
             y_train = self.y_data
+            X_test = cp.deepcopy(X_test)
+            y_test = cp.deepcopy(y_test)
 
-        N_total_size = X_train.shape[0]
-
-        # # Splits X data and design matrix data
-        # X_train, X_test, y_train, y_test = \
-        #     sk_modsel.train_test_split(self.X_data, self.y_data,
-        #                                test_size=test_percent)
-        test_size = y_test.shape[0]
-
-        N_mc_data = len(X_train)
 
         # Splits dataset into managable k fold tests
-        mc_test_size = N_mc_data // k_splits
+        mc_test_size = X_train.shape[0] // k_splits
 
         # All possible indices available
-        mc_indices = list(range(N_mc_data))
+        mc_indices = list(range(X_train.shape[0]))
 
         # Stores the test values from each k trained data set in an array
-        r2_list = np.empty(N_mc)
         beta_coefs = []
-        self.y_pred_list = np.empty((test_size, N_mc))
+        self.y_pred_list = np.empty((y_test.shape[0], N_mc))
 
         for i_mc in tqdm(range(N_mc), desc="Monte Carlo Cross Validation"):
 
@@ -369,8 +372,10 @@ class MCCrossValidation(__CV_core):
             # Trains method bu fitting data
             self.reg.fit(k_X_train, k_y_train)
 
+            y_predict = self.reg.predict(X_test)
+
             # Adds prediction and beta coefs
-            self.y_pred_list[:, i_mc] = self.reg.predict(X_test).ravel()
+            self.y_pred_list[:, i_mc] = y_predict.ravel()
             beta_coefs.append(self.reg.coef_)
 
         # Mean Square Error, mean((y - y_approx)**2)
@@ -383,8 +388,10 @@ class MCCrossValidation(__CV_core):
         self.bias = np.mean(_bias**2)
 
         # R^2 score, 1 - sum(y-y_approx)/sum(y-mean(y))
-        _r2 = metrics.r2(y_test, self.y_pred_list, axis=0)
-        self.r2 = np.mean(_r2)
+        # _r2 = metrics.r2(y_test, self.y_pred_list, axis=0)
+
+        self.r2 = sk_metrics.r2_score(y_test, self.y_pred_list.mean(axis=1))
+        # self.r2 = np.mean(_r2)
 
         # Variance, var(y_predictions)
         self.var = np.mean(np.var(self.y_pred_list, axis=1, keepdims=True))
@@ -393,7 +400,7 @@ class MCCrossValidation(__CV_core):
         self.beta_coefs_var = np.asarray(beta_coefs).var(axis=1)
         self.beta_coefs = np.asarray(beta_coefs).mean(axis=1)
 
-        self.x_pred_test = X_test[:,1]
+        self.x_pred_test = X_test[:, 1]
         self.y_pred = np.mean(self.y_pred_list, axis=1)
         self.y_pred_var = np.var(self.y_pred_list, axis=1)
 
@@ -424,7 +431,7 @@ def kFoldCVWrapper(X, y, reg, k=4, test_percent=0.4,
 
     return {
         "r2": kfcv_reg.r2, "mse": kfcv_reg.mse, "bias": kfcv_reg.bias,
-        "var": kfcv_reg.var, 
+        "var": kfcv_reg.var,
         "diff": kfcv_reg.mse - kfcv_reg.bias - kfcv_reg.var,
         "coef": kfcv_reg.beta_coefs, "coef_var": kfcv_reg.beta_coefs_var}
     # , "x_pred": kfcv_reg.x_pred_test,
@@ -470,18 +477,24 @@ def SKLearnkFoldCV(X, y, reg, k=4, test_percent=0.4,
 
     # Preps lists to be filled
     y_pred_list = np.empty((y_test.shape[0], k))
+    r2_list = np.empty(k)
     beta_coefs = []
 
     # Specifies the number of splits
     kfcv = sk_modsel.KFold(n_splits=k, shuffle=shuffle)
 
-    for i, val in tqdm(enumerate(kfcv.split(X_train)), 
-        desc="SK-learn k-fold CV"):
+    for i, val in tqdm(enumerate(kfcv.split(X_train)),
+                       desc="SK-learn k-fold CV"):
 
         train_index, test_index = val
 
         reg.fit(X_train[train_index], y_train[train_index])
-        y_pred_list[:, i] = reg.predict(X_test).ravel()
+
+        y_predict = reg.predict(X_test)
+
+        r2_list[i] = sk_metrics.r2_score(y_test, y_predict)
+
+        y_pred_list[:, i] = y_predict.ravel()
         beta_coefs.append(reg.coef_)
 
     # Mean Square Error, mean((y - y_approx)**2)
@@ -494,18 +507,21 @@ def SKLearnkFoldCV(X, y, reg, k=4, test_percent=0.4,
     bias = np.mean(_bias**2)
 
     # R^2 score, 1 - sum(y-y_approx)/sum(y-mean(y))
-    r2 = metrics.r2(y_test, y_pred_list, axis=1).mean()
+    r2 = r2_list.mean()
 
     # Variance, var(y_predictions)
     var = np.mean(np.var(y_pred_list, axis=1, keepdims=True))
+
+    r2 = sk_metrics.r2_score(y_test, y_pred_list.mean(axis=1))
 
     return {"r2": r2, "mse": mse, "bias": bias, "var": var,
             "diff": mse - bias - var,
             "coef": np.asarray(beta_coefs).var(axis=1),
             "coef_var": np.asarray(beta_coefs).mean(axis=1)}
 
-def kkfoldWrapper(X, y, reg, k=4, test_percent=0.4,
-                   shuffle=False, X_test=None, y_test=None):
+
+def kkfoldCVWrapper(X, y, reg, k=4, test_percent=0.4,
+                    shuffle=False, X_test=None, y_test=None):
     """k-fold Cross Validation using a manual method.
 
     Args:
@@ -526,17 +542,17 @@ def kkfoldWrapper(X, y, reg, k=4, test_percent=0.4,
 
     kkfcv_reg = kkFoldCrossValidation(X, y, reg)
     kkfcv_reg.cross_validate(k_splits=k, test_percent=test_percent,
-                            shuffle=shuffle, X_test=X_test, y_test=y_test)
+                             shuffle=shuffle, X_test=X_test, y_test=y_test)
 
     return {
         "r2": kkfcv_reg.r2, "mse": kkfcv_reg.mse, "bias": kkfcv_reg.bias,
-        "var": kkfcv_reg.var, 
+        "var": kkfcv_reg.var,
         "diff": kkfcv_reg.mse - kkfcv_reg.bias - kkfcv_reg.var,
         "coef": kkfcv_reg.beta_coefs, "coef_var": kkfcv_reg.beta_coefs_var}
 
 
-def MCCVWrapper(X, y, reg, N_mc, k=4, test_percent=0.4, shuffle=False, 
-    X_test=None, y_test=None):
+def MCCVWrapper(X, y, reg, N_mc, k=4, test_percent=0.4, shuffle=False,
+                X_test=None, y_test=None):
     """k-fold Cross Validation using a manual method.
 
     Args:
@@ -557,12 +573,18 @@ def MCCVWrapper(X, y, reg, N_mc, k=4, test_percent=0.4, shuffle=False,
     """
 
     mccv_reg = MCCrossValidation(X, y, reg)
-    mccv_reg.cross_validate(N_mc, k_splits=k, test_percent=test_percent, 
-        X_test=X_test, y_test=y_test, shuffle=shuffle)
+    mccv_reg.cross_validate(N_mc, k_splits=k, test_percent=test_percent,
+                            X_test=X_test, y_test=y_test, shuffle=shuffle)
+
+    return {
+        "r2": mccv_reg.r2, "mse": mccv_reg.mse, "bias": mccv_reg.bias,
+        "var": mccv_reg.var,
+        "diff": mccv_reg.mse - mccv_reg.bias - mccv_reg.var,
+        "coef": mccv_reg.beta_coefs, "coef_var": mccv_reg.beta_coefs_var}
 
 
 def SKLearnMCCV(X, y, reg, N_bs, k=4, test_percent=0.4):
-    pass
+    raise NotImplementedError("SKLearnMCCV")
 
 
 def __compare_kfold_cv():
@@ -625,7 +647,7 @@ def __compare_kfold_cv():
 
 
 def __compare_mc_cv():
-    pass
+    raise NotImplementedError("__compare_mc_cv")
 
 
 def __test_cross_validation_methods():
@@ -645,10 +667,7 @@ def __test_cross_validation_methods():
     # Sets up random matrices
     x = np.random.rand(n, 1)
 
-    def func_excact(_x): return 2*_x*_x + np.exp(-2*_x) + noise * \
-        np.random.randn(_x.shape[0], _x.shape[1])
-
-    y = func_excact(x)
+    y = 2*x*x + np.exp(-2*x) + noise*np.random.randn(x.shape[0], x.shape[1])
 
     # Sets up design matrix
     poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
@@ -661,11 +680,9 @@ def __test_cross_validation_methods():
     print("Regular linear regression")
     print("R2:    {:-20.16f}".format(reg.score(X, y)))
     print("MSE:   {:-20.16f}".format(metrics.mse(y, y_predict)))
-    # print (metrics.bias(y, y_predict))
     print("Bias^2:{:-20.16f}".format(metrics.bias(y, y_predict)))
 
     # Small plotter
-    import matplotlib.pyplot as plt
     plt.plot(x, y, "o", label="data")
     plt.plot(x, y_predict, "o",
              label=r"Pred, $R^2={:.4f}$".format(reg.score(X, y)))
@@ -700,7 +717,6 @@ def __test_cross_validation_methods():
                                      kkcv.bias + kkcv.var))
     print("Diff: {}".format(abs(kkcv.bias + kkcv.var - kkcv.mse)))
 
-    print (kkcv.x_pred_test.shape, kkcv.y_pred.shape, kkcv.y_pred_var.shape)
     plt.errorbar(kkcv.x_pred_test, kkcv.y_pred,
                  yerr=np.sqrt(kkcv.y_pred_var), fmt="o",
                  label=r"kk-fold CV, $R^2={:.4f}$".format(kkcv.r2))
@@ -726,11 +742,186 @@ def __test_cross_validation_methods():
 
     plt.xlabel(r"$x$")
     plt.ylabel(r"$y$")
-    plt.title(r"$y=2x^2$")
+    plt.title(r"$y=2x^2 + e^{-2x}$")
+    y = 2*x*x + np.exp(-2*x) + noise*np.random.randn(x.shape[0], x.shape[1])
     plt.legend()
     plt.show()
 
 
+def __test_bias_variance_kfcv():
+    """Checks bias-variance relation."""
+    from regression import OLSRegression
+    import sklearn.linear_model as sk_model
+    import sklearn.preprocessing as sk_preproc
+    import matplotlib.pyplot as plt
+
+    # Initial values
+    N_polynomials = 30
+    deg_list = np.linspace(1, N_polynomials, N_polynomials, dtype=int)
+    n = 500
+    test_percent = 0.2
+    noise = 0.1
+    np.random.seed(2018)
+
+    x = np.random.rand(n, 1)
+    y = 2*x*x + np.exp(-2*x) + noise * \
+        np.random.randn(x.shape[0], x.shape[1])
+
+    x_train, x_test, y_train, y_test = \
+        sk_modsel.train_test_split(x, y,
+                                   test_size=test_percent,
+                                   shuffle=False)
+
+    mse_list = np.empty(N_polynomials)
+    var_list = np.empty(N_polynomials)
+    bias_list = np.empty(N_polynomials)
+    r2_list = np.empty(N_polynomials)
+
+    for i, deg in enumerate(deg_list):
+        # Sets up design matrix
+        poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
+        X = poly.fit_transform(x_train)
+
+        results = kFoldCVWrapper(X, y_train, sk_model.LinearRegression(
+                                    fit_intercept=False),
+                                 X_test=poly.fit_transform(x_test),
+                                 y_test=y_test)
+
+        mse_list[i] = results["mse"]
+        var_list[i] = results["var"]
+        bias_list[i] = results["bias"]
+        r2_list[i] = results["r2"]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(deg_list, mse_list, "-*", label=r"$\mathrm{MSE}$")
+    ax.plot(deg_list, var_list, "-x", label=r"$\mathrm{Var}$")
+    ax.plot(deg_list, bias_list, "-.", label=r"$\mathrm{Bias}$")
+    ax.set_xlabel(r"Polynomial degree")
+    ax.set_ylabel(r"MSE/Var/Bias")
+    ax.set_ylim(-0.01, 0.2)
+    ax.legend()
+    plt.show()
+    plt.close(fig)
+
+
+def __test_bias_variance_kkfcv():
+    """Checks bias-variance relation."""
+    from regression import OLSRegression
+    import sklearn.linear_model as sk_model
+    import sklearn.preprocessing as sk_preproc
+    import matplotlib.pyplot as plt
+
+    # Initial values
+    N_polynomials = 30
+    deg_list = np.linspace(1, N_polynomials, N_polynomials, dtype=int)
+    n = 500
+    test_percent = 0.2
+    noise = 0.1
+    np.random.seed(2018)
+
+    x = np.random.rand(n, 1)
+    y = 2*x*x + np.exp(-2*x) + noise * \
+        np.random.randn(x.shape[0], x.shape[1])
+
+    x_train, x_test, y_train, y_test = \
+        sk_modsel.train_test_split(x, y,
+                                   test_size=test_percent,
+                                   shuffle=False)
+
+    mse_list = np.empty(N_polynomials)
+    var_list = np.empty(N_polynomials)
+    bias_list = np.empty(N_polynomials)
+    r2_list = np.empty(N_polynomials)
+
+    for i, deg in enumerate(deg_list):
+        # Sets up design matrix
+        poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
+        X = poly.fit_transform(x_train)
+
+        results = kkfoldCVWrapper(X, y_train, sk_model.LinearRegression(
+                                    fit_intercept=False),
+                                  X_test=poly.fit_transform(x_test),
+                                  y_test=y_test)
+
+        mse_list[i] = results["mse"]
+        var_list[i] = results["var"]
+        bias_list[i] = results["bias"]
+        r2_list[i] = results["r2"]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(deg_list, mse_list, "-*", label=r"$\mathrm{MSE}$")
+    ax.plot(deg_list, var_list, "-x", label=r"$\mathrm{Var}$")
+    ax.plot(deg_list, bias_list, "-.", label=r"$\mathrm{Bias}$")
+    ax.set_xlabel(r"Polynomial degree")
+    ax.set_ylabel(r"MSE/Var/Bias")
+    ax.set_ylim(-0.01, 0.2)
+    ax.legend()
+    plt.show()
+    plt.close(fig)
+
+
+def __test_bias_variance_mccv():
+    """Checks bias-variance relation."""
+    from regression import OLSRegression
+    import sklearn.linear_model as sk_model
+    import sklearn.preprocessing as sk_preproc
+    import matplotlib.pyplot as plt
+
+    # Initial values
+    N_polynomials = 30
+    deg_list = np.linspace(1, N_polynomials, N_polynomials, dtype=int)
+    n = 500
+    N_bs = 200
+    test_percent = 0.2
+    noise = 0.1
+    np.random.seed(2018)
+
+    x = np.random.rand(n, 1)
+    y = 2*x*x + np.exp(-2*x) + noise * \
+        np.random.randn(x.shape[0], x.shape[1])
+
+    x_train, x_test, y_train, y_test = \
+        sk_modsel.train_test_split(x, y,
+                                   test_size=test_percent,
+                                   shuffle=False)
+
+    mse_list = np.empty(N_polynomials)
+    var_list = np.empty(N_polynomials)
+    bias_list = np.empty(N_polynomials)
+    r2_list = np.empty(N_polynomials)
+
+    for i, deg in enumerate(deg_list):
+        # Sets up design matrix
+        poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
+        X = poly.fit_transform(x_train)
+
+        results = MCCVWrapper(X, y_train, sk_model.LinearRegression(
+                                    fit_intercept=False), N_bs,
+                              X_test=poly.fit_transform(x_test), y_test=y_test)
+
+        mse_list[i] = results["mse"]
+        var_list[i] = results["var"]
+        bias_list[i] = results["bias"]
+        r2_list[i] = results["r2"]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(deg_list, mse_list, "-*", label=r"$\mathrm{MSE}$")
+    ax.plot(deg_list, var_list, "-x", label=r"$\mathrm{Var}$")
+    ax.plot(deg_list, bias_list, "-.", label=r"$\mathrm{Bias}$")
+    ax.set_xlabel(r"Polynomial degree")
+    ax.set_ylabel(r"MSE/Var/Bias")
+    ax.set_ylim(-0.01, 0.2)
+    ax.legend()
+    plt.show()
+    plt.close(fig)
+
+
 if __name__ == '__main__':
     __test_cross_validation_methods()
-    # __compare_kfold_cv()
+    __test_bias_variance_kfcv()
+    __test_bias_variance_kkfcv()
+    __test_bias_variance_mccv()
+    __compare_kfold_cv()

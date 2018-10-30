@@ -21,3 +21,9 @@
 
 # Sublime stuff
 *.sublime-*
+
+# Datafiles
+datafiles/
+
+# Figures
+fig
