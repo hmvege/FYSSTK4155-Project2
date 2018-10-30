@@ -5,11 +5,28 @@ import scipy
 import copy as cp
 
 
+def _l1_penalty(weights):
+    pass
+
+def _l1_penalty_derivative(weights):
+    pass
+
+def _l2_penalty(weights):
+    pass
+
+def _l2_penalty_derivative(weights):
+    pass
+
+def _gradient_descent(X, y, weights, lr):
+    pass
+
+
 class LogisticRegression:
     """An implementation of Logistic regression."""
     _fit_performed = False
+
     def __init__(self, solver="gradient_descent", max_iter=100,
-        penalty="l2", tol=1e-4, lr=1.0, lmbda=1.0):
+                 penalty="l2", tol=1e-4, lr=1.0, lmbda=1.0):
         """Sets up the linalg backend.
 
         Args:
@@ -25,12 +42,42 @@ class LogisticRegression:
             lmbda (float): regularization strength. Default is 1.0.
         """
 
-        self.solver = solver
+        self._set_solver(solver)
+        self._set_penalty(penalty)
         self.max_iter = max_iter
-        self.penalty = penalty
         self.tol = tol
         self.lr = lr
         self.lmbda = lmbda
+
+    def _set_solver(self, solver):
+        """Set the penalty/regularization method to use."""
+        self.solver = solver
+
+        if solver == "gradient_descent": # aka Steepest descent
+            self._get_solver = None
+        elif solver == "conjugate_gradient":
+            self._get_solver = None
+        elif solver == "sga": # Stochastic Gradient Descent
+            self._get_solver = None
+        elif solver == "nr": # Newton-Raphson method
+            self._get_solver = None
+        else:
+            raise KeyError(("{} not recognized as a solver"
+                            " method.".format(solver)))
+
+    def _set_penalty(self, penalty):
+        """Set the penalty/regularization method to use."""
+        self.penalty = penalty
+
+        if penalty == "l1":
+            self._get_penalty = lambda x: 0.0
+        elif penalty == "l2":
+            self._get_penalty = lambda x: 0.0
+        elif penalty == None:
+            self._get_penalty = lambda x: 0.0
+        else:
+            raise KeyError(("{} not recognized as a regularization"
+                            " method.".format(penalty)))
 
     @property
     def coef_(self):
@@ -70,21 +117,24 @@ class LogisticRegression:
         self.N_features, self.p = X.shape
         _, self.N_labels = y.shape
 
-        print (X.shape, np.ones((self.N_features, self.p)).shape)
+        # Adds constant term and increments the number of predictors
         X = np.hstack([np.ones((self.N_features, self.p)), X])
-        print (X.shape)
         self.p += 1
 
+        # Adds beta_0 coefficients
         self.coef = np.zeros((self.p, self.N_labels))
-        self.coef[0,:] = np.ones(self.N_labels)
+        self.coef[0, :] = np.ones(self.N_labels)
 
+        # Sets up method for storing cost function values
         self.cost_values = []
         self.cost_values.append(self._cost_function(X, y, self.coef))
 
         for i in range(self.max_iter):
+
             self.coef = self._gradient_descent(X, y, self.coef, self.lr)
             # self.coef += self._l2_regularization(self.coef)
             self.cost_values.append(self._cost_function(X, y, self.coef))
+
         # self.coef[0, 0] = 2.61789264
         print(self.coef)
 
@@ -108,6 +158,8 @@ class LogisticRegression:
         Returns:
             (ndarray): 1D array of weights
         """
+
+        # TODO: move this to outside? Make it take cost_function_gradient and features
 
         # y_pred = self._predict(X, weights)
 
@@ -138,7 +190,7 @@ class LogisticRegression:
         # print (cost1.shape)
         # print (cost2.shape)
 
-        self.cost = np.sum(cost1 - cost2)
+        self.cost = np.sum(cost1 - cost2) + self._get_penalty(weights)
 
         return self.cost
 
