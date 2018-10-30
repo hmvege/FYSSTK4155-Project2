@@ -32,49 +32,48 @@ NaN
 
 \tableofcontents
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
+\input{introduction}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Theory}
 \subsection{The Ising Model}
-\subsubsection{1-dimensional Ising model}
-\subsubsection{2-dimensional Ising model}
-
-\subsection{A refresher on linear regression}
-% Move this to appendix!
-\subsubsection{Ridge regression}
-\subsubsection{Lasso regression}
-
-\subsection{Bootstrapping}
-\subsection{k-fold Cross-Validation}
+\input{theory/ising_model.tex}
 
 \subsection{Logistic regression}
+\input{theory/logistic_regression.tex}
 
-\subsubsection{Cost Functions}
-
-\subsection{Optimization methods}
-\subsubsection{Gradient descent}
-\subsubsection{Stochastic gradient descent}
-\subsubsection{Newton-Raphson}
-\subsubsection{Conjugate gradient}
-
+\subsection{Cost Functions}
+\input{theory/cost_functions.tex}
 
 \subsection{Neural Networks}
+\input{theory/neuralnetworks.tex}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation}
+\input{implementation}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Results}
+\input{results}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}
+\input{discussion.tex}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
+\input{conclusion.tex}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{appendices}
-Put stuff like Bootstrapping, kfold CV, OLS/Ridge/Lasso regression here
+\input{appendix.tex}
 \end{appendices}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{plainnat}
-\bibliography{bib/bibliography.bib}
+\bibliography{bibliography/lib.bib}
 
 
 \end{document}
