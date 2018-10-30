@@ -416,8 +416,8 @@ def __test_bias_variance_bootstrap():
 
         # SKLearnBootstrap.
         # BootstrapWrapper
-        # reg = OLSRegression()
-        reg = sk_model.LinearRegression(fit_intercept=False)
+        reg = OLSRegression()
+        # reg = sk_model.LinearRegression(fit_intercept=False)
         results = SKLearnBootstrap(poly.fit_transform(cp.deepcopy(x_train)),
                                    cp.deepcopy(y_train), reg, 
                                    N_bs,

@@ -198,8 +198,8 @@ def task1c():
     labels_data = pickle.load(open(os.path.join(
             data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
 
-    print("Data shape: {} Bytes: {} MB".format(input_data.shape, input_data.nbytes / (1024*1024)))
-    print("Data label shape: {} Bytes: {} MB".format(labels_data.shape, labels_data.nbytes / (1024*1024)))
+    print("Data shape: {} Bytes: {:.2f} MB".format(input_data.shape, input_data.nbytes / (1024*1024)))
+    print("Data label shape: {} Bytes: {:.2f} MB".format(labels_data.shape, labels_data.nbytes / (1024*1024)))
 
 
 def main():
