@@ -39,7 +39,7 @@ class MultilayerPerceptron:
             for l_i, l_j in zip(layer_sizes[:-1], layer_sizes[1:])]
 
         self.biases = [
-            np.zeros((layer_sizes[l_i]))
+            np.zeros((layer_sizes[l_i], 1))
             for l_i in range(1, len(layer_sizes))]
 
         for w in self.weights:
@@ -79,13 +79,13 @@ class MultilayerPerceptron:
 
         # Gets delta 
         delta = 2*(sigmoid_list[-1] - y) * sigmoid_derivative(z_list[-1])
-        delta_w[-1] = np.outer(delta, sigmoid_list[-2].T)
+        delta_w[-1] = np.dot(delta, sigmoid_list[-2].T)
         delta_b[-1] = delta
 
         for l in range(2, self.N_layers):
             print(l)
-            delta = sigmoid_derivative(z_list[-l]) * 2*(z_list[-l] - sigmoid_list[-l])
-            delta_w[l] = np.outer(delta, sigmoid_list[1-l])
+            delta = np.dot(self.weights[-l+1].T, delta) * sigmoid_derivative(z_list[-1])
+            delta_w[l] = np.dot(delta, sigmoid_list(-l-1).T)
             delta_b[l] = delta
             print(delta.shape, sigmoid_list[1-l].shape, delta_w[-l].shape)
 
