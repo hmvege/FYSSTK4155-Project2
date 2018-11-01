@@ -5,19 +5,61 @@ import scipy
 import copy as cp
 
 
-def _l1_penalty(weights):
+def _l1(weights):
+    return np.linalg.norm(weights, ord=1)
+
+
+def _l1_derivative(weights):
+    # NOTE: include this in report
+    # https://math.stackexchange.com/questions/141101/minimizing-l-1-regularization
+    return np.sign(weights)
+
+
+def _l2(weights):
+    return np.linalg.norm(weights)
+
+
+def _l2_derivative(weights):
+    # NOTE: include this in report
+    # https://math.stackexchange.com/questions/2792390/derivative-of-euclidean-norm-l2-norm
+    return 2*weights
+
+
+class _OptimizerBase:
+    """Base class for optimization."""
+
+    def set_regularization_method(self, penalty):
+        """Set the penalty/regularization method to use."""
+
+        self.penalty = penalty
+
+        if penalty == "l1":
+            self._get_penalty = lambda x: 0.0
+        elif penalty == "l2":
+            self._get_penalty = lambda x: 0.0
+        elif penalty == None:
+            self._get_penalty = lambda x: 0.0
+        else:
+            raise KeyError(("{} not recognized as a regularization"
+                            " method.".format(penalty)))
+
+    def optimize(self):
+        pass
+
+
+class GradientDescent(_OptimizerBase):
     pass
 
-def _l1_penalty_derivative(weights):
+
+class ConjugateGradient(_OptimizerBase):
     pass
 
-def _l2_penalty(weights):
+
+class SGA(_OptimizerBase):
     pass
 
-def _l2_penalty_derivative(weights):
-    pass
 
-def _gradient_descent(X, y, weights, lr):
+class NewtonRaphson(_OptimizerBase):
     pass
 
 
@@ -42,39 +84,44 @@ class LogisticRegression:
             lmbda (float): regularization strength. Default is 1.0.
         """
 
-        self._set_solver(solver)
-        self._set_penalty(penalty)
+        self._set_optimizer(solver)
+        self._set_regularization_method(penalty)
+        self.penalty = penalty
         self.max_iter = max_iter
         self.tol = tol
         self.lr = lr
         self.lmbda = lmbda
 
-    def _set_solver(self, solver):
+    def _set_optimizer(self, solver):
         """Set the penalty/regularization method to use."""
         self.solver = solver
 
-        if solver == "gradient_descent": # aka Steepest descent
+        if solver == "gradient_descent":  # aka Steepest descent
             self._get_solver = None
         elif solver == "conjugate_gradient":
             self._get_solver = None
-        elif solver == "sga": # Stochastic Gradient Descent
+        elif solver == "sga":  # Stochastic Gradient Descent
             self._get_solver = None
-        elif solver == "nr": # Newton-Raphson method
+        elif solver == "nr":  # Newton-Raphson method
             self._get_solver = None
         else:
             raise KeyError(("{} not recognized as a solver"
                             " method.".format(solver)))
 
-    def _set_penalty(self, penalty):
+    def _set_regularization_method(self, penalty):
         """Set the penalty/regularization method to use."""
+
         self.penalty = penalty
 
         if penalty == "l1":
-            self._get_penalty = lambda x: 0.0
+            self._get_penalty = _l1
+            self._get_penalty_derivative = _l1_derivative
         elif penalty == "l2":
+            self._get_penalty = _l2
+            self._get_penalty_derivative = _l2_derivative
+        elif isinstance(type(penalty), None):
             self._get_penalty = lambda x: 0.0
-        elif penalty == None:
-            self._get_penalty = lambda x: 0.0
+            self._get_penalty_derivative = lambda x: 0.0
         else:
             raise KeyError(("{} not recognized as a regularization"
                             " method.".format(penalty)))
@@ -103,7 +150,7 @@ class LogisticRegression:
     def coef_var(self, value):
         self.beta_coefs_var = value
 
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, alpha=1.0):
         """Performs a linear regression fit for data X_train and y_train.
 
         Args:
@@ -129,14 +176,25 @@ class LogisticRegression:
         self.cost_values = []
         self.cost_values.append(self._cost_function(X, y, self.coef))
 
-        for i in range(self.max_iter):
+        # Temp, clean this part up
+        def learning_rate(t, t0, t1):
+            return t0 / (t + t1)
 
+        # Temp, sets the regularization parameter
+        self.alpha = alpha
+
+        for i in range(self.max_iter):
+            # Calls the optimizer class which
+            # self.coef = self._optimize(X, y, self.coef)
+
+            # # OLD
             self.coef = self._gradient_descent(X, y, self.coef, self.lr)
-            # self.coef += self._l2_regularization(self.coef)
+            # # self.coef += self._l2_regularization(self.coef)
+
+            # Appends cost function values
             self.cost_values.append(self._cost_function(X, y, self.coef))
 
         # self.coef[0, 0] = 2.61789264
-        print(self.coef)
 
         self._fit_performed = True
 
@@ -164,7 +222,7 @@ class LogisticRegression:
         # y_pred = self._predict(X, weights)
 
         gradient = self._cost_function_gradient(
-            X, y, weights) / self.N_features
+            X, y, weights) / X.shape[0]
         weights -= gradient*lr
         return weights
 
@@ -187,20 +245,19 @@ class LogisticRegression:
         # print (p_probabilities.shape, y_pred.shape)
         cost1 = - y * np.log(p_probabilities)
         cost2 = (1 - y) * np.log(1 - p_probabilities)
-        # print (cost1.shape)
-        # print (cost2.shape)
 
-        self.cost = np.sum(cost1 - cost2) + self._get_penalty(weights)
+        cost = np.sum(cost1 - cost2) + self._get_penalty(weights)
 
-        return self.cost
+        return cost
 
     def _cost_function_gradient(self, X, y, weights):
         """Takes the gradient of the cost function w.r.t. the coefficients.
 
             dC(W)/dw = - X^T * (y - p(X^T * w))
         """
-
-        return X.T @ (self._sigmoid(self._predict(X, weights)) - y)
+        grad = X.T @ (self._sigmoid(self._predict(X, weights)) - y)
+        grad += self.alpha*self._get_penalty_derivative(weights)
+        return grad
 
     def _cost_function_laplacian(self, X, y, w):
         """Takes the laplacian of the cost function w.r.t. the coefficients.
@@ -275,24 +332,28 @@ def __test_logistic_regression():
     y = (iris["target"] == 2).astype(np.int)  # 1 if Iris-Virginica, else 0
 
     # SK-Learn logistic regression
-    sk_log_reg = sk_model.LogisticRegression()
+    sk_log_reg = sk_model.LogisticRegression(
+        solver="liblinear", C=1.0, penalty="l2", max_iter=10000)
     sk_log_reg.fit(cp.deepcopy(X), cp.deepcopy(y))
     X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
     y_sk_proba = sk_log_reg.predict_proba(X_new)
 
-    print("SK-learn coeffs: ", sk_log_reg.coef_)
+    print("SK-learn coefs: ", sk_log_reg.intercept_, sk_log_reg.coef_)
 
     # Manual logistic regression
-    log_reg = LogisticRegression()
+    log_reg = LogisticRegression(penalty="l1", lr=1.0, max_iter=100000)
     log_reg.fit(cp.deepcopy(X), cp.deepcopy(y.reshape(-1, 1)))
     y_proba = log_reg.predict_proba(X_new)
+
+    print("Manual coefs:", log_reg.coef_)
 
     fig = plt.figure()
 
     # SK-Learn logistic regression
     ax1 = fig.add_subplot(211)
-    ax1.plot(X_new, y_sk_proba[:, 1], "g-", label="Iris-Virginica")
-    ax1.plot(X_new, y_sk_proba[:, 0], "b--", label="Not Iris-Virginica")
+    ax1.plot(X_new, y_sk_proba[:, 1], "g-", label="Iris-Virginica(SK-Learn)")
+    ax1.plot(X_new, y_sk_proba[:, 0], "b--",
+             label="Not Iris-Virginica(SK-Learn)")
     ax1.set_title(
         r"SK-Learn versus manual implementation of Logistic Regression")
     ax1.set_ylabel(r"Probability")
@@ -300,9 +361,9 @@ def __test_logistic_regression():
 
     # Manual logistic regression
     ax2 = fig.add_subplot(212)
+    ax2.plot(X_new, y_proba[:, 1], "g-", label="Iris-Virginica(Manual)")
+    ax2.plot(X_new, y_proba[:, 0], "b--", label="Not Iris-Virginica(Manual)")
     ax2.set_ylabel(r"Probability")
-    ax2.plot(X_new, y_proba[:, 1], "g-", label="Iris-Virginica")
-    ax2.plot(X_new, y_proba[:, 0], "b--", label="Not Iris-Virginica")
     ax2.legend()
     plt.show()
 
