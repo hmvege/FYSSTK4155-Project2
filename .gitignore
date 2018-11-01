@@ -27,3 +27,7 @@ datafiles/
 
 # Figures
 fig
+
+
+# Test
+*.bat
