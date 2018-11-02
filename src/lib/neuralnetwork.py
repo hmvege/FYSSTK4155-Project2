@@ -1,10 +1,11 @@
 import numpy as np
+from tqdm import tqdm
 
 # TODO: Implement a multilayer perceptron neural network here!
 
 
 def sigmoid(z):
-    return 1/(1 + np.exp(-z))
+    return 1.0/(1.0 + np.exp(-z))
 
 
 def sigmoid_derivative(z):
@@ -35,23 +36,25 @@ class MultilayerPerceptron:
 
         # Sets up weights and biases
         self.weights = [
-            np.zeros((l_i, l_j)) 
+            np.random.rand(l_j, l_i)
             for l_i, l_j in zip(layer_sizes[:-1], layer_sizes[1:])]
 
-        self.biases = [
-            np.zeros((layer_sizes[l_i], 1))
-            for l_i in range(1, len(layer_sizes))]
-
-        for w in self.weights:
-            print ("w shape: ", w.shape)
-
+        self.biases = [np.random.rand(l_j, 1) for l_j in layer_sizes[1:]]
         self.layer_sizes = layer_sizes
         self.N_layers = len(layer_sizes)
 
-    def feed_forward(self, a):
+    def _cost_function(self, a, y):
+        """Cost function"""
+        return np.sum((a - y)**2, axis=0)/(2*y.shape[0])
+
+    def _cost_function_derivative(self, a, y):
+        """Derivative of the cost function."""
+        return 2*(a - y)
+
+    def forward_pass(self, a):
         """Performs a feed-forward to the last layer."""
-        for l in range(self.N_layers):
-            a = sigmoid(self.weights[l].T @ a + self.biases[l])
+        for l in range(self.N_layers-1):
+            a = sigmoid((self.weights[l] @ a) + self.biases[l])
         return a
 
     def back_propegate(self, x, y):
@@ -67,87 +70,144 @@ class MultilayerPerceptron:
         """
 
         # Retrieves the z and sigmoid for each layer in sample
-        z_list = [self.weights[0].T @ x + self.biases[0]]
-        sigmoid_list = [sigmoid(z_list[0])]
-        for l in range(1, self.N_layers-1):
-            z_list.append(self.weights[l].T @ z_list[l-1] + self.biases[l])
-            sigmoid_list.append(sigmoid(z_list[-1]))
+        z_list = []
+        self.activations = [x.reshape((-1,1))]
+        for l in range(0, self.N_layers-1):
+            # print(self.weights[l].shape, activations[-1].shape, self.biases[l].shape)
+            z = (self.weights[l] @ self.activations[-1]).reshape((-1,1)) 
+            z += self.biases[l]
+            z_list.append(z)
+            self.activations.append(sigmoid(z_list[l]))
 
         # Backpropegates
-        delta_w = [np.zeros(w.size) for w in self.weights]
-        delta_b = [np.zeros(b.size) for b in self.biases]
+        self.delta_w = [np.zeros(w.shape) for w in self.weights]
+        self.delta_b = [np.zeros(b.shape) for b in self.biases]
 
-        # Gets delta 
-        delta = 2*(sigmoid_list[-1] - y) * sigmoid_derivative(z_list[-1])
-        delta_w[-1] = np.dot(delta, sigmoid_list[-2].T)
-        delta_b[-1] = delta
+        # Gets initial delta value, first of the four equations
+        delta = self._cost_function_derivative(self.activations[-1], y)
+        delta *= sigmoid_derivative(z_list[-1])
 
+        # Sets last element before back-propagating
+        self.delta_b[-1] = delta
+        self.delta_w[-1] = delta @ self.activations[-2].T
+
+        # Loops over layers
         for l in range(2, self.N_layers):
-            print(l)
-            delta = np.dot(self.weights[-l+1].T, delta) * sigmoid_derivative(z_list[-1])
-            delta_w[l] = np.dot(delta, sigmoid_list(-l-1).T)
-            delta_b[l] = delta
-            print(delta.shape, sigmoid_list[1-l].shape, delta_w[-l].shape)
+            # Second equation: delta^l = delta^{l+1} W^l * dsigma(z^l)
+            delta = (self.weights[-l+1].T @ delta) * \
+                sigmoid_derivative(z_list[-l])
+            self.delta_b[-l] = delta
+            self.delta_w[-l] = delta @ self.activations[-l-1].T
 
-        print(len(delta_w), delta_w[0].shape)
-        exit(1)
-        return delta_w, delta_b
+        return self.delta_w, self.delta_b
 
-
-    def train(self, data_train, data_train_labels, epochs=10, 
-        mini_batch_size=100, eta=1.0):
+    def train(self, data_train, data_train_labels, epochs=5,
+              mini_batch_size=50, eta=1.0, data_test=None, 
+              data_test_labels=None):
         """Trains the neural-net on provided data. Assumes data size 
         is the same as what provided in the initialization.
 
+        Uses Stochastic Gradient Descent, SGA, and mini-batches to get the 
+        deed done.
+
         Args:
-            data_train (ndarray): training data. Shape: [training_sets, set_size]
+            data_train (ndarray): training data. Shape: [training_sets, 
+                set_size]
             data_train_labels (ndarray): training data labels.
         """
 
-        assert self.layer_sizes[0] == data_train.shape[1]
+        assert self.layer_sizes[0] == data_train.shape[1], ("training data "
+            "and labels do not match in shape: {} != {}".format(
+                self.layer_sizes[0], data_train.shape[1]))
 
+        # Sets if we are to evaluate the data while running
+        if (not isinstance(data_test, type(None))) and \
+            (not isinstance(data_test_labels, type(None))):
+            perform_eval = True
+        else:
+            perform_eval = False
+
+        # Gets the number of batches
         number_batches = data_train.shape[0] // mini_batch_size
 
-        # TEMP
-        batch_data = data_train[:mini_batch_size]
-        batch_labels = data_train_labels[:mini_batch_size]
+        # print (batch_data)
 
-        for epoch in range(epochs):
+        # exit(1)
+        for epoch in tqdm(range(epochs),"Epoch"):
+            c=0
+            # print(epoch,  self.weights)
+            np.random.shuffle(data_train)
 
-            # Resets gradient sums
-            delta_w_sum = []
-            delta_b_sum = []
+            # Splits into batches
+            batch_data = [
+                data_train[i*mini_batch_size:mini_batch_size*(i+1)]
+                for i in range(number_batches)]
+            batch_labels = [
+                data_train_labels[i*mini_batch_size:mini_batch_size*(i+1)]
+                for i in range(number_batches)]
 
-            for i_batch, vals_ in enumerate(zip(batch_data, batch_labels)):
-                batch, label = vals_
-                y_ = np.zeros((self.layer_sizes[-1]))
-                y_[label] = 1.0
+            # Loops over minibatches
+            for mb_data, mb_labels in zip(batch_data, batch_labels):
+                c+=1
 
-                delta_w, delta_b = self.back_propegate(batch, y_)
+                # Resets gradient sums
+                delta_w_sum = [np.zeros(w.shape) for w in self.weights]
+                delta_b_sum = [np.zeros(b.shape) for b in self.biases]
 
-                delta_w_sum.append(delta_w)
-                delta_b_sum.append(delta_b)
+                # Loops over all samples and labels in mini batch
+                for sample, label in zip(mb_data, mb_labels):
 
-            # delta_w_sum = np.asarray(delta_w_sum)
-            # delta_b_sum = np.asarray(delta_b_sum)
+                    # import matplotlib.pyplot as plt
+                    # from matplotlib import cm
+                    # plt.imshow(sample.reshape(int(np.sqrt(sample.shape[0])), int(np.sqrt(sample.shape[0]))), cmap=cm.gray)
+                    # plt.show()
 
-            print (delta_w_sum[-1][-2].shape, delta_b_sum[-1][-1].shape)
-            exit(1)
-            # Updates weights and biases
-            for l in range(self.N_layers):
-                self.weights[l] -= eta*np.sum(delta_w_sum)
-                self.biases[l] -= eta*np.sum(delta_b_sum)
+                    # Sets up output vector
+                    y_ = np.zeros((self.layer_sizes[-1], 1))
+                    y_[label] = 1.0
+
+                    delta_w, delta_b = self.back_propegate(sample, y_)
+
+                    delta_w_sum = [dws + dw for dws, dw in zip(delta_w_sum, delta_w)]
+                    delta_b_sum = [dbs + db for dbs, db in zip(delta_b_sum, delta_b)]
+
+                # print( self.weights)
+                print()
+                print(len(delta_w_sum), self.N_layers, delta_w_sum[0].shape, self.weights[0].shape)
+                print(delta_w_sum[0].shape, delta_w_sum[0][0])
+                exit(1)
+
+                # Updates weights and biases
+                print (self.weights[0][0,0], delta_w_sum[0]*eta/float(mini_batch_size))
+
+                self.weights = [w - dw*eta/float(mini_batch_size) for w, dw in zip(self.weights, delta_w_sum)]
+                self.biases = [b - db*eta/float(mini_batch_size) for b, db in zip(self.biases, delta_b_sum)]
+
+                print (self.weights[0][0,0])
+                print(self.weights[0].shape, delta_w_sum[0].shape)
+                    # print(np.sum(temp_w_sum)/float(mini_batch_size))
+                    # if l==1:exit(1)
+
+                # # print( self.weights)
+                if c==3: exit(1)
 
 
-
-            raise SystemExit("Good so far!")
-                
-
-            print ("Breaks after 1 epoch @ 108")
-            break
+            if perform_eval:
+                print("Epoch: {} Score: {}/{}".format(
+                    epoch, self.evaluate(data_test, data_test_labels), 
+                    len(data_test_labels)))
 
 
-def __test_mlp():
+    def evaluate(self, test_data, test_labels):
+        """Evaluates test data."""
+        results = []
+        for test, label in zip(test_data, test_labels):
+            results.append(np.argmax(self.forward_pass(test))==label)
+        # print (sum(results))
+        # exit(1)
+        return sum(results)
+
+def __test_mlp_mnist():
     import gzip
     import pickle
 
@@ -161,9 +221,97 @@ def __test_mlp():
     print("DATA VALID: ", data_valid[0].shape, data_valid[1].shape)
     print("DATA TEST: ", data_test[0].shape, data_test[1].shape)
 
+    X = np.array([[0.0], [1.0]])
+    y = np.array([0, 2])
+
     MLP = MultilayerPerceptron([data_train[0].shape[1], 8, 10])
-    MLP.train(data_train[0], data_train[1])
+    MLP.train(data_train[0][:10000], data_train[1][:10000], 
+        data_test=data_test[0], data_test_labels=data_test[1])
+    print(MLP.evaluate(data_test[0], data_test[1]))
+
+def __test_nn_sklearn_comparison():
+    import warnings
+    from sklearn.neural_network import MLPRegressor
+
+    X = np.array([[0.0], [1.0]])
+    y = np.array([0, 2])
+    mlp = MLPRegressor( solver              = 'sgd',      # Stochastic gradient descent.
+                        activation          = 'logistic', # Skl name for sigmoid.
+                        alpha               = 0.0,        # No regularization for simplicity.
+                        hidden_layer_sizes  = (3, 3) )    # Full network is of size (1,3,3,1).
+
+    # Force sklearn to set up all the necessary matrices by fitting a data set. 
+    # We dont care if it converges or not, so lets ignore raised warnings.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mlp.fit(X,y)
+
+    # A single, completely random, data point which we will propagate through 
+    # the network.
+    X      = np.array([[1.125982598]])
+    target = np.array([ 8.29289285])
+    mlp.predict(X)
+
+    # ==========================================================================
+    n_samples, n_features   = X.shape
+    batch_size              = n_samples
+    hidden_layer_sizes      = mlp.hidden_layer_sizes
+    if not hasattr(hidden_layer_sizes, "__iter__"):
+        hidden_layer_sizes = [hidden_layer_sizes]
+    hidden_layer_sizes = list(hidden_layer_sizes)
+    layer_units = ([n_features] + hidden_layer_sizes + [mlp.n_outputs_])
+    activations = [X]
+    activations.extend(np.empty((batch_size, n_fan_out)) 
+                       for n_fan_out in layer_units[1:])
+    deltas      = [np.empty_like(a_layer) for a_layer in activations]
+    coef_grads  = [np.empty((n_fan_in_, n_fan_out_)) 
+                   for n_fan_in_, n_fan_out_ in zip(layer_units[:-1],
+                                                    layer_units[1:])]
+    intercept_grads = [np.empty(n_fan_out_) for n_fan_out_ in layer_units[1:]]
+    # ==========================================================================
+
+    activations                       = mlp._forward_pass(activations) 
+    loss, coef_grads, intercept_grads = mlp._backprop(
+            X, target, activations, deltas, coef_grads, intercept_grads)
+
+    # nn = NeuralNetwork( inputs          = 1,
+    #                     hidden_layers   = 2,
+    #                     neurons         = 3,
+    #                     outputs         = 1,
+    #                     activations     = 'sigmoid',
+    #             out_activations = 'identity',
+    #             cost_function   = 'mse')
+
+    nn = MultilayerPerceptron([1,3,3,1])
+
+    # Copy the weights and biases from the scikit-learn network to your own.
+    for i, w in enumerate(mlp.coefs_):
+        print(i, w.shape, nn.weights[i].shape)
+        nn.weights[i] = w.T
+    for i, b in enumerate(mlp.intercepts_):
+        nn.biases[i]  = b.T.reshape(-1,1)
+
+    # Call your own backpropagation function, and you're ready to compare with 
+    # the scikit-learn code.
+    print(nn.weights[0].shape)
+    y = nn.forward_pass(X)
+    nn.back_propegate(y, target)
+
+
+
+
+    for i, a in enumerate(nn.activations) :
+        print(a, activations[i])
+        assert np.allclose(a, activations[i])
+
+    for i, derivative_bias in enumerate(nn.derivative_biases) :
+        assert np.allclose(derivative_bias, intercept_grads[i])
+
+    for i, derivative_weight in enumerate(nn.derivative_weights) :
+        assert np.allclose(derivative_weight, coef_grads[i])
+
 
 
 if __name__ == '__main__':
-    __test_mlp()
+    # __test_mlp_mnist()
+    __test_nn_sklearn_comparison()

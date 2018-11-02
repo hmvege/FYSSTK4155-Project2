@@ -1,4 +1,4 @@
-    #!/usr/bin/env python3
+#!/usr/bin/env python3
 
 import numpy as np
 import scipy
@@ -198,12 +198,6 @@ class LogisticRegression:
 
         self._fit_performed = True
 
-    def _l2_regularization(self, weights):
-        return np.min(0.5*(weights.T @ weights))
-
-    def _l1_regularization(self, weights):
-        return np.min(np.linalg.norm(weights, ord=1))
-
     def _gradient_descent(self, X, y, weights, lr=1.0):
         """Cost/loss function for logistic regression. Also known as the 
         cross entropy in statistics.
@@ -223,6 +217,7 @@ class LogisticRegression:
 
         gradient = self._cost_function_gradient(
             X, y, weights) / X.shape[0]
+
         weights -= gradient*lr
         return weights
 
@@ -306,12 +301,13 @@ class LogisticRegression:
             (float): mean accuracy score for features_test values.
         """
 
+
         raise NotImplementedError("score")
 
         return
 
     def predict_proba(self, X):
-        """Predicts probability of a design matrix X."""
+        """Predicts probability of a design matrix X of shape (N, p - 1)."""
 
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
