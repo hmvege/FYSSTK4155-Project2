@@ -1,1 +1,33 @@
-Some text if not it wont compile
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[toc,page]{appendix}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{url}
+
+% For having latex symbols in section titles
+\usepackage{epstopdf}
+
+% Remembrance 
+% \newcommand{\husk}[1]{\color{red}#1\color{black}}
+
+% For proper citations
+% \usepackage[round, authoryear]{natbib}
+\usepackage[numbers]{natbib} 
+
+% For fixing large table height
+\usepackage{a4wide}
+
+\begin{document}
+\subsection{Neural Networks}
+Among the many methods developed for machine learning, neural networks, and especially deep neural networks, are among the most popular. Neural networks were suggested already in 1943 \cite{McCulloch1943} and have had many renaissances since. Currently we are experiencing such a renaissance, but in contrast to earlier periods of resurfaced interest, we now have the computer power to use neural nets efficiently. \\ \\
+A neural net bases itself loosely upon the biological model of neurons communicating together in the brain. A neuron cell contains most of what a normal cell contains, but it also has a long tail called an axon and some antenna like extension called dendrites. The axon of one cell can extend quite far and attach to some of the dendrites of another neural cell. Thus, the biological neural net consists of neural cells receiving input through their dendrites from many other cells and sending output through one output \cite{Geron}[p. 257]. \\ \\
+The computed neural networks works in a similar way. We construct "neurons" or "nodes" which are ordered in different layers where each neuron in one layer is connected to all neurons in the next layer. Initially, we start with an input layer which we feed information. Following this initial layer we have one or many hidden layers before we reach the output layer. A neural network with two or more hidden layers are called deep neural networks \cite{Geron}[p. 263]. Each neuron contains an activation function which determines the strength of the output. In the early days, a step function was used as the activation function. However, one has found that the use of a activation function with a gradient, such as the logistic function used in logistic regression, gives a better neural net. This is due to the fact that we now can apply gradient descent when optimizing the neural net which is discussed below. \\ \\
+To activate a neuron, it needs an input. This input is provided by all the neurons in previous layers through "wires" connecting the neurons (think of the axon to a dendrite). Each of these "wires" is weighted and all connection between one layer and the next is affected by a bias term. Thus, the output of a neuron is given as
+\begin{equation}
+Z = \sigma(\vec{w}^T \cdot \vec{x})
+\end{equation}
+\end{document}
