@@ -165,8 +165,9 @@ class LogisticRegression:
         _, self.N_labels = y.shape
 
         # Adds constant term and increments the number of predictors
-        X = np.hstack([np.ones((self.N_features, self.p)), X])
+        X = np.hstack([np.ones((self.N_features, 1)), X])
         self.p += 1
+
 
         # Adds beta_0 coefficients
         self.coef = np.zeros((self.p, self.N_labels))
@@ -176,6 +177,7 @@ class LogisticRegression:
         self.cost_values = []
         self.cost_values.append(self._cost_function(X, y, self.coef))
 
+
         # Temp, clean this part up
         def learning_rate(t, t0, t1):
             return t0 / (t + t1)
@@ -183,7 +185,7 @@ class LogisticRegression:
         # Temp, sets the regularization parameter
         self.alpha = alpha
 
-        for i in range(self.max_iter):
+        for i in range(int(self.max_iter)):
             # Calls the optimizer class which
             # self.coef = self._optimize(X, y, self.coef)
 

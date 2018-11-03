@@ -12,7 +12,7 @@
 \usepackage{epstopdf}
 
 % Remembrance 
-% \newcommand{\husk}[1]{\color{red}#1\color{black}}
+\newcommand{\husk}[1]{\color{red}#1\color{black}}
 
 % For proper citations
 % \usepackage[round, authoryear]{natbib}
@@ -26,8 +26,14 @@
 Among the many methods developed for machine learning, neural networks, and especially deep neural networks, are among the most popular. Neural networks were suggested already in 1943 \cite{McCulloch1943} and have had many renaissances since. Currently we are experiencing such a renaissance, but in contrast to earlier periods of resurfaced interest, we now have the computer power to use neural nets efficiently. \\ \\
 A neural net bases itself loosely upon the biological model of neurons communicating together in the brain. A neuron cell contains most of what a normal cell contains, but it also has a long tail called an axon and some antenna like extension called dendrites. The axon of one cell can extend quite far and attach to some of the dendrites of another neural cell. Thus, the biological neural net consists of neural cells receiving input through their dendrites from many other cells and sending output through one output \cite{Geron}[p. 257]. \\ \\
 The computed neural networks works in a similar way. We construct "neurons" or "nodes" which are ordered in different layers where each neuron in one layer is connected to all neurons in the next layer. Initially, we start with an input layer which we feed information. Following this initial layer we have one or many hidden layers before we reach the output layer. A neural network with two or more hidden layers are called deep neural networks \cite{Geron}[p. 263]. Each neuron contains an activation function which determines the strength of the output. In the early days, a step function was used as the activation function. However, one has found that the use of a activation function with a gradient, such as the logistic function used in logistic regression, gives a better neural net. This is due to the fact that we now can apply gradient descent when optimizing the neural net which is discussed below. \\ \\
-To activate a neuron, it needs an input. This input is provided by all the neurons in previous layers through "wires" connecting the neurons (think of the axon to a dendrite). Each of these "wires" is weighted and all connection between one layer and the next is affected by a bias term. Thus, the output of a neuron is given as
+To activate a neuron, it needs an input. This input is provided by all the neurons in previous layers through "wires" connecting the neurons (think of the axon to a dendrite). Each of these "wires" is weighted and all connections between one layer and the next is affected by a bias term. Thus, the output of a neuron is given as \cite{Geron}[p. 260]
 \begin{equation}
-Z = \sigma(\vec{w}^T \cdot \vec{x})
+a = \sigma(\vec{w}^T \cdot \vec{x} + b)
+\label{eqT:activation}
 \end{equation}
+where $a$ is the output, $\vec{w}$ are the weights, $\vec{x}$ are the inputs and $b$ is the bias term. Note that if we had used a stepfunction instead of the logit function in the equation above, the neuron would either give an output of 1 or nothing, i.e. 0. When we instead use the sigmoid function, the output can be in the range of 0 to 1. \\ \\
+Once all neurons have been calculated in a layer, we can move on to the next and continue until we reach our output layer. Each layer can have as many neurons as the user wants. Optimizing the number of neurons in each layer is an art and requires both experience and a bit of luck. The output layer needs one neuron for each class we wish to identify. \\ \\
+After initial calculation of the outer layer, you will most likely have an answer that is completely rubbish. It is clear that we have to optimize the neural net. As each neurons activation function is calculated using equation \eqref{eqT:activation}, we can see that we can optimize the weights between the neurons and the bias between the layers. This is done through a method called backwards propagation where one uses the cost function to identify the magnitude of the error (the cost) of a neural net and then one goes backwards throught the neural net to update the weights and biases. \\ \\
+
+Mathais skriver mer om backwards nedenfor dette.
 \end{document}
