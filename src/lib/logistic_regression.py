@@ -168,7 +168,6 @@ class LogisticRegression:
         X = np.hstack([np.ones((self.N_features, 1)), X])
         self.p += 1
 
-
         # Adds beta_0 coefficients
         self.coef = np.zeros((self.p, self.N_labels))
         self.coef[0, :] = np.ones(self.N_labels)
@@ -176,7 +175,6 @@ class LogisticRegression:
         # Sets up method for storing cost function values
         self.cost_values = []
         self.cost_values.append(self._cost_function(X, y, self.coef))
-
 
         # Temp, clean this part up
         def learning_rate(t, t0, t1):
@@ -302,7 +300,6 @@ class LogisticRegression:
         Returns:
             (float): mean accuracy score for features_test values.
         """
-
 
         raise NotImplementedError("score")
 

@@ -188,9 +188,8 @@ def task1b():
     # Plot different bias/variance values
 
 
-def task1c(sk = False):
+def task1c(sk=False):
     """Task c) of project 2."""
-
 
     training_size = 0.8
     fract = 0.1
@@ -201,30 +200,37 @@ def task1c(sk = False):
     input_data = read_t("all", data_path)
 
     labels_data = pickle.load(open(os.path.join(
-            data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
+        data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
 
-    print("Data shape: {} Bytes: {:.2f} MB".format(input_data.shape, input_data.nbytes / (1024*1024)))
-    print("Data label shape: {} Bytes: {:.2f} MB".format(labels_data.shape, labels_data.nbytes / (1024*1024)))
+    print("Data shape: {} Bytes: {:.2f} MB".format(
+        input_data.shape, input_data.nbytes / (1024*1024)))
+    print("Data label shape: {} Bytes: {:.2f} MB".format(
+        labels_data.shape, labels_data.nbytes / (1024*1024)))
 
     # divide data into ordered, critical and disordered
-    X_ordered = input_data[:int(np.floor(70000*fract)), :]  #X_ordered=input_data[:70000,:]
-    Y_ordered = labels_data[:int(np.floor(70000*fract))]  #Y_ordered=labels_data[:70000]
+    # X_ordered=input_data[:70000,:]
+    X_ordered = input_data[:int(np.floor(70000*fract)), :]
+    # Y_ordered=labels_data[:70000]
+    Y_ordered = labels_data[:int(np.floor(70000*fract))]
 
     # X_critical=input_data[70000:100000,:]
     # Y_critical=labels_data[70000:100000]
 
-    X_disordered=input_data[100000:int(np.floor(100000*(1 + fract))),:]  # X_disordered=input_data[100000:,:]
-    Y_disordered=labels_data[100000:int(np.floor(100000*(1 + fract)))]  #Y_disordered=labels_data[100000:]
+    # X_disordered=input_data[100000:,:]
+    X_disordered = input_data[100000:int(np.floor(100000*(1 + fract))), :]
+    # Y_disordered=labels_data[100000:]
+    Y_disordered = labels_data[100000:int(np.floor(100000*(1 + fract)))]
 
-    del input_data,labels_data
+    del input_data, labels_data
 
     # define training and test data sets
-    X=np.concatenate((X_ordered,X_disordered))
-    Y=np.concatenate((Y_ordered,Y_disordered))
+    X = np.concatenate((X_ordered, X_disordered))
+    Y = np.concatenate((Y_ordered, Y_disordered))
 
-    # pick random data points from ordered and disordered states 
+    # pick random data points from ordered and disordered states
     # to create the training and test sets
-    X_train,X_test,Y_train,Y_test=sk_modsel.train_test_split(X,Y,train_size=training_size)
+    X_train, X_test, Y_train, Y_test = sk_modsel.train_test_split(
+        X, Y, train_size=training_size)
 
     # full data set
     # X=np.concatenate((X_critical,X))
@@ -238,56 +244,65 @@ def task1c(sk = False):
     print(X_test.shape[0], 'test samples')
 
     # define regularisation parameter
-    lmbdas=np.logspace(-5,5,11)
+    lmbdas = np.logspace(-5, 5, 11)
 
     # preallocate data
-    train_accuracy=np.zeros(lmbdas.shape,np.float64)
-    test_accuracy=np.zeros(lmbdas.shape,np.float64)
-    critical_accuracy=np.zeros(lmbdas.shape,np.float64)
+    train_accuracy = np.zeros(lmbdas.shape, np.float64)
+    test_accuracy = np.zeros(lmbdas.shape, np.float64)
+    critical_accuracy = np.zeros(lmbdas.shape, np.float64)
 
-    train_accuracy_SGD=np.zeros(lmbdas.shape,np.float64)
-    test_accuracy_SGD=np.zeros(lmbdas.shape,np.float64)
-    critical_accuracy_SGD=np.zeros(lmbdas.shape,np.float64)
+    train_accuracy_SGD = np.zeros(lmbdas.shape, np.float64)
+    test_accuracy_SGD = np.zeros(lmbdas.shape, np.float64)
+    critical_accuracy_SGD = np.zeros(lmbdas.shape, np.float64)
 
     # loop over regularisation strength
-    for i,lmbda in enumerate(lmbdas):
+    for i, lmbda in enumerate(lmbdas):
 
         # define logistic regressor
         if sk:
-            logreg=sk_model.LogisticRegression(C=1.0/lmbda,random_state=1,verbose=0,max_iter=1E3,tol=1E-5)
+            logreg = sk_model.LogisticRegression(
+                C=1.0/lmbda, random_state=1, verbose=0, max_iter=1E3, tol=1E-5)
         else:
-            logreg = logistic_regression.LogisticRegression(penalty="l1", lr=1.0, max_iter=1E3)
+            logreg = logistic_regression.LogisticRegression(
+                penalty="l1", lr=1.0, max_iter=1E3)
         # fit training data
         logreg.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train.reshape(-1, 1)))
 
         # check accuracy
-        train_accuracy[i]=logreg.score(X_train,Y_train)
-        test_accuracy[i]=logreg.score(X_test,Y_test)
+        train_accuracy[i] = logreg.score(X_train, Y_train)
+        test_accuracy[i] = logreg.score(X_test, Y_test)
         # critical_accuracy[i]=logreg.score(X_critical,Y_critical)
-        
+
         print('accuracy: train, test, critical')
-        print('liblin: %0.4f, %0.4f, %0.4f' %(train_accuracy[i],test_accuracy[i],critical_accuracy[i]) )
+        print('liblin: %0.4f, %0.4f, %0.4f' %
+              (train_accuracy[i], test_accuracy[i], critical_accuracy[i]))
 
         # define SGD-based logistic regression
-        logreg_SGD = sk_model.SGDClassifier(loss='log', penalty='l2', alpha=lmbda, max_iter=100, 
-                                               shuffle=True, random_state=1, learning_rate='optimal')
+        logreg_SGD = sk_model.SGDClassifier(loss='log', penalty='l2',
+                                            alpha=lmbda, max_iter=100,
+                                            shuffle=True, random_state=1,
+                                            learning_rate='optimal')
 
         # fit training data
-        logreg_SGD.fit(X_train,Y_train)
+        logreg_SGD.fit(X_train, Y_train)
 
         # check accuracy
-        train_accuracy_SGD[i]=logreg_SGD.score(X_train,Y_train)
-        test_accuracy_SGD[i]=logreg_SGD.score(X_test,Y_test)
+        train_accuracy_SGD[i] = logreg_SGD.score(X_train, Y_train)
+        test_accuracy_SGD[i] = logreg_SGD.score(X_test, Y_test)
         # critical_accuracy_SGD[i]=logreg_SGD.score(X_critical,Y_critical)
-        
-        print('SGD: %0.4f, %0.4f, %0.4f' %(train_accuracy_SGD[i],test_accuracy_SGD[i],critical_accuracy_SGD[i]) )
 
-        print('finished computing %i/11 iterations' %(i+1))
+        print('SGD: %0.4f, %0.4f, %0.4f' % (
+            train_accuracy_SGD[i],
+            test_accuracy_SGD[i],
+            critical_accuracy_SGD[i]))
+
+        print('finished computing %i/11 iterations' % (i+1))
 
 
 def main():
     # task1b()
     task1c()
+
 
 if __name__ == '__main__':
     main()

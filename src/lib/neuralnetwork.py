@@ -350,8 +350,10 @@ def __test_nn_sklearn_comparison():
     import copy as cp
     from sklearn.neural_network import MLPRegressor
 
-    X = np.array([[0.0], [1.0]])
-    y = np.array([0, 2])
+    # X = np.array([[0.0], [1.0]])
+    # y = np.array([0, 2])
+    X = np.array([[0.0, 0.5], [1.0, 2.0]])
+    y = np.array([[0, 2], [1, 3]])
 
     mlp = MLPRegressor(
         solver='sgd',               # Stochastic gradient descent.
@@ -369,6 +371,8 @@ def __test_nn_sklearn_comparison():
     # the network.
     X = np.array([[1.125982598]])
     target = np.array([8.29289285])
+    X = np.array([[1.125982598, 1.23238399]])
+    target = np.array([8.29289285, 3.45992399])
 
     # ==========================================================================
     n_samples, n_features = X.shape
@@ -400,7 +404,7 @@ def __test_nn_sklearn_comparison():
     #             out_activations = 'identity',
     #             cost_function   = 'mse')
 
-    nn = MultilayerPerceptron([1, 3, 3, 1])
+    nn = MultilayerPerceptron([2, 3, 3, 2])
 
     # Copy the weights and biases from the scikit-learn network to your own.
     for i, w in enumerate(mlp.coefs_):
@@ -441,5 +445,5 @@ def __test_nn_sklearn_comparison():
 
 
 if __name__ == '__main__':
-    __test_mlp_mnist()
-    # __test_nn_sklearn_comparison()
+    # __test_mlp_mnist()
+    __test_nn_sklearn_comparison()
