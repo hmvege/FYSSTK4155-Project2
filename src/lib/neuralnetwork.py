@@ -11,7 +11,7 @@ def sigmoid(z):
 
 def sigmoid_derivative(z):
     s = sigmoid(z)
-    return s*(s+1)
+    return s*(1-s)
     # exp_ = np.exp(-z)
     # return exp_ / (1 + exp_)**2
 
@@ -96,8 +96,8 @@ class MultilayerPerceptron:
             if i+1 != (self.N_layers - 1):
                 activations.append(sigmoid(z))
             else:
-                activations.append(sigmoid(z))
-                # activations.append(z)
+                # activations.append(sigmoid(z))
+                activations.append(z)
 
         return activations
 
@@ -128,8 +128,8 @@ class MultilayerPerceptron:
             if (i+1) != (self.N_layers - 1):
                 self.activations.append(sigmoid(z).T)
             else:
-                self.activations.append(sigmoid(z).T)
-                # self.activations.append(z.T)
+                # self.activations.append(sigmoid(z).T)
+                self.activations.append(z.T)
 
         # Backpropegates
         self.delta_w = [np.zeros(w.shape) for w in self.weights]
@@ -137,7 +137,7 @@ class MultilayerPerceptron:
 
         # Gets initial delta value, first of the four equations
         delta = self._cost_function_derivative(self.activations[-1], y).T
-        delta *= sigmoid_derivative(z_list[-1])
+        # delta *= sigmoid_derivative(z_list[-1])
 
         # Sets last element before back-propagating
         self.delta_b[-1] = delta
@@ -149,7 +149,7 @@ class MultilayerPerceptron:
             delta = (self.weights[-l+1].T @ delta) * \
                 sigmoid_derivative(z_list[-l])
             self.delta_w[-l] = delta @ self.activations[-l-1]
-            self.delta_b[-l] = np.sum(delta,axis=0)
+            self.delta_b[-l] = np.sum(delta,axis=1)
             # self.delta_b[-l] = np.mean(delta, axis=0)
             # self.delta_w[-l] /= x.shape[0]
 
@@ -350,10 +350,8 @@ def __test_nn_sklearn_comparison():
     import copy as cp
     from sklearn.neural_network import MLPRegressor
 
-    # X = np.array([[0.0], [1.0]])
-    # y = np.array([0, 2])
-    X = np.array([[0.0, 0.5], [1.0, 2.0]])
-    y = np.array([[0, 2], [1, 3]])
+    X = np.array([[0.0], [1.0]])
+    y = np.array([0, 2])
 
     mlp = MLPRegressor(
         solver='sgd',               # Stochastic gradient descent.
@@ -371,8 +369,6 @@ def __test_nn_sklearn_comparison():
     # the network.
     X = np.array([[1.125982598]])
     target = np.array([8.29289285])
-    X = np.array([[1.125982598, 1.23238399]])
-    target = np.array([8.29289285, 3.45992399])
 
     # ==========================================================================
     n_samples, n_features = X.shape
@@ -404,7 +400,9 @@ def __test_nn_sklearn_comparison():
     #             out_activations = 'identity',
     #             cost_function   = 'mse')
 
-    nn = MultilayerPerceptron([2, 3, 3, 2])
+    nn = MultilayerPerceptron([1, 3, 3, 1])
+    # TODO: check for a larger MLP 
+    åææø
 
     # Copy the weights and biases from the scikit-learn network to your own.
     for i, w in enumerate(mlp.coefs_):
