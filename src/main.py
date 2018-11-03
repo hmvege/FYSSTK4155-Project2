@@ -202,6 +202,7 @@ def task1c():
     print("Data label shape: {} Bytes: {:.2f} MB".format(labels_data.shape, labels_data.nbytes / (1024*1024)))
 
 
+
 def main():
     # task1b()
     task1c()
