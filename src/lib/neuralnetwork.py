@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm import tqdm
+import copy as cp
 
 # TODO: Implement a multilayer perceptron neural network here!
 
@@ -9,14 +10,30 @@ def sigmoid(z):
 
 
 def sigmoid_derivative(z):
-    # s = sigmoid(z)
-    # return s*(s+1)
-    exp_ = np.exp(-z)
-    return exp_ / (1 + exp_)**2
+    s = sigmoid(z)
+    return s*(s+1)
+    # exp_ = np.exp(-z)
+    # return exp_ / (1 + exp_)**2
 
+
+def plot_image(sample, label):
+    """Simple function for plotting the input."""
+    sample = cp.deepcopy(sample)
+    if len(sample.shape) == 2:
+        sample = sample[0]
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
+    plt.imshow(
+        sample.reshape(int(np.sqrt(sample.shape[0])),
+                       int(np.sqrt(sample.shape[0]))),
+        cmap=cm.gray)
+    plt.title("Label: {}".format(label))
+    plt.show()
+    
 
 class MultilayerPerceptron:
-    def __init__(self, layer_sizes):
+    def __init__(self, layer_sizes, activation="sigmoid",
+                 final_activation="identity"):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -24,7 +41,14 @@ class MultilayerPerceptron:
         Args:
             layer_sizes (list(int)): list of layer sizes after input data.
                 Constists of [input_layer_size, N layer sizes, output_layer].
-            input_data_size (int): size of input data.
+            activation (str): activation function. Choices is "sigmoid, 
+                "identity", "relu", "tanh", "heaviside". Optional, default is 
+                "sigmoid".
+            final_activation (str): final layer activation function. Choices 
+                is "sigmoid, "identity", "relu", "tanh", "heaviside". Optional,
+                default is "identity".
+            cost_function (str): Cost function. Choices is "ls", "logit". Optional,
+                default "ls".
 
         Raises:
             AssertionError: if input_data_size is not a list.
@@ -35,6 +59,9 @@ class MultilayerPerceptron:
         assert len(layer_sizes) >= 2, ("Must have at least two layers: "
                                        "len(layer_sizes)={}".format(
                                            len(layer_sizes)))
+
+        # self._set_layer_activation(activation)
+        # self._set_final_layer_activation(final_activation)
 
         # Sets up weights and biases
         self.weights = [
@@ -50,7 +77,7 @@ class MultilayerPerceptron:
 
     def _cost_function(self, a, y):
         """Cost function"""
-        return np.sum((a - y)**2, axis=0)/(2*y.shape[0])
+        return np.sum((a - y)**2)/2#*y.shape[0])
 
     def _cost_function_derivative(self, a, y):
         """Derivative of the cost function."""
@@ -69,7 +96,8 @@ class MultilayerPerceptron:
             if i+1 != (self.N_layers - 1):
                 activations.append(sigmoid(z))
             else:
-                activations.append(z)
+                activations.append(sigmoid(z))
+                # activations.append(z)
 
         return activations
 
@@ -85,13 +113,13 @@ class MultilayerPerceptron:
             (list(ndarray)): all layer bias gradients
         """
 
-        print(x.shape, y.shape, self.weights[0].shape, self.biases[0].shape)
+        # print(x.shape, y.shape, self.weights[0].shape, self.biases[0].shape)
+
+
 
         # Retrieves the z and sigmoid for each layer in sample
         z_list = []
         self.activations = [x]
-        # print((self.weights[0] @ self.activations[0]).shape)
-        # exit("GOOD!")
         for i in range(self.N_layers - 1):
             z = (self.weights[i] @ self.activations[i].T)
             z += self.biases[i]
@@ -100,19 +128,19 @@ class MultilayerPerceptron:
             if (i+1) != (self.N_layers - 1):
                 self.activations.append(sigmoid(z).T)
             else:
-                self.activations.append(z.T)
+                self.activations.append(sigmoid(z).T)
+                # self.activations.append(z.T)
 
         # Backpropegates
         self.delta_w = [np.zeros(w.shape) for w in self.weights]
         self.delta_b = [np.zeros(b.shape) for b in self.biases]
 
         # Gets initial delta value, first of the four equations
-        delta = self._cost_function_derivative(self.activations[-1], y)
-        # delta *= sigmoid_derivative(z_list[-1])
+        delta = self._cost_function_derivative(self.activations[-1], y).T
+        delta *= sigmoid_derivative(z_list[-1])
 
         # Sets last element before back-propagating
         self.delta_b[-1] = delta
-        print (delta.shape, self.activations[-2].shape, delta.T @ self.activations[-2])
         self.delta_w[-1] = delta @ self.activations[-2]
 
         # Loops over layers
@@ -121,9 +149,9 @@ class MultilayerPerceptron:
             delta = (self.weights[-l+1].T @ delta) * \
                 sigmoid_derivative(z_list[-l])
             self.delta_w[-l] = delta @ self.activations[-l-1]
-            self.delta_b[-l] = delta
-            # self.delta_b[-l] = np.mean(delta, axis=1)
-            # self.delta_w[-l] /= x.shape[1]
+            self.delta_b[-l] = np.sum(delta,axis=0)
+            # self.delta_b[-l] = np.mean(delta, axis=0)
+            # self.delta_w[-l] /= x.shape[0]
 
         return self.delta_w, self.delta_b
 
@@ -160,42 +188,59 @@ class MultilayerPerceptron:
         # for epoch in tqdm(range(epochs), "Epoch"):
         for epoch in range(epochs):
             c = 0
-            # print(epoch,  self.weights)
-            np.random.shuffle(data_train)
 
-            # Splits into batches
-            batch_data = [
-                data_train[i*mini_batch_size:mini_batch_size*(i+1)]
-                for i in range(number_batches)]
-            batch_labels = [
-                data_train_labels[i*mini_batch_size:mini_batch_size*(i+1)]
-                for i in range(number_batches)]
+            # print (data_train.shape, data_train_labels.shape)
+            # np.random.shuffle([data_train, data_train_labels])
+
+            # # Shuffles data sets and its labels
+            # shuffle_indexes = np.random.randint(0, 
+            #     len(data_train_labels), size=len(data_train_labels))
+            # data_train = data_train[shuffle_indexes]
+            # data_train_labels = data_train_labels[shuffle_indexes]
+
+            # # Splits into batches
+            # batch_data = [
+            #     data_train[i*mini_batch_size:mini_batch_size*(i+1)]
+            #     for i in range(number_batches)]
+            # batch_labels = [
+            #     data_train_labels[i*mini_batch_size:mini_batch_size*(i+1)]
+            #     for i in range(number_batches)]
 
             # Loops over minibatches
-            for mb_data, mb_labels in zip(batch_data, batch_labels):
+            # for mb_data, mb_labels in zip(batch_data, batch_labels):
+            for i in range(number_batches):
+
+                # Selects mini batch data
+                mini_batch_indices = np.random.randint(0, 
+                    data_train.shape[0], size=mini_batch_size)
+                mb_data = data_train[mini_batch_indices]
+                mb_labels = data_train_labels[mini_batch_indices]
+                # print(mb_data.shape)
+                # print(mb_labels.shape)
+
                 c += 1
 
                 # Resets gradient sums
                 delta_w_sum = [np.zeros(w.shape) for w in self.weights]
                 delta_b_sum = [np.zeros(b.shape) for b in self.biases]
 
+                checked_lab = False
+
                 # Loops over all samples and labels in mini batch
                 for sample, label in zip(mb_data, mb_labels):
 
-                    # import matplotlib.pyplot as plt
-                    # from matplotlib import cm
-                    # plt.imshow(
-                    #     sample.reshape(int(np.sqrt(sample.shape[0])),
-                    #                    int(np.sqrt(sample.shape[0]))),
-                    #     cmap=cm.gray)
-                    # plt.show()
+                    if not checked_lab and c==1:
+                        print(label)
+                        checked_lab=True
 
                     sample = np.atleast_2d(sample)
-                    # exit(1)
+
+                    # plot_image(sample, label)
 
                     # Sets up output vector
                     y_ = np.zeros(self.layer_sizes[-1])
                     y_[label] = 1.0
+                    # print(y_)
 
                     delta_w, delta_b = self.back_propegate(sample, y_)
 
@@ -204,34 +249,43 @@ class MultilayerPerceptron:
                     delta_b_sum = [dbs + db for dbs,
                                    db in zip(delta_b_sum, delta_b)]
 
-                # print( self.weights)
-                print()
-                print(len(delta_w_sum), self.N_layers,
-                      delta_w_sum[0].shape, self.weights[0].shape)
-                print(delta_w_sum[0].shape, delta_w_sum[0][0])
-                exit(1)
 
-                # Updates weights and biases
-                print(self.weights[0][0, 0], delta_w_sum[0]
-                      * eta/float(mini_batch_size))
+                # print(len(delta_b_sum), delta_b_sum[0].shape, delta_b_sum[1].shape)
+                # print(len(delta_w_sum), delta_w_sum[0].shape, delta_w_sum[1].shape)
 
-                self.weights = [
-                    w - dw*eta/float(mini_batch_size) for w, dw in
-                    zip(self.weights, delta_w_sum)]
+                for l in range(self.N_layers-1):
+                    self.weights[l] -= delta_w_sum[l]*eta/mini_batch_size
+                    self.biases[l] -= delta_b_sum[l]*eta/mini_batch_size
 
-                self.biases = [b - db*eta/float(mini_batch_size)
-                               for b, db in zip(self.biases, delta_b_sum)]
+                # self.weights = [
+                #     w - dw*eta/mini_batch_size for w, dw in
+                #     zip(self.weights, delta_w_sum)]
 
-                print(self.weights[0][0, 0])
-                print(self.weights[0].shape, delta_w_sum[0].shape)
-                # print(np.sum(temp_w_sum)/float(mini_batch_size))
-                # if l==1:exit(1)
+                # self.biases = [b - db*eta/mini_batch_size
+                #                for b, db in zip(self.biases, delta_b_sum)]
 
-                # # print( self.weights)
-                if c == 3:
-                    exit(1)
+                # exit(1)
+                # print(self.weights[0][0, 0])
+                # print(self.weights[0].shape, delta_w_sum[0].shape)
+                # # print(np.sum(temp_w_sum)/float(mini_batch_size))
+                # # if l==1:exit(1)
 
+                # print(self.weights[1][:5])
+                # if c == 7:
+                #     exit("Exits at {}".format(c))
+                # else:
+                #     print(c)
+                # print(data_test[0].shape)
+
+                # print(self._forward_pass((data_test[0].reshape((-1,1))))[-1], np.argmax(self._forward_pass((data_test[0].reshape((-1,1))))[-1]), data_test_labels[0])
+
+                # exit(1)
+
+                if c==40:exit(1)
+            # print(self.weights[1][:5])
             if perform_eval:
+                # print(data_test.shape, data_test_labels.shape)
+                # exit(1)
                 print("Epoch: {} Score: {}/{}".format(
                     epoch, self.evaluate(data_test, data_test_labels),
                     len(data_test_labels)))
@@ -240,7 +294,31 @@ class MultilayerPerceptron:
         """Evaluates test data."""
         results = []
         for test, label in zip(test_data, test_labels):
-            results.append(np.argmax(self.forward_pass(test)) == label)
+
+            # print(label.shape)
+            # if label.shape != self.layer_sizes[-1]:
+            #     _tmp = np.zeros(self.layer_sizes[-1])
+            #     _tmp[label] = 1
+            #     label = _tmp
+            res_ = self.predict(np.atleast_2d(test).T)
+            # print(res_)
+
+
+            print(np.argmax(self.predict(
+                np.atleast_2d(test).T)), label, np.argmax(self.predict(
+                np.atleast_2d(test).T))==label)
+
+            results.append(np.argmax(self.predict(
+                np.atleast_2d(test).T)) == label)
+
+            # print (label, np.argmax(self.predict(
+            #     np.atleast_2d(test).T)), res_)
+
+            plot_image(test, label)
+
+            # exit(1)
+
+        # print(results)
         # print (sum(results))
         # exit(1)
         return sum(results)
@@ -262,7 +340,8 @@ def __test_mlp_mnist():
 
     MLP = MultilayerPerceptron([data_train[0].shape[1], 8, 10])
     MLP.train(data_train[0][:10000], data_train[1][:10000],
-              data_test=data_test[0], data_test_labels=data_test[1])
+              data_test=data_test[0], data_test_labels=data_test[1], 
+              mini_batch_size=20, epochs=5)
     print(MLP.evaluate(data_test[0], data_test[1]))
 
 
@@ -331,7 +410,11 @@ def __test_nn_sklearn_comparison():
 
     # Call your own backpropagation function, and you're ready to compare with
     # the scikit-learn code.
+    y_sklearn = mlp.predict(X)
     y = nn.predict(cp.deepcopy(X))
+
+    assert np.allclose(y, y_sklearn), ("Prediction "
+                                       "{} != {}".format(y, y_sklearn))
 
     nn.back_propegate(X, target)
 
@@ -344,7 +427,8 @@ def __test_nn_sklearn_comparison():
     for i, derivative_bias in enumerate(nn.delta_b):
         print(i, derivative_bias.T, intercept_grads[i])
         assert np.allclose(
-            derivative_bias.T, intercept_grads[i]), "error in layer {}".format(i)
+            derivative_bias.T, intercept_grads[i]), (
+            "error in layer {}".format(i))
     else:
         print("Biases derivatives are correct.")
 
@@ -358,4 +442,4 @@ def __test_nn_sklearn_comparison():
 
 if __name__ == '__main__':
     __test_mlp_mnist()
-    __test_nn_sklearn_comparison()
+    # __test_nn_sklearn_comparison()
