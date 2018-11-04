@@ -22,6 +22,12 @@ import sklearn.linear_model as sk_model
 import sklearn.metrics as sk_metrics
 import sklearn.utils as sk_utils
 
+# # Proper LaTeX font
+# import matplotlib as mpl
+# mpl.rc("text", usetex=True)
+# mpl.rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
+# mpl.rcParams["font.family"] += ["serif"]
+
 
 def read_t(t="all", root="."):
     """Loads an ising model data set."""
@@ -81,10 +87,15 @@ def task1b(pickle_fname):
     linreg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
     y_pred_linreg = linreg.predict(cp.deepcopy(X_test))
 
+    linreg_general_results = {
+        "r2": metrics.r2(y_test, y_pred_linreg),
+        "mse": metrics.mse(y_test, y_pred_linreg),
+        "bias": metrics.bias(y_test, y_pred_linreg)}
+
     print("LINREG:")
-    print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_linreg)))
-    print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_linreg)))
-    print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_linreg)))
+    print("R2:  {:-20.16f}".format(linreg_general_results["r2"]))
+    print("MSE: {:-20.16f}".format(linreg_general_results["mse"]))
+    print("Bias: {:-20.16f}".format(linreg_general_results["bias"]))
     # print("Beta coefs: {}".format(linreg.coef_))
     # print("Beta coefs variances: {}".format(linreg.coef_var))
 
@@ -101,9 +112,11 @@ def task1b(pickle_fname):
                                                 fit_intercept=False), k=4,
                                             X_test=X_test, y_test=y_test)
 
+    ridge_general_results = []
     ridge_bs_results = []
     ridge_cvkf_results = []
 
+    lasso_general_results = []
     lasso_bs_results = []
     lasso_cvkf_results = []
 
@@ -113,11 +126,17 @@ def task1b(pickle_fname):
         ridge_reg = reg.RidgeRegression(lmbda)
         ridge_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
         y_pred_ridge = ridge_reg.predict(cp.deepcopy(X_test)).reshape(-1, 1)
+        ridge_general_results.append({
+            "lambda": lmbda,
+            "r2": metrics.r2(y_test, y_pred_ridge),
+            "mse": metrics.mse(y_test, y_pred_ridge),
+            "bias": metrics.bias(y_test, y_pred_ridge),
+        })
 
         print("\nRIDGE (lambda={}):".format(lmbda))
-        print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_ridge)))
-        print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_ridge)))
-        print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_ridge)))
+        print("R2:  {:-20.16f}".format(ridge_general_results[-1]["r2"]))
+        print("MSE: {:-20.16f}".format(ridge_general_results[-1]["mse"]))
+        print("Bias: {:-20.16f}".format(ridge_general_results[-1]["bias"]))
         # print("Beta coefs: {}".format(ridge_reg.coef_))
         # print("Beta coefs variances: {}".format(ridge_reg.coef_var))
 
@@ -128,34 +147,46 @@ def task1b(pickle_fname):
 
         ridge_cvkf_results.append(
             cv.kFoldCVWrapper(X_train, y_train,
-                                reg.RidgeRegression(lmbda), k=4,
-                                X_test=X_test, y_test=y_test))
+                              reg.RidgeRegression(lmbda), k=4,
+                              X_test=X_test, y_test=y_test))
 
         # Lasso regression
         lasso_reg = sk_model.Lasso(alpha=lmbda)
+
+        # Filtering out annoing warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+
             lasso_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
             y_pred_lasso = lasso_reg.predict(
                 cp.deepcopy(X_test)).reshape(-1, 1)
 
+        lasso_general_results.append({
+            "lambda": lmbda,
+            "r2": metrics.r2(y_test, y_pred_lasso),
+            "mse": metrics.mse(y_test, y_pred_lasso),
+            "bias": metrics.bias(y_test, y_pred_lasso),
+        })
+
         print("\nLASSO (lambda={}):".format(lmbda))
-        print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_lasso)))
-        print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_lasso)))
-        print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_lasso)))
+        print("R2:  {:-20.16f}".format(lasso_general_results[-1]["r2"]))
+        print("MSE: {:-20.16f}".format(lasso_general_results[-1]["mse"]))
+        print("Bias: {:-20.16f}".format(lasso_general_results[-1]["bias"]))
         # print("Beta coefs: {}".format(lasso_reg.coef_))
 
+        # Filtering out annoing warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+
             lasso_bs_results.append(
-                bs.BootstrapWrapper(X_train, y_train,
+                bs.BootstrapWrapper(cp.deepcopy(X_train), cp.deepcopy(y_train),
                                     sk_model.Lasso(lmbda),
                                     N_bs, X_test=X_test, y_test=y_test))
 
             lasso_cvkf_results.append(
-                cv.kFoldCVWrapper(X_train, y_train,
-                                    sk_model.Lasso(lmbda), k=4,
-                                    X_test=X_test, y_test=y_test))
+                cv.kFoldCVWrapper(cp.deepcopy(X_train), cp.deepcopy(y_train),
+                                  sk_model.Lasso(lmbda), k=4,
+                                  X_test=X_test, y_test=y_test))
 
         J_ridge = np.asarray(ridge_reg.coef_).reshape((L, L))
         J_lasso = np.asarray(lasso_reg.coef_).reshape((L, L))
@@ -192,9 +223,11 @@ def task1b(pickle_fname):
         plt.close(fig)
 
     with open(pickle_fname, "wb") as f:
-        pickle.dump([linreg_bs_results, linreg_cvkf_results,
-                     ridge_bs_results, ridge_cvkf_results, 
-                     lasso_bs_results, lasso_cvkf_results], f)
+        pickle.dump([linreg_general_results, linreg_bs_results,
+                     linreg_cvkf_results, ridge_general_results,
+                     ridge_bs_results, ridge_cvkf_results,
+                     lasso_general_results, lasso_bs_results,
+                     lasso_cvkf_results], f)
         print("Data pickled and dumped to: {:s}".format(pickle_fname))
 
 
@@ -210,43 +243,64 @@ def task1b_bias_variance_analysis(pickle_fname):
     lambda_values = np.logspace(-4, 5, 10)
     data = load_pickle(pickle_fname)
 
-    # Ridge data
-    for d_ in data[-1]:
-        print(d_[0])
-        for i, lmbda in enumerate(lambda_values):
-            print(lmbda, d_[i])
+    def select_value(input_list, data_to_select):
+        """Small function moving selected values to list."""
+        return [e[data_to_select] for e in input_list]
 
-    # heatmap_plotter("test")
+    # OLS values
+    ols_r2 = data[0]["r2"]
+    # General Ridge values
+    ridge_r2 = select_value(data[3], "r2")
+    ridge_mse = select_value(data[3], "mse")
+    ridge_bias = select_value(data[3], "bias")
+    # Bootstrap Ridge values
+    ridge_bs_mse = select_value(data[4], "mse")
+    ridge_bs_bias = select_value(data[4], "bias")
+    ridge_bs_var = select_value(data[4], "var")
+    # k-fold CV Ridge values
+    ridge_kfcv_mse = select_value(data[5], "mse")
+    ridge_kfcv_bias = select_value(data[5], "bias")
+    ridge_kfcv_var = select_value(data[5], "var")
+    # General Lasso values
+    lasso_r2 = select_value(data[6], "r2")
+    lasso_mse = select_value(data[6], "mse")
+    lasso_bias = select_value(data[6], "bias")
+    # Bootstrap Lasso
+    lasso_bs_mse = select_value(data[7], "mse")
+    lasso_bs_bias = select_value(data[7], "bias")
+    lasso_bs_var = select_value(data[7], "var")
+    # k-fold CV Lasso
+    lasso_kfcv_mse = select_value(data[8], "mse")
+    lasso_kfcv_bias = select_value(data[8], "bias")
+    lasso_kfcv_var = select_value(data[8], "var")
 
-def heatmap_plotter(x, y, z, figure_name, tick_param_fs=None, label_fs=None,
-                    vmin=None, vmax=None, xlabel=None, ylabel=None,
-                    cbartitle=None):
+    plot_dual_values(lambda_values, ridge_r2, lambda_values, lasso_r2,
+                       r"Ridge", r"Lasso", "ridge_lasso_lambda_r2", 
+                       r"$\lambda$", r"$R^2$")
+    plot_dual_values(lambda_values, ridge_mse, lambda_values, lasso_mse,
+                       r"Ridge", r"Lasso", "ridge_lasso_lambda_mse", 
+                       r"$\lambda$", r"$\mathrm{MSE}$")
+    plot_dual_values(lambda_values, ridge_bias, lambda_values, lasso_bias,
+                       r"Ridge", r"Lasso", "ridge_lasso_lambda_bias", 
+                       r"$\lambda$", r"$\mathrm{Bias}$")
 
-    fig, ax = plt.subplots()
 
-    yheaders = ['%1.2f' % i for i in y]
-    xheaders = ['%1.2e' % i for i in x]
 
-    heatmap = ax.pcolor(z, edgecolors="k", linewidth=2, vmin=vmin, vmax=vmax)
-    cbar = plt.colorbar(heatmap, ax=ax)
-    cbar.ax.tick_params(labelsize=tick_param_fs)
-    cbar.ax.set_title(cbartitle, fontsize=label_fs)
+def plot_dual_values(x1, y1, x2, y2, label1, label2, figname, xlabel, 
+    ylabel):
+    """Plots two different values in a single window."""
+    fig = plt.figure()
 
-    # ax.set_title(method, fontsize=fs1)
-    ax.set_xticks(np.arange(z.shape[0]) + .5, minor=False)
-    ax.set_yticks(np.arange(z.shape[1]) + .5, minor=False)
+    ax1 = fig.add_subplot(111)
+    ax1.semilogx(x1, y1, label=label1)
+    ax1.semilogx(x2, y2, label=label2)
+    ax1.set_ylabel(ylabel)
+    ax1.set_xlabel(xlabel)
+    ax1.legend()
 
-    ax.set_xticklabels(xheaders, rotation=90, fontsize=tick_param_fs)
-    ax.set_yticklabels(yheaders, fontsize=tick_param_fs)
-
-    ax.set_xlabel(xlabel, fontsize=label_fs)
-    ax.set_ylabel(ylabel, fontsize=label_fs)
-    plt.tight_layout()
-
-    fig.savefig(figure_name)
-    print("Figure saved at {}".format(figure_name))
-    plt.close(fig)
-
+    fig.savefig("../fig/{}.pdf".format(figname))
+    print("Figure saved at {}".format(figname))
+    plt.show()
 
 
 def task1c(sk=False):
@@ -373,8 +427,8 @@ def task1c(sk=False):
 
 
 def main():
-    pickle_fname_1b = "bs_kf_data_1b"
-    # task1b(pickle_fname_1b)
+    pickle_fname_1b = "bs_kf_data_1b.pkl"
+    task1b(pickle_fname_1b)
     task1b_bias_variance_analysis(pickle_fname_1b)
     # task1c()
 
