@@ -3,6 +3,7 @@ import copy as cp
 import os
 import pickle
 import sys
+import warnings
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -34,7 +35,7 @@ def read_t(t="all", root="."):
     return np.unpackbits(data).astype(int).reshape(-1, 1600)
 
 
-def task1b():
+def task1b(pickle_fname):
     """Task b of project 2"""
 
     # Number of samples to generate
@@ -43,7 +44,7 @@ def task1b():
 
     N_bs = 200
 
-    np.random.seed(12)
+    np.random.seed(1234)
 
     # system size
     L = 20
@@ -113,7 +114,7 @@ def task1b():
         ridge_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
         y_pred_ridge = ridge_reg.predict(cp.deepcopy(X_test)).reshape(-1, 1)
 
-        print("\nRIDGE:")
+        print("\nRIDGE (lambda={}):".format(lmbda))
         print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_ridge)))
         print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_ridge)))
         print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_ridge)))
@@ -125,31 +126,36 @@ def task1b():
                                 reg.RidgeRegression(lmbda),
                                 N_bs, X_test=X_test, y_test=y_test))
 
-        ridge_cfkf_results.append(
-            bs.BootstrapWrapper(X_train, y_train,
-                                reg.RidgeRegression(lmbda),
-                                N_bs, X_test=X_test, y_test=y_test))
+        ridge_cvkf_results.append(
+            cv.kFoldCVWrapper(X_train, y_train,
+                                reg.RidgeRegression(lmbda), k=4,
+                                X_test=X_test, y_test=y_test))
 
         # Lasso regression
         lasso_reg = sk_model.Lasso(alpha=lmbda)
-        lasso_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
-        y_pred_lasso = lasso_reg.predict(cp.deepcopy(X_test)).reshape(-1, 1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            lasso_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
+            y_pred_lasso = lasso_reg.predict(
+                cp.deepcopy(X_test)).reshape(-1, 1)
 
-        print("\nLASSO:")
+        print("\nLASSO (lambda={}):".format(lmbda))
         print("R2:  {:-20.16f}".format(metrics.r2(y_test, y_pred_lasso)))
         print("MSE: {:-20.16f}".format(metrics.mse(y_test, y_pred_lasso)))
         print("Bias: {:-20.16f}".format(metrics.bias(y_test, y_pred_lasso)))
         # print("Beta coefs: {}".format(lasso_reg.coef_))
 
-        lasso_bs_results.append(
-            bs.BootstrapWrapper(X_train, y_train,
-                                reg.LassoRegression(lmbda),
-                                N_bs, X_test=X_test, y_test=y_test))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            lasso_bs_results.append(
+                bs.BootstrapWrapper(X_train, y_train,
+                                    sk_model.Lasso(lmbda),
+                                    N_bs, X_test=X_test, y_test=y_test))
 
-        lasso_cvkf_results.append(
-            bs.BootstrapWrapper(X_train, y_train,
-                                reg.LassoRegression(lmbda),
-                                N_bs, X_test=X_test, y_test=y_test))
+            lasso_cvkf_results.append(
+                cv.kFoldCVWrapper(X_train, y_train,
+                                    sk_model.Lasso(lmbda), k=4,
+                                    X_test=X_test, y_test=y_test))
 
         J_ridge = np.asarray(ridge_reg.coef_).reshape((L, L))
         J_lasso = np.asarray(lasso_reg.coef_).reshape((L, L))
@@ -185,7 +191,62 @@ def task1b():
 
         plt.close(fig)
 
-    # Plot different bias/variance values
+    with open(pickle_fname, "wb") as f:
+        pickle.dump([linreg_bs_results, linreg_cvkf_results,
+                     ridge_bs_results, ridge_cvkf_results, 
+                     lasso_bs_results, lasso_cvkf_results], f)
+        print("Data pickled and dumped to: {:s}".format(pickle_fname))
+
+
+def load_pickle(picke_file_name):
+    with open(picke_file_name, "rb") as f:
+        data = pickle.load(f)
+        print("Pickle file loaded: {}".format(picke_file_name))
+    return data
+
+
+def task1b_bias_variance_analysis(pickle_fname):
+    """Plot different bias/variance values"""
+    lambda_values = np.logspace(-4, 5, 10)
+    data = load_pickle(pickle_fname)
+
+    # Ridge data
+    for d_ in data[-1]:
+        print(d_[0])
+        for i, lmbda in enumerate(lambda_values):
+            print(lmbda, d_[i])
+
+    # heatmap_plotter("test")
+
+def heatmap_plotter(x, y, z, figure_name, tick_param_fs=None, label_fs=None,
+                    vmin=None, vmax=None, xlabel=None, ylabel=None,
+                    cbartitle=None):
+
+    fig, ax = plt.subplots()
+
+    yheaders = ['%1.2f' % i for i in y]
+    xheaders = ['%1.2e' % i for i in x]
+
+    heatmap = ax.pcolor(z, edgecolors="k", linewidth=2, vmin=vmin, vmax=vmax)
+    cbar = plt.colorbar(heatmap, ax=ax)
+    cbar.ax.tick_params(labelsize=tick_param_fs)
+    cbar.ax.set_title(cbartitle, fontsize=label_fs)
+
+    # ax.set_title(method, fontsize=fs1)
+    ax.set_xticks(np.arange(z.shape[0]) + .5, minor=False)
+    ax.set_yticks(np.arange(z.shape[1]) + .5, minor=False)
+
+    ax.set_xticklabels(xheaders, rotation=90, fontsize=tick_param_fs)
+    ax.set_yticklabels(yheaders, fontsize=tick_param_fs)
+
+    ax.set_xlabel(xlabel, fontsize=label_fs)
+    ax.set_ylabel(ylabel, fontsize=label_fs)
+    plt.tight_layout()
+
+    fig.savefig(figure_name)
+    print("Figure saved at {}".format(figure_name))
+    plt.close(fig)
+
 
 
 def task1c(sk=False):
@@ -248,11 +309,11 @@ def task1c(sk=False):
 
     # preallocate data
     train_accuracy = np.zeros(lmbdas.shape, np.float64)
-    test_accuracy = np.zeros(lmbdas.shape, np.float64)    
+    test_accuracy = np.zeros(lmbdas.shape, np.float64)
     critical_accuracy = np.zeros(lmbdas.shape, np.float64)
 
     train_accuracy_SK = np.zeros(lmbdas.shape, np.float64)
-    test_accuracy_SK = np.zeros(lmbdas.shape, np.float64)    
+    test_accuracy_SK = np.zeros(lmbdas.shape, np.float64)
     critical_accuracy_SK = np.zeros(lmbdas.shape, np.float64)
 
     train_accuracy_SGD = np.zeros(lmbdas.shape, np.float64)
@@ -267,10 +328,11 @@ def task1c(sk=False):
             C=1.0/lmbda, random_state=1, verbose=0, max_iter=1E3, tol=1E-5)
 
         logreg = logistic_regression.LogisticRegression(
-            penalty="l1", lr=1.0, max_iter=1E3, alpha = lmbda)
-        
+            penalty="l1", lr=1.0, max_iter=1E3, alpha=lmbda)
+
         # fit training data
-        logreg_SK.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train.reshape(-1, 1)))
+        logreg_SK.fit(cp.deepcopy(X_train),
+                      cp.deepcopy(Y_train.reshape(-1, 1)))
         logreg.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train.reshape(-1, 1)))
 
         # check accuracy
@@ -311,8 +373,10 @@ def task1c(sk=False):
 
 
 def main():
-    # task1b()
-    task1c()
+    pickle_fname_1b = "bs_kf_data_1b"
+    # task1b(pickle_fname_1b)
+    task1b_bias_variance_analysis(pickle_fname_1b)
+    # task1c()
 
 
 if __name__ == '__main__':
