@@ -152,7 +152,8 @@ class BootstrapRegression:
             y_predict = self.reg.predict(X_test)
 
             # Calculates r2
-            r2_list[i_bs] = metrics.r2(y_test, y_predict)
+            # r2_list[i_bs] = metrics.r2(y_test, y_predict)
+            r2_list[i_bs] = sk_metrics.r2_score(y_test, y_predict)
 
             # mse_list[i_bs] = metrics.mse(y_predict, y_test)
             # bias_list[i_bs] = metrics.bias(y_predict, y_test)
