@@ -235,9 +235,10 @@ class LogisticRegression:
 
         p_probabilities = self._sigmoid(y_pred)
 
-        # print (p_probabilities.shape, y_pred.shape)
+        temp_val = [1 - p_probabilities[i] + 1e-11 if 1 - p_probabilities[i] < 1e-11 else 1 - p_probabilities[i] for i in range(len(p_probabilities))]
+
         cost1 = - y * np.log(p_probabilities)
-        cost2 = (1 - y) * np.log(1 - p_probabilities)
+        cost2 = (1 - y) * np.log(temp_val) #np.log(1 - p_probabilities)
 
         cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
 
