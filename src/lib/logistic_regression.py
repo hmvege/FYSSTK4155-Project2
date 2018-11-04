@@ -68,7 +68,7 @@ class LogisticRegression:
     _fit_performed = False
 
     def __init__(self, solver="gradient_descent", max_iter=100,
-                 penalty="l2", tol=1e-4, lr=1.0, lmbda=1.0):
+                 penalty="l2", tol=1e-4, lr=1.0, alpha=1.0):
         """Sets up the linalg backend.
 
         Args:
@@ -81,7 +81,7 @@ class LogisticRegression:
             tol (float): tolerance or when to cut of calculations. Optional, 
                 default is 1e-4.
             lr (float): learning reate. Optional, default is 1.0.
-            lmbda (float): regularization strength. Default is 1.0.
+            alpha (float): regularization strength. Default is 1.0.
         """
 
         self._set_optimizer(solver)
@@ -90,7 +90,7 @@ class LogisticRegression:
         self.max_iter = max_iter
         self.tol = tol
         self.lr = lr
-        self.lmbda = lmbda
+        self.alpha = alpha
 
     def _set_optimizer(self, solver):
         """Set the penalty/regularization method to use."""
@@ -150,7 +150,7 @@ class LogisticRegression:
     def coef_var(self, value):
         self.beta_coefs_var = value
 
-    def fit(self, X_train, y_train, alpha=1.0):
+    def fit(self, X_train, y_train):
         """Performs a linear regression fit for data X_train and y_train.
 
         Args:
@@ -180,8 +180,6 @@ class LogisticRegression:
         def learning_rate(t, t0, t1):
             return t0 / (t + t1)
 
-        # Temp, sets the regularization parameter
-        self.alpha = alpha
 
         for i in range(int(self.max_iter)):
             # Calls the optimizer class which
@@ -241,7 +239,7 @@ class LogisticRegression:
         cost1 = - y * np.log(p_probabilities)
         cost2 = (1 - y) * np.log(1 - p_probabilities)
 
-        cost = np.sum(cost1 - cost2) + self._get_penalty(weights)
+        cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
 
         return cost
 
@@ -290,20 +288,61 @@ class LogisticRegression:
         """
         return X @ weights
 
-    def score(self, features_test, labels_test):
+    def score(self, X, Y):
         """Returns the mean accuracy of the fit.
+
+        Args:
+            X (ndarray): array of shape (N, p - 1) to classify
+            Y (ndarray): true labels
+
+        Returns:
+            (float): mean accuracy score for features_test values.
+        """
+
+        pred = self.predict(X)
+
+        nominator = np.sum(self._indicator(pred, Y))
+        denominator = float(Y.shape[0])
+
+        return nominator/denominator
+
+    def _indicator(self, features_test, labels_test):
+        """Returns 1 if features_test[i] == labels_test[i]
 
         Args:
             features_test (ndarray): array of shape (N, p - 1) to test for
             labels_test (ndarray): true labels
 
         Returns:
-            (float): mean accuracy score for features_test values.
+            (array): elements are 1 or 0
         """
 
-        raise NotImplementedError("score")
+        # print (features_test.shape, len(labels_test))
 
-        return
+        indicator_array = np.where(features_test == labels_test, 1, 0)
+        # print(indicator_array)
+
+        return indicator_array
+
+    def predict(self, X):
+        """Predicts category 1 or 2 of a design matrix X of shape (N, p - 1)."""
+
+        if not self._fit_performed:
+            raise UserWarning("Fit not performed.")
+
+        X = np.hstack([np.ones((X.shape[0], 1)), X])
+
+        # print (X.shape)
+        probabilities = self._sigmoid(self._predict(X, self.coef))
+        results_proba = np.asarray([1 - probabilities, probabilities])
+        results_proba = np.moveaxis(results_proba, 0, 1)
+        # print (results_proba[0, 0], results_proba[0, 1], len(results_proba), results_proba.shape)
+
+        results = np.array([0 if results_proba[i, 0] >= results_proba[i, 1] else 1 for i in range(len(results_proba))])
+        #unsure if it should be 0 if... else 1 or 1 if... else 0.
+        
+        return results
+
 
     def predict_proba(self, X):
         """Predicts probability of a design matrix X of shape (N, p - 1)."""
@@ -311,7 +350,11 @@ class LogisticRegression:
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
 
-        X = np.hstack([np.ones(X.shape), X])
+        print (X.shape)
+
+        X = np.hstack([np.ones((X.shape[0], 1)), X])
+
+        print (X.shape)
         probabilities = self._sigmoid(self._predict(X, self.coef))
         results = np.asarray([1 - probabilities, probabilities])
         return np.moveaxis(results, 0, 1)
