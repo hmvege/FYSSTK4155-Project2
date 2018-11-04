@@ -422,6 +422,22 @@ def __test_regresssions():
 
     for alpha_ in [1e-4, 1e-3, 1e-2, 1e-1, 1e1, 1e2]:
         __test_ridge_regression(x, y, deg, alpha_)
+        __test_lasso_regression(x, y, deg, alpha_)
+
+
+def __test_lasso_regression(x, y, deg, alpha=0.1):
+    print("\nTesting Lasso for degree={} for alpha={}".format(deg, alpha))
+    import sklearn.preprocessing as sk_preproc
+    import sklearn.linear_model as sk_model
+
+    poly = sk_preproc.PolynomialFeatures(degree=deg, include_bias=True)
+    X = poly.fit_transform(x, y)
+
+    sk_reg = sk_model.Lasso(alpha=alpha, fit_intercept=False)
+    sk_reg.fit(X, y)
+    print("SciKit Lasso regression")
+    print("R^2: {:.16f}".format(sk_reg.score(X, y)))
+
 
 
 if __name__ == '__main__':

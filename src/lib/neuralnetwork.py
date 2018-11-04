@@ -35,7 +35,7 @@ def plot_image(sample, label):
 
 class MultilayerPerceptron:
     def __init__(self, layer_sizes, activation="sigmoid",
-                 final_activation="identity", cost_function="mse"):
+                 final_activation="identity", cost_function="mse", alpha=0.0):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -51,6 +51,7 @@ class MultilayerPerceptron:
                 "heaviside". Optional, default is "identity".
             cost_function (str): Cost function. Choices is "mse", "logit". 
                 Optional, default "mse".
+            alpha (float): L2 regularization term. Default is 0.0.
 
         Raises:
             AssertionError: if input_data_size is not a list.
@@ -65,6 +66,9 @@ class MultilayerPerceptron:
         self._set_layer_activation(activation)
         self._set_final_layer_activation(final_activation)
         self._set_cost_function(cost_function)
+
+        # L2 regularization term
+        self.alpha = alpha
 
         # Sets up weights and biases
         self.weights = [
@@ -124,19 +128,35 @@ class MultilayerPerceptron:
     def _set_cost_function(self, cost_function):
         """Sets the cost function to use."""
         if cost_function == "mse":
-            self._cost_function = mse_cost
-            self._cost_function_derivative = mse_cost_derivative
+            self._base_cost_function = mse_cost
+            self._base_cost_function_derivative = mse_cost_derivative
         else:
             raise ValueError("Cost function '{}' not recognized.".format(
                 cost_function))
 
-    # def _cost_function(self, a, y):
-    #     """Cost function"""
-    #     return np.sum((a - y)**2)/2  # *y.shape[0])
+    def _cost_function(self, x, y):
+        """Cost function"""
+        base_cost = self._base_cost_function(x,y)
 
-    # def _cost_function_derivative(self, a, y):
-    #     """Derivative of the cost function."""
-    #     return (a - y)
+        # L2 regularization
+        if alpha != 0.0:
+            l2_cost = np.linalg.norm(x - y)
+        else:
+            l2_cost = 0
+
+        return base_cost + self.alpha*l2_cost
+
+    def _cost_function_derivative(self, x, y):
+        """Derivative of the cost function."""
+        base_cost_derivative = self._base_cost_function_derivative(x, y)
+
+        # L2 regularization
+        if self.alpha != 0.0:
+            l2_cost_derivative = 2*(x-y)
+        else:
+            l2_cost_derivative = 0
+
+        return base_cost_derivative + self.alpha*l2_cost_derivative
 
     def predict(self, x):
         return self._forward_pass(x)[-1]
@@ -149,10 +169,9 @@ class MultilayerPerceptron:
             z += self.biases[i]
 
             if i+1 != (self.N_layers - 1):
-                activations.append(sigmoid(z))
-            else:
-                activations.append(sigmoid(z))
-                # activations.append(z) # Identity
+                activations.append(self._activation(z))
+        
+        activations.append(self._final_activation(z))
 
         return activations
 
@@ -179,10 +198,12 @@ class MultilayerPerceptron:
             z_list.append(z)
 
             if (i+1) != (self.N_layers - 1):
-                self.activations.append(sigmoid(z).T)
+                self.activations.append(self._activation(z).T)
             else:
-                self.activations.append(sigmoid(z).T)  # Sigmoid output layer
+                self.activations.append(self._final_activation(z).T)  # Sigmoid output layer
                 # self.activations.append(z.T) # Identity
+
+        print(self.activations[-1], np.argmax(y))
 
         # Backpropegates
         self.delta_w = [np.zeros(w.shape) for w in self.weights]
@@ -190,7 +211,8 @@ class MultilayerPerceptron:
 
         # Gets initial delta value, first of the four equations
         delta = self._cost_function_derivative(self.activations[-1], y).T
-        delta *= sigmoid_derivative(z_list[-1])  # Sigmoid output
+        # delta *= sigmoid_derivative(z_list[-1])  # Sigmoid output
+        delta *= self._final_activation_derivative(z_list[-1])
 
         # Sets last element before back-propagating
         self.delta_b[-1] = delta
@@ -199,8 +221,11 @@ class MultilayerPerceptron:
         # Loops over layers
         for l in range(2, self.N_layers):
             # Second equation: delta^l = delta^{l+1} W^l * dsigma(z^l)
-            delta = (self.weights[-l+1].T @ delta) * \
-                sigmoid_derivative(z_list[-l])
+            # delta = (self.weights[-l+1].T @ delta) * \
+            #     sigmoid_derivative(z_list[-l])
+            z = z_list[-l]
+            sp = self._activation_derivative(z)
+            delta = (self.weights[-l+1].T @ delta) * sp
             self.delta_w[-l] = delta @ self.activations[-l-1]
             self.delta_b[-l] = delta  # np.sum(delta, axis=1)
             # self.delta_b[-l] = np.mean(delta, axis=0)
@@ -309,15 +334,15 @@ class MultilayerPerceptron:
                     self.weights[l] -= delta_w_sum[l]*eta/mb_data.shape[0]
                     self.biases[l] -= delta_b_sum[l]*eta/mb_data.shape[0]
 
-                print(self._forward_pass((data_test[0].reshape((-1, 1))))[-1],
-                      np.argmax(self._forward_pass(
-                          (data_test[0].reshape((-1, 1))))[-1]),
-                      data_test_labels[0])
+                # print(self._forward_pass((data_test[0].reshape((-1, 1))))[-1],
+                #       np.argmax(self._forward_pass(
+                #           (data_test[0].reshape((-1, 1))))[-1]),
+                #       data_test_labels[0])
 
-                exit(1)
+                # # exit(1)
 
-                if c == 40:
-                    exit(1)
+                # if c == 40:
+                #     exit(1)
 
             # print(self.weights[1][:5])
             if perform_eval:
@@ -331,32 +356,14 @@ class MultilayerPerceptron:
         """Evaluates test data."""
         results = []
         for test, label in zip(test_data, test_labels):
+            pred = self.predict(np.atleast_2d(test).T)
+            results.append(np.argmax(pred) == label)
 
-            # print(label.shape)
-            # if label.shape != self.layer_sizes[-1]:
-            #     _tmp = np.zeros(self.layer_sizes[-1])
-            #     _tmp[label] = 1
-            #     label = _tmp
-            res_ = self.predict(np.atleast_2d(test).T)
-            # print(res_)
-
-            print(np.argmax(self.predict(
-                np.atleast_2d(test).T)), label, np.argmax(self.predict(
-                    np.atleast_2d(test).T)) == label)
-
-            results.append(np.argmax(self.predict(
-                np.atleast_2d(test).T)) == label)
-
-            # print (label, np.argmax(self.predict(
-            #     np.atleast_2d(test).T)), res_)
-
+            print("Predicted label:", np.argmax(pred), pred)
             plot_image(test, label)
 
             # exit(1)
 
-        # print(results)
-        # print (sum(results))
-        # exit(1)
         return sum(results)
 
 
@@ -374,7 +381,8 @@ def __test_mlp_mnist():
     print("DATA VALID: ", data_valid[0].shape, data_valid[1].shape)
     print("DATA TEST: ", data_test[0].shape, data_test[1].shape)
 
-    MLP = MultilayerPerceptron([data_train[0].shape[1], 8, 10])
+    MLP = MultilayerPerceptron([data_train[0].shape[1], 8, 10], 
+        final_activation="sigmoid")
     MLP.train(data_train[0][:10000], data_train[1][:10000],
               data_test=data_test[0], data_test_labels=data_test[1],
               mini_batch_size=20, epochs=5)
@@ -445,8 +453,7 @@ def __test_nn_sklearn_comparison():
     #             cost_function   = 'mse')
 
     # nn = MultilayerPerceptron([1, 3, 3, 1])
-    nn = MultilayerPerceptron([2, 3, 3, 1])
-    # TODO: check for a larger MLP
+    nn = MultilayerPerceptron([2, 3, 3, 1], final_activation="identity")
 
     # Copy the weights and biases from the scikit-learn network to your own.
     for i, w in enumerate(mlp.coefs_):
