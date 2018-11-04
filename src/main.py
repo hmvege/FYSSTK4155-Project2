@@ -192,7 +192,7 @@ def task1c(sk=False):
     """Task c) of project 2."""
 
     training_size = 0.8
-    fract = 0.1
+    fract = 0.01
 
     print("Logistic regression")
 
@@ -248,8 +248,12 @@ def task1c(sk=False):
 
     # preallocate data
     train_accuracy = np.zeros(lmbdas.shape, np.float64)
-    test_accuracy = np.zeros(lmbdas.shape, np.float64)
+    test_accuracy = np.zeros(lmbdas.shape, np.float64)    
     critical_accuracy = np.zeros(lmbdas.shape, np.float64)
+
+    train_accuracy_SK = np.zeros(lmbdas.shape, np.float64)
+    test_accuracy_SK = np.zeros(lmbdas.shape, np.float64)    
+    critical_accuracy_SK = np.zeros(lmbdas.shape, np.float64)
 
     train_accuracy_SGD = np.zeros(lmbdas.shape, np.float64)
     test_accuracy_SGD = np.zeros(lmbdas.shape, np.float64)
@@ -259,16 +263,20 @@ def task1c(sk=False):
     for i, lmbda in enumerate(lmbdas):
 
         # define logistic regressor
-        if sk:
-            logreg = sk_model.LogisticRegression(
-                C=1.0/lmbda, random_state=1, verbose=0, max_iter=1E3, tol=1E-5)
-        else:
-            logreg = logistic_regression.LogisticRegression(
-                penalty="l1", lr=1.0, max_iter=1E3)
+        logreg_SK = sk_model.LogisticRegression(
+            C=1.0/lmbda, random_state=1, verbose=0, max_iter=1E3, tol=1E-5)
+
+        logreg = logistic_regression.LogisticRegression(
+            penalty="l1", lr=1.0, max_iter=1E3, alpha = lmbda)
+        
         # fit training data
+        logreg_SK.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train.reshape(-1, 1)))
         logreg.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train.reshape(-1, 1)))
 
         # check accuracy
+        train_accuracy_SK[i] = logreg_SK.score(X_train, Y_train)
+        test_accuracy_SK[i] = logreg_SK.score(X_test, Y_test)
+
         train_accuracy[i] = logreg.score(X_train, Y_train)
         test_accuracy[i] = logreg.score(X_test, Y_test)
         # critical_accuracy[i]=logreg.score(X_critical,Y_critical)
@@ -276,6 +284,9 @@ def task1c(sk=False):
         print('accuracy: train, test, critical')
         print('liblin: %0.4f, %0.4f, %0.4f' %
               (train_accuracy[i], test_accuracy[i], critical_accuracy[i]))
+
+        print('SK: %0.4f, %0.4f, %0.4f' %
+              (train_accuracy_SK[i], test_accuracy_SK[i], critical_accuracy_SK[i]))
 
         # define SGD-based logistic regression
         logreg_SGD = sk_model.SGDClassifier(loss='log', penalty='l2',
