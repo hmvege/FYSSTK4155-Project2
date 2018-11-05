@@ -1,7 +1,6 @@
 import numpy as np
 import copy as cp
-from utils.math import sigmoid, sigmoid_derivative, mse_cost, \
-    mse_cost_derivative, identity, identity_derivative
+import utils.math as umath
 
 
 def plot_image(sample_, label, pred):
@@ -68,23 +67,25 @@ class MultilayerPerceptron:
     def _set_layer_activation(self, activation):
         """Sets the layer activation."""
         if activation == "sigmoid" or "logistic":
-            self._activation = sigmoid
-            self._activation_derivative = sigmoid_derivative
+            self._activation = umath.sigmoid
+            self._activation_derivative = umath.sigmoid_derivative
         elif activation == "identity":
-            self._activation = identity
-            self._activation_derivative = identity_derivative
-        # elif activation == "relu":
-        #     self._activation =
-        #     self._activation_derivative =
-        # elif activation == "tanh":
-        #     self._activation =
-        #     self._activation_derivative =
-        # elif activation == "heaviside":
-        #     self._activation =
-        #     self._activation_derivative =
+            self._activation = umath.identity
+            self._activation_derivative = umath.identity_derivative
+        elif activation == "relu":
+            self._activation = umath.relu
+            self._activation_derivative = umath.relu_derivative
+        elif activation == "tanh":
+            self._activation = umath.tanh
+            self._activation_derivative = umath.tanh_derivative
+        elif activation == "heaviside":
+            self._activation = umath.heaviside
+            self._activation_derivative = umath.heaviside_derivative
         else:
-            raise ValueError("Activation type '{}' not recognized.".format(
+            raise KeyError("Activation type '{}' not recognized.".format(
                 activation))
+
+# TODO: final activation derivative never used when backpropagating?
 
     def _set_final_layer_activation(self, final_activation):
         """Sets the final layer activation."""
@@ -94,29 +95,63 @@ class MultilayerPerceptron:
         elif final_activation == "identity":
             self._final_activation = identity
             self._final_activation_derivative = identity_derivative
-        # elif final_activation == "relu":
-        #     self._final_activation =
-        #     self._final_activation_derivative =
-        # elif final_activation == "tanh":
-        #     self._final_activation =
-        #     self._final_activation_derivative =
-        # elif final_activation == "heaviside":
-        #     self._final_activation =
-        #     self._final_activation_derivative =
-        # elif final_activation == "softmax":
-        #     self._final_activation =
-        #     self._final_activation_derivative =
+        elif final_activation == "relu":
+            self._final_activation = umath.relu
+            self._final_activation_derivative = umath.relu_derivative
+        elif final_activation == "tanh":
+            self._final_activation = umath.tanh
+            self._final_activation_derivative = umath.tanh_derivative
+        elif final_activation == "heaviside":
+            self._final_activation = umath.heaviside
+            self._final_activation_derivative = umath.heaviside_derivative
+        elif final_activation == "softmax":
+            self._final_activation = umath.softmax
+            self._final_activation_derivative = umath.softmax_derivative
         else:
-            raise ValueError(("Final layer activation type '{}' not "
+            raise KeyError(("Final layer activation type '{}' not "
                               "recognized.".format(activation)))
 
-    def _set_cost_function(self, cost_function):
-        """Sets the cost function to use."""
-        if cost_function == "mse":
-            self._base_cost_function = mse_cost
-            self._base_cost_function_derivative = mse_cost_derivative
+    def _set_learning_rate(self, eta):
+        """Sets the learning rate."""
+        if isinstance(eta, float):
+            self._update_learning_rate = lambda _i, _N: eta
+        elif eta == "inverse":
+            self._update_learning_rate = lambda _i, _N: 1 - _i/float(_N+1)
         else:
-            raise ValueError("Cost function '{}' not recognized.".format(
+            raise KeyError(("Eta {} is not recognized learning"
+                              " rate.".format(eta)))
+
+    def _set_cost_function(self, cost_function):
+        """Sets the cost function to use.
+
+        A nice list of different cost functions found here:
+        https://stats.stackexchange.com/questions/154879/a-list-of-
+        cost-functions-used-in-neural-networks-alongside-applications
+
+        Args:
+            cost_functions (str): name of the cost function to use.
+
+        Raises:
+            KeyError if cost_function is not a recognized cost function.
+        """
+        if cost_function == "mse":
+            self._base_cost_function = umath.mse_cost
+            self._base_cost_function_derivative = umath.mse_cost_derivative
+        elif cost_function == "cross_entropy":
+            self._base_cost_function = umath.log_entropy
+            self._base_cost_function_derivative = umath.log_entropy_derivative
+        elif cost_function == "exponential_cost":
+            raise NotImplementedError(cost_function)
+        elif cost_function == "hellinger_distance":
+            raise NotImplementedError(cost_function)
+        elif cost_function == "kullback_leibler_divergence":
+            raise NotImplementedError(cost_function)
+        elif cost_function == "generalized_kullback_leibler_divergence":
+            raise NotImplementedError(cost_function)
+        elif cost_function == "itakura_saito_distance":
+            raise NotImplementedError(cost_function)
+        else:
+            raise KeyError("Cost function '{}' not recognized.".format(
                 cost_function))
 
     def _cost_function(self, x, y):
@@ -231,7 +266,7 @@ class MultilayerPerceptron:
         """Trains the neural-net on provided data. Assumes data size 
         is the same as what provided in the initialization.
 
-        Uses Stochastic Gradient Descent, SGA, and mini-batches to get the 
+        Uses Stochastic Gradient Descent(SGA) and mini-batches to get the 
         deed done.
 
         Args:
@@ -242,7 +277,8 @@ class MultilayerPerceptron:
             epochs (int): number of times we are to train the data. Default 
                 is 10.
             mini_batch_size (int): size of mini batch. Optional, default is 50.
-            eta (float): learning rate, optional. Default is 1.0.
+            eta (float): learning rate, optional. Choices: float(constant), 
+                "inverse". "Inverse" sets eta to 1 - i/(N+1). Default is 1.0.
             data_test (ndarray): data to run tests for. Shape:
                 (samples, input_size, 1)
             data_test_labels (ndarray): training data labels. Shape: 
@@ -270,7 +306,12 @@ class MultilayerPerceptron:
         # Gets the number of batches
         number_batches = N_train_size // mini_batch_size
 
+        self._set_learning_rate(eta)
+
         for epoch in range(epochs):
+
+            # Updates the learning rate
+            eta_ = self._update_learning_rate(epoch, epochs)
 
             # Performs the SGA step of shuffling data
             shuffle_indexes = np.random.choice(list(range(N_train_size)),
@@ -278,8 +319,8 @@ class MultilayerPerceptron:
                                                replace=False)
 
             # Shuffles the data with the shuffle-indices
-            shuffled_data = cp.deepcopy(data_train[shuffle_indexes])
-            shuffled_labels = cp.deepcopy(data_train_labels[shuffle_indexes])
+            shuffled_data = data_train[shuffle_indexes]
+            shuffled_labels = data_train_labels[shuffle_indexes]
 
             # Splits data into minibatches
             shuffled_data = [
@@ -289,9 +330,10 @@ class MultilayerPerceptron:
                 shuffled_labels[i:i+mini_batch_size]
                 for i in range(0, N_train_size, number_batches)]
 
+            # Iterates over mini batches
             for mb_data, mb_labels in zip(shuffled_data, shuffled_labels):
 
-                self.update_mini_batch(mb_data, mb_labels, eta)
+                self.update_mini_batch(mb_data, mb_labels, eta_)
 
             # If we have provided testing data, we perform an epoch evaluation
             if perform_eval:
@@ -320,8 +362,8 @@ class MultilayerPerceptron:
 
         # Updates weights and biases
         for l in range(self.N_layers - 1):
-            self.weights[l] -= (delta_w_sum[l]*eta/float(len(mb_data)))
-            self.biases[l] -= (delta_b_sum[l]*eta/float(len(mb_data)))
+            self.weights[l] -= (delta_w_sum[l]*eta/len(mb_data))
+            self.biases[l] -= (delta_b_sum[l]*eta/len(mb_data))
 
     def evaluate(self, test_data, test_labels, show_image=False):
         """Evaluates test data.
@@ -344,6 +386,21 @@ class MultilayerPerceptron:
                 plot_image(test, np.argmax(label), np.argmax(pred))
 
         return sum(results)
+
+    def score(self, test_data, test_labels, verbose=False):
+        """Returns the accuracy score for given test data.
+
+        Args:
+            test_data (ndarray): array of shape (sample, input_size, 1), 
+                contains the input data to test for.
+            test_labels (ndarray): array of desired output to compare against.
+                On the shape of (sample, output_size)        
+        """
+        results = self.evaluate(test_data, test_labels)
+        if verbose:
+            print("Accuracy = {}/{} = {}".format(results, len(results),
+                                                 results/len(results)))
+        return results/len(results)
 
 
 def __test_mlp_mnist():
