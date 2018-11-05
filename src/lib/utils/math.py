@@ -7,7 +7,7 @@ import numpy as np
 # =============================================================================
 
 
-def sigmoid(x):
+def logistic(x):
     """Sigmoidal activation function.
 
     Args:
@@ -16,8 +16,8 @@ def sigmoid(x):
     return 1.0/(1.0 + np.exp(-x))
 
 
-def sigmoid_derivative(x):
-    s = sigmoid(x)
+def logistic_derivative(x):
+    s = logistic(x)
     return s*(1-s)
 
 
@@ -84,6 +84,8 @@ def relu(x):
     Args:
         x (ndarray): weighted sum of inputs
     """
+    # np.clip(x, 0, np.finfo(x.dtype).max, out=x)
+    # return x
     return np.where(x >= 0, x, 0)
 
 
@@ -93,7 +95,7 @@ def relu_derivative(x):
     Args:
         x (ndarray): weighted sum of inputs
     """
-    return np.where(x >= 0, 1, 0)
+    return np.where(relu(x) > 0, 1, 0)
 
 
 def tanh(x):
@@ -111,7 +113,7 @@ def tanh_derivative(x):
     Args:
         x (ndarray): weighted sum of inputs
     """
-    return 1/(np.cosh(x)**2)
+    return 1 - tanh(x)**2
 
 
 # =============================================================================
@@ -121,7 +123,7 @@ def tanh_derivative(x):
 
 def mse_cost(x, y):
     """Mean Square error cost function."""
-    return np.sum((x - y)**2)/2  # *y.shape[0])
+    return 0.5*np.sum((x - y)**2)#/y.shape[0]
 
 
 def mse_cost_derivative(x, y):

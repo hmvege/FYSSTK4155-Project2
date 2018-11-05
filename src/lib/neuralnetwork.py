@@ -18,9 +18,21 @@ def plot_image(sample_, label, pred):
     plt.show()
 
 
+AVAILABLE_ACTIVATIONS = ["identity", "logistic", "relu", "tanh", "heaviside"]
+
+AVAILABLE_OUTPUT_ACTIVATIONS = [
+    "identity", "logistic", "relu", "tanh", "heaviside", "softmax"]
+
+AVAILABLE_COST_FUNCTIONS = ["mse", "log_loss", "exponential_cost",
+                            "hellinger_distance",
+                            "kullback_leibler_divergence",
+                            "generalized_kullback_leibler_divergence",
+                            "itakura_saito_distance"]
+
+
 class MultilayerPerceptron:
-    def __init__(self, layer_sizes, activation="sigmoid",
-                 final_activation="identity", cost_function="mse", alpha=0.0):
+    def __init__(self, layer_sizes, activation="logistic",
+                 output_activation="identity", cost_function="mse", alpha=0.0):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -28,13 +40,13 @@ class MultilayerPerceptron:
         Args:
             layer_sizes (list(int)): list of layer sizes after input data.
                 Constists of [input_layer_size, N layer sizes, output_layer].
-            activation (str): activation function. Choices is "sigmoid", 
+            activation (str): activation function. Choices is "logistic", 
                 "identity", "relu", "tanh", "heaviside". Optional, default is 
-                "sigmoid".
-            final_activation (str): final layer activation function. Choices 
-                is "sigmoid" or "logistic", "softmax", "identity", "relu", "tanh", 
+                "logistic".
+            output_activation (str): final layer activation function. Choices 
+                is "logistic" or "logistic", "softmax", "identity", "relu", "tanh", 
                 "heaviside". Optional, default is "identity".
-            cost_function (str): Cost function. Choices is "mse", "logit". 
+            cost_function (str): Cost function. Choices is "mse", "log_loss". 
                 Optional, default "mse".
             alpha (float): L2 regularization term. Default is 0.0.
 
@@ -49,7 +61,7 @@ class MultilayerPerceptron:
                                            len(layer_sizes)))
 
         self._set_layer_activation(activation)
-        self._set_final_layer_activation(final_activation)
+        self._set_output_layer_activation(output_activation)
         self._set_cost_function(cost_function)
 
         # L2 regularization term
@@ -66,9 +78,16 @@ class MultilayerPerceptron:
 
     def _set_layer_activation(self, activation):
         """Sets the layer activation."""
-        if activation == "sigmoid" or "logistic":
-            self._activation = umath.sigmoid
-            self._activation_derivative = umath.sigmoid_derivative
+
+        assert activation in AVAILABLE_ACTIVATIONS, (
+            "{} not among available output activation functions: "
+            "{}".format(activation, ", ".join(AVAILABLE_ACTIVATIONS)))
+
+        self.activation = activation
+
+        if activation == "logistic":
+            self._activation = umath.logistic
+            self._activation_derivative = umath.logistic_derivative
         elif activation == "identity":
             self._activation = umath.identity
             self._activation_derivative = umath.identity_derivative
@@ -82,34 +101,45 @@ class MultilayerPerceptron:
             self._activation = umath.heaviside
             self._activation_derivative = umath.heaviside_derivative
         else:
-            raise KeyError("Activation type '{}' not recognized.".format(
-                activation))
+            raise KeyError("Activation type '{}' not recognized. Available "
+                           "activations:".format(
+                               activation, ", ".join(AVAILABLE_ACTIVATIONS)))
 
 # TODO: final activation derivative never used when backpropagating?
 
-    def _set_final_layer_activation(self, final_activation):
+    def _set_output_layer_activation(self, output_activation):
         """Sets the final layer activation."""
-        if final_activation == "sigmoid" or "logistic":
-            self._final_activation = sigmoid
-            self._final_activation_derivative = sigmoid_derivative
-        elif final_activation == "identity":
-            self._final_activation = identity
-            self._final_activation_derivative = identity_derivative
-        elif final_activation == "relu":
-            self._final_activation = umath.relu
-            self._final_activation_derivative = umath.relu_derivative
-        elif final_activation == "tanh":
-            self._final_activation = umath.tanh
-            self._final_activation_derivative = umath.tanh_derivative
-        elif final_activation == "heaviside":
-            self._final_activation = umath.heaviside
-            self._final_activation_derivative = umath.heaviside_derivative
-        elif final_activation == "softmax":
-            self._final_activation = umath.softmax
-            self._final_activation_derivative = umath.softmax_derivative
+
+        assert output_activation in AVAILABLE_OUTPUT_ACTIVATIONS, (
+            "{} not among available output activation functions: "
+            "{}".format(output_activation, ", ".join(
+                AVAILABLE_OUTPUT_ACTIVATIONS)))
+
+        self.output_activation = output_activation
+
+        if output_activation == "logistic":
+            self._output_activation = umath.logistic
+            self._output_activation_derivative = umath.logistic_derivative
+        elif output_activation == "identity":
+            self._output_activation = umath.identity
+            self._output_activation_derivative = umath.identity_derivative
+        elif output_activation == "relu":
+            self._output_activation = umath.relu
+            self._output_activation_derivative = umath.relu_derivative
+        elif output_activation == "tanh":
+            self._output_activation = umath.tanh
+            self._output_activation_derivative = umath.tanh_derivative
+        elif output_activation == "heaviside":
+            self._output_activation = umath.heaviside
+            self._output_activation_derivative = umath.heaviside_derivative
+        elif output_activation == "softmax":
+            self._output_activation = umath.softmax
+            self._output_activation_derivative = umath.softmax_derivative
         else:
-            raise KeyError(("Final layer activation type '{}' not "
-                              "recognized.".format(activation)))
+            raise KeyError("Final layer activation type '{}' not "
+                           "recognized. Available activations:".format(
+                               activation, ", ".join(
+                                   AVAILABLE_OUTPUT_ACTIVATIONS)))
 
     def _set_learning_rate(self, eta):
         """Sets the learning rate."""
@@ -119,7 +149,7 @@ class MultilayerPerceptron:
             self._update_learning_rate = lambda _i, _N: 1 - _i/float(_N+1)
         else:
             raise KeyError(("Eta {} is not recognized learning"
-                              " rate.".format(eta)))
+                            " rate.".format(eta)))
 
     def _set_cost_function(self, cost_function):
         """Sets the cost function to use.
@@ -134,10 +164,11 @@ class MultilayerPerceptron:
         Raises:
             KeyError if cost_function is not a recognized cost function.
         """
+        self.cost_function = cost_function
         if cost_function == "mse":
             self._base_cost_function = umath.mse_cost
             self._base_cost_function_derivative = umath.mse_cost_derivative
-        elif cost_function == "cross_entropy":
+        elif cost_function == "log_loss":
             self._base_cost_function = umath.log_entropy
             self._base_cost_function_derivative = umath.log_entropy_derivative
         elif cost_function == "exponential_cost":
@@ -151,38 +182,75 @@ class MultilayerPerceptron:
         elif cost_function == "itakura_saito_distance":
             raise NotImplementedError(cost_function)
         else:
-            raise KeyError("Cost function '{}' not recognized.".format(
-                cost_function))
+            raise KeyError("Cost function '{}' not recognized. Available loss"
+                           " functions: {}".format(cost_function, ", ".join(
+                               AVAILABLE_COST_FUNCTIONS)))
 
-    def _cost_function(self, x, y):
-        """Cost function."""
+    def _cost_function(self, layer, x, y):
+        """Cost function.
+
+        Args:
+            layer (int): which layer we are in
+            x (ndarray): input values.
+            y (ndarray): output values, one-hot vector.
+        """
         base_cost = self._base_cost_function(x, y)
 
-        # L2 regularization
-        if alpha != 0.0:
-            l2_cost = np.linalg.norm(x - y)
-        else:
-            l2_cost = 0
-
-        return base_cost + self.alpha*l2_cost
+        return base_cost + self._regularization(layer)*0.5/x.shape[0]
 
     def _cost_function_derivative(self, x, y):
         """Derivative of the cost function.
 
         Args:
             x (ndarray): input values.
-            y (ndarray): output values.
+            y (ndarray): output values, one-hot vector.
         """
 
         base_cost_derivative = self._base_cost_function_derivative(x, y)
 
-        # L2 regularization
-        if self.alpha != 0.0:
-            l2_cost_derivative = 2*(x-y)
-        else:
-            l2_cost_derivative = 0
+        return base_cost_derivative  # + self._regularization_derivative(layer)
 
-        return base_cost_derivative + self.alpha*l2_cost_derivative
+    def _regularization(self, layer):
+        """Computes the L2 regularization.
+
+        Args:
+            layer (int): layer to compute regularization for.
+
+        Returns:
+            (float) l2-norm of given layer.
+        """
+        if self.alpha != 0.0:
+            return self.alpha*np.sum(self.weights[layer]**2)
+        else:
+            return 0.0
+
+    def _regularization_derivative(self, layer):
+        """Computes the L2 regularization derivative.
+
+        Args:
+            layer (int): layer to compute regularization for.
+
+        Returns:
+            (ndarray) derivative of the l2-norm of given layer.
+        """
+        if self.alpha != 0.0:
+            return self.alpha*self.weights[layer]
+        else:
+            return 0.0
+
+    # def _compute_gradient_derivatives(self, layer, delta_b, delta_w, delta):
+    #     """Computes the gradients of biases and weights, and adds L2
+    #     regularization if that is prompted.
+
+    #     Args:
+    #         layer (int): which layer we are in
+    #         delta_b (ndarray): bias derivatives.
+    #         delta_w (ndarray): weight derivatives.
+    #         delta (ndarray): base derivative.
+
+    #     Returns:
+    #         delta_b, delta_w
+    #     """
 
     def predict(self, x):
         """Returns the last layer of activation from _forward_pass."""
@@ -198,7 +266,7 @@ class MultilayerPerceptron:
             if i+1 != (self.N_layers - 1):
                 activations.append(self._activation(z))
 
-        activations.append(self._final_activation(z))
+        activations.append(self._output_activation(z))
 
         return activations
 
@@ -207,7 +275,7 @@ class MultilayerPerceptron:
 
         Args:
             x (ndarray): initial layer input.
-            y (ndarray): true output values(labels).
+            y (ndarray): true output values(labels), one-hot vector.
 
         Returns:
             (list(ndarray)): all layer weight gradients
@@ -227,7 +295,7 @@ class MultilayerPerceptron:
                 self.activations.append(self._activation(z))
             else:
                 # Sigmoid output layer
-                self.activations.append(self._final_activation(z).T)
+                self.activations.append(self._output_activation(z).T)
 
         # Backpropegation begins, initializes the backpropagation derivatives
         delta_w = [np.empty(w.shape) for w in self.weights]
@@ -237,11 +305,15 @@ class MultilayerPerceptron:
         delta = self._cost_function_derivative(self.activations[-1], y).T
 
         # No final derivative?
-        # delta *= self._final_activation_derivative(z_list[-1])
+        # delta *= self._output_activation_derivative(z_list[-1])
 
         # Sets last element before back-propagating
         delta_b[-1] = delta
         delta_w[-1] = delta @ self.activations[-2].T
+        delta_w[-1] += self._regularization_derivative(-1)#/x.shape[0]
+
+        # delta_b, delta_w = self._compute_gradient_derivatives(layer, delta_b,
+        #     delta_w, delta)
 
         # Loops over layers
         for l in range(2, self.N_layers):
@@ -257,6 +329,8 @@ class MultilayerPerceptron:
 
             delta_b[-l] = delta  # np.sum(delta, axis=1)
             delta_w[-l] = delta @ self.activations[-l-1].T
+            print (delta_w[-l].shape)
+            delta_w[-l] += self._regularization_derivative(-l)
 
         return delta_w, delta_b
 
@@ -360,7 +434,7 @@ class MultilayerPerceptron:
             delta_w_sum = [dw + dws for dw, dws in zip(delta_w, delta_w_sum)]
             delta_b_sum = [db + dbs for db, dbs in zip(delta_b, delta_b_sum)]
 
-        # Updates weights and biases
+        # Updates weights and biases by subtracting their gradients
         for l in range(self.N_layers - 1):
             self.weights[l] -= (delta_w_sum[l]*eta/len(mb_data))
             self.biases[l] -= (delta_b_sum[l]*eta/len(mb_data))
@@ -423,7 +497,7 @@ def __test_mlp_mnist():
         y_[label_] = 1.0
         return y_
 
-    # Converts data to ((N, p-1)) shape
+    # Converts data to ((N, p-1)) shape.
     data_train_samples = np.asarray(
         [d_.reshape((-1, 1)) for d_ in data_train[0]])
     data_valid_samples = np.asarray(
@@ -431,7 +505,8 @@ def __test_mlp_mnist():
     data_test_samples = np.asarray(
         [d_.reshape((-1, 1)) for d_ in data_test[0]])
 
-    # Converts labels from single floats to arrays with 1.0 at correct output
+    # Converts labels from single floats to arrays with 1.0 at correct output.
+    # Aka, to one-hot vector format.
     data_train_labels = np.asarray(
         [convert_output(l, 10) for l in data_train[1]])
     data_valid_labels = np.asarray(
@@ -441,13 +516,15 @@ def __test_mlp_mnist():
 
     # Sets up my MLP.
     MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
-                               final_activation="sigmoid")
+                               activation="sigmoid",
+                               output_activation="sigmoid",
+                               alpha=0.0)
     MLP.train(data_train_samples, data_train_labels,
               data_test=data_test_samples,
               data_test_labels=data_test_labels,
               mini_batch_size=20,
-              epochs=1000,
-              eta=1.0)
+              epochs=100,
+              eta="inverse")
     MLP.evaluate(data_test_samples, data_test_labels, show_image=True)
 
 
@@ -457,15 +534,16 @@ def __test_nn_sklearn_comparison():
     from sklearn.neural_network import MLPRegressor
 
     def test_regressor(X_train, y_train, X_test, y_test, nn_layers,
-                       sk_hidden_layers, final_activation):
+                       sk_hidden_layers, input_activation, output_activation, 
+                       alpha=0.0):
 
         mlp = MLPRegressor(
             solver='sgd',               # Stochastic gradient descent.
-            activation='logistic',      # Skl name for sigmoid.
-            alpha=0.0,                  # No regularization for simplicity.
+            activation=input_activation,  # Skl name for sigmoid.
+            alpha=alpha,                  # No regularization for simplicity.
             hidden_layer_sizes=sk_hidden_layers)  # Full NN size is (1,3,3,1).
 
-        mlp.out_activation_ = final_activation
+        mlp.out_activation_ = output_activation
 
         # Force sklearn to set up all the necessary matrices by fitting a data
         # set. We dont care if it converges or not, so lets ignore raised
@@ -493,13 +571,15 @@ def __test_nn_sklearn_comparison():
                            for n_fan_out_ in layer_units[1:]]
         # =====================================================================
 
-        mlp.out_activation_ = "logistic"
+        mlp.out_activation_ = output_activation
         activations = mlp._forward_pass(activations)
         loss, coef_grads, intercept_grads = mlp._backprop(
             X_test, y_test, activations, deltas, coef_grads, intercept_grads)
 
         # Activates my own MLP
-        nn = MultilayerPerceptron(nn_layers, final_activation=final_activation)
+        nn = MultilayerPerceptron(
+            nn_layers, activation=input_activation,
+            output_activation=output_activation, alpha=alpha)
 
         # Copy the weights and biases from the scikit-learn network to your
         # own.
@@ -574,15 +654,15 @@ def __test_nn_sklearn_comparison():
     y_test3 = np.array([8.29289285])
 
     test_regressor(X_train1, y_train1, X_test1, y_test1,
-                   layer_sizes1, sk_hidden_layers1, "identity")
+                   layer_sizes1, sk_hidden_layers1, "logistic", "softmax")
     test_regressor(X_train2, y_train2, X_test2, y_test2,
-                   layer_sizes2, sk_hidden_layers2, "identity")
+                   layer_sizes2, sk_hidden_layers2, "logistic", "identity", 0.5)
     test_regressor(X_train3, y_train3, X_test3, y_test3,
-                   layer_sizes3, sk_hidden_layers3, "logistic")
+                   layer_sizes3, sk_hidden_layers3, "logistic", "logistic")
 
     print("Forward and back propagation tests completed.\n")
 
 
 if __name__ == '__main__':
-    __test_mlp_mnist()
+    # __test_mlp_mnist()
     __test_nn_sklearn_comparison()
