@@ -1,6 +1,6 @@
 import numpy as np
 import copy as cp
-import utils.math as umath
+import utils.math_tools as umath
 
 
 def plot_image(sample_, label, pred):
@@ -32,7 +32,8 @@ AVAILABLE_COST_FUNCTIONS = ["mse", "log_loss", "exponential_cost",
 
 class MultilayerPerceptron:
     def __init__(self, layer_sizes, activation="logistic",
-                 output_activation="identity", cost_function="mse", alpha=0.0):
+                 output_activation="identity", cost_function="mse", alpha=0.0, 
+                 momentum=0.0):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -49,7 +50,7 @@ class MultilayerPerceptron:
             cost_function (str): Cost function. Choices is "mse", "log_loss". 
                 Optional, default "mse".
             alpha (float): L2 regularization term. Default is 0.0.
-
+            momentum (float): adds a dependency on previous gradient
         Raises:
             AssertionError: if input_data_size is not a list.
             AssertionError: if layer_sizes is less than two.
@@ -66,6 +67,10 @@ class MultilayerPerceptron:
 
         # L2 regularization term
         self.alpha = alpha
+
+        # Sets momentum given it is valid
+        assert momentum >= 0.0, "momentum must be positive"
+        self.momentum = momentum
 
         # Sets up weights and biases
         self.weights = [
@@ -95,7 +100,7 @@ class MultilayerPerceptron:
             self._activation = umath.relu
             self._activation_derivative = umath.relu_derivative
         elif activation == "tanh":
-            self._activation = umath.tanh
+            self._activation = umath.tanh_
             self._activation_derivative = umath.tanh_derivative
         elif activation == "heaviside":
             self._activation = umath.heaviside
@@ -127,7 +132,7 @@ class MultilayerPerceptron:
             self._output_activation = umath.relu
             self._output_activation_derivative = umath.relu_derivative
         elif output_activation == "tanh":
-            self._output_activation = umath.tanh
+            self._output_activation = umath.tanh_
             self._output_activation_derivative = umath.tanh_derivative
         elif output_activation == "heaviside":
             self._output_activation = umath.heaviside
@@ -172,7 +177,9 @@ class MultilayerPerceptron:
             self._base_cost_function = umath.log_entropy
             self._base_cost_function_derivative = umath.log_entropy_derivative
         elif cost_function == "exponential_cost":
-            raise NotImplementedError(cost_function)
+            self._base_cost_function = umath.exponential_cost
+            self._base_cost_function_derivative = \
+                umath.exponential_cost_derivative
         elif cost_function == "hellinger_distance":
             raise NotImplementedError(cost_function)
         elif cost_function == "kullback_leibler_divergence":
@@ -198,17 +205,17 @@ class MultilayerPerceptron:
 
         return base_cost + self._regularization(layer)*0.5/x.shape[0]
 
-    def _cost_function_derivative(self, x, y):
+    def _cost_function_derivative(self, y, y_true):
         """Derivative of the cost function.
 
         Args:
-            x (ndarray): input values.
-            y (ndarray): output values, one-hot vector.
+            y (ndarray): input values.
+            y_true (ndarray): output values, one-hot vector.
         """
 
-        base_cost_derivative = self._base_cost_function_derivative(x, y)
+        base_cost_derivative = self._base_cost_function_derivative(y, y_true)
 
-        return base_cost_derivative  # + self._regularization_derivative(layer)
+        return base_cost_derivative
 
     def _regularization(self, layer):
         """Computes the L2 regularization.
@@ -310,7 +317,7 @@ class MultilayerPerceptron:
         # Sets last element before back-propagating
         delta_b[-1] = delta
         delta_w[-1] = delta @ self.activations[-2].T
-        delta_w[-1] += self._regularization_derivative(-1)#/x.shape[0]
+        delta_w[-1] += self._regularization_derivative(-1)  # /x.shape[0]
 
         # delta_b, delta_w = self._compute_gradient_derivatives(layer, delta_b,
         #     delta_w, delta)
@@ -329,7 +336,6 @@ class MultilayerPerceptron:
 
             delta_b[-l] = delta  # np.sum(delta, axis=1)
             delta_w[-l] = delta @ self.activations[-l-1].T
-            print (delta_w[-l].shape)
             delta_w[-l] += self._regularization_derivative(-l)
 
         return delta_w, delta_b
@@ -516,8 +522,9 @@ def __test_mlp_mnist():
 
     # Sets up my MLP.
     MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
-                               activation="sigmoid",
-                               output_activation="sigmoid",
+                               activation="logistic",
+                               cost_function="log_loss",
+                               output_activation="logistic",
                                alpha=0.0)
     MLP.train(data_train_samples, data_train_labels,
               data_test=data_test_samples,
@@ -534,7 +541,7 @@ def __test_nn_sklearn_comparison():
     from sklearn.neural_network import MLPRegressor
 
     def test_regressor(X_train, y_train, X_test, y_test, nn_layers,
-                       sk_hidden_layers, input_activation, output_activation, 
+                       sk_hidden_layers, input_activation, output_activation,
                        alpha=0.0):
 
         mlp = MLPRegressor(
@@ -594,8 +601,8 @@ def __test_nn_sklearn_comparison():
         y = nn.predict(cp.deepcopy(X_test).T)
 
         # Asserts that the forward pass is correct
-        assert np.allclose(y, y_sklearn), ("Prediction "
-                                           "{} != {}".format(y, y_sklearn))
+        assert np.allclose(y, y_sklearn), (
+            "Prediction {} != {}".format(y, y_sklearn))
 
         delta_w, delta_b = nn.back_propagate(X_test.T, y_test)
 
@@ -656,7 +663,8 @@ def __test_nn_sklearn_comparison():
     test_regressor(X_train1, y_train1, X_test1, y_test1,
                    layer_sizes1, sk_hidden_layers1, "logistic", "softmax")
     test_regressor(X_train2, y_train2, X_test2, y_test2,
-                   layer_sizes2, sk_hidden_layers2, "logistic", "identity", 0.5)
+                   layer_sizes2, sk_hidden_layers2, "logistic", "identity", 
+                   alpha=0.5)
     test_regressor(X_train3, y_train3, X_test3, y_test3,
                    layer_sizes3, sk_hidden_layers3, "logistic", "logistic")
 
@@ -664,5 +672,5 @@ def __test_nn_sklearn_comparison():
 
 
 if __name__ == '__main__':
-    # __test_mlp_mnist()
-    __test_nn_sklearn_comparison()
+    __test_mlp_mnist()
+    # __test_nn_sklearn_comparison()

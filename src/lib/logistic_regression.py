@@ -180,7 +180,6 @@ class LogisticRegression:
         def learning_rate(t, t0, t1):
             return t0 / (t + t1)
 
-
         for i in range(int(self.max_iter)):
             # Calls the optimizer class which
             # self.coef = self._optimize(X, y, self.coef)
@@ -235,10 +234,13 @@ class LogisticRegression:
 
         p_probabilities = self._sigmoid(y_pred)
 
-        temp_val = [1 - p_probabilities[i] + 1e-11 if 1 - p_probabilities[i] < 1e-11 else 1 - p_probabilities[i] for i in range(len(p_probabilities))]
+        # temp_val = [1 - p_probabilities[i] + 1e-11 if 1 - p_probabilities[i] < 1e-11 else 1 - p_probabilities[i] for i in range(len(p_probabilities))]
 
         cost1 = - y * np.log(p_probabilities)
-        cost2 = (1 - y) * np.log(temp_val) #np.log(1 - p_probabilities)
+        # cost2 = (1 - y) * np.log(temp_val) #np.log(1 - p_probabilities)
+        cost2 = (1 - y) * np.log(np.where(1 - p_probabilities < 1e-11, 1 -
+                                          p_probabilities + 1e-11,
+                                          1 - p_probabilities))
 
         cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
 
@@ -339,11 +341,11 @@ class LogisticRegression:
         results_proba = np.moveaxis(results_proba, 0, 1)
         # print (results_proba[0, 0], results_proba[0, 1], len(results_proba), results_proba.shape)
 
-        results = np.array([0 if results_proba[i, 0] >= results_proba[i, 1] else 1 for i in range(len(results_proba))])
-        #unsure if it should be 0 if... else 1 or 1 if... else 0.
-        
-        return results
+        results = np.array([0 if results_proba[i, 0] >= results_proba[i, 1]
+                            else 1 for i in range(len(results_proba))])
+        # unsure if it should be 0 if... else 1 or 1 if... else 0.
 
+        return results
 
     def predict_proba(self, X):
         """Predicts probability of a design matrix X of shape (N, p - 1)."""
@@ -351,11 +353,11 @@ class LogisticRegression:
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
 
-        print (X.shape)
+        print(X.shape)
 
         X = np.hstack([np.ones((X.shape[0], 1)), X])
 
-        print (X.shape)
+        print(X.shape)
         probabilities = self._sigmoid(self._predict(X, self.coef))
         results = np.asarray([1 - probabilities, probabilities])
         return np.moveaxis(results, 0, 1)

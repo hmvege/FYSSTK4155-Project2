@@ -59,6 +59,7 @@ def softmax_derivative(x):
     z_ij = np.einsum("i,j->ij", z_exp, z_exp)
     return z_id - z_ij
 
+
 def heaviside(x):
     """The Heaviside activation function.
 
@@ -98,7 +99,7 @@ def relu_derivative(x):
     return np.where(relu(x) > 0, 1, 0)
 
 
-def tanh(x):
+def tanh_(x):
     """The tangens hyperbolicus activation function.
 
     Args:
@@ -113,7 +114,7 @@ def tanh_derivative(x):
     Args:
         x (ndarray): weighted sum of inputs
     """
-    return 1 - tanh(x)**2
+    return 1 - tanh_(x)**2
 
 
 # =============================================================================
@@ -121,17 +122,35 @@ def tanh_derivative(x):
 # =============================================================================
 
 
-def mse_cost(x, y):
+def mse_cost(y, y_true):
     """Mean Square error cost function."""
-    return 0.5*np.sum((x - y)**2)#/y.shape[0]
+    return 0.5*np.sum((y - y_true)**2)  # /y.shape[0]
 
 
-def mse_cost_derivative(x, y):
+def mse_cost_derivative(y, y_true):
     """Mean Square error cost function derivative."""
-    return (x - y)
+    return (y - y_true)
 
-def log_entropy(x, y):
-    pass
 
-def log_entropy_derivative(x, y):
-    pass
+def log_entropy(y, y_true):
+    """Cross entropy cost function."""
+
+    cost1 = y_true * np.log(y)
+    cost2 = (1 - y_true) * np.log(1 - y)
+    return - np.sum(cost1 + cost2)
+
+
+def log_entropy_derivative(y, y_true):
+    """Derivative of cross entropy cost function."""
+    y = np.clip(y, 1e-10, 1 - 1e-10)
+    return (y - y_true) / (y*(1 - y))
+
+
+def exponential_cost(y, y_true, tau=0.1):
+    """Exponential cost function."""
+    return tau*np.exp(1/tau * np.sum((y-y_true)**2))
+
+
+def exponential_cost_derivative(y, y_true, tau=0.1):
+    """Exponential cost function gradient."""
+    return 2/tau * (y-y_true)*exponential_cost(y, y_true, tau)
