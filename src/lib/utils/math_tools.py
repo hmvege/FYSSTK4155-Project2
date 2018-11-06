@@ -161,3 +161,35 @@ def exponential_cost(y, y_true, tau=0.1):
 def exponential_cost_derivative(y, y_true, tau=0.1):
     """Exponential cost function gradient."""
     return 2/tau * (y-y_true)*exponential_cost(y, y_true, tau)
+
+
+
+# =============================================================================
+# REGULARIZATIONS
+# =============================================================================
+
+
+def _l1(weights):
+    """The L1 norm."""
+    return np.linalg.norm(weights, ord=1)
+
+
+def _l1_derivative(weights):
+    """The derivative of the L1 norm."""
+    # NOTE: Include this in report
+    # https://math.stackexchange.com/questions/141101/minimizing-l-1-regularization
+    return np.sign(weights)
+
+
+def _l2(weights):
+    """The L2 norm."""
+    return np.linalg.norm(weights)
+
+
+def _l2_derivative(weights):
+    """The derivative of the L2 norm."""
+    # NOTE: Include this in report
+    # https://math.stackexchange.com/questions/2792390/derivative-of-
+    # euclidean-norm-l2-norm
+    return 2*weights
+

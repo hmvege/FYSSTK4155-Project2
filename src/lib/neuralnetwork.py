@@ -98,7 +98,7 @@ class MultilayerPerceptron:
                            "activations:".format(
                                activation, ", ".join(AVAILABLE_ACTIVATIONS)))
 
-# TODO: final activation derivative never used when backpropagating?
+# TODO: final activation derivative never used when backpropagating? Derive the backpropegation again perhaps
 
     def _set_output_layer_activation(self, output_activation):
         """Sets the final layer activation."""

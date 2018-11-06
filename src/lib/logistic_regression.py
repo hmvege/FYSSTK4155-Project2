@@ -3,93 +3,30 @@
 import numpy as np
 import scipy
 import copy as cp
-import abc
 import utils.math_tools as umath
+import utils.optimize as uopt
 from utils.math_tools import AVAILABLE_OUTPUT_ACTIVATIONS
 
-
-def _l1(weights):
-    """The L1 norm."""
-    return np.linalg.norm(weights, ord=1)
-
-
-def _l1_derivative(weights):
-    """The derivative of the L1 norm."""
-    # NOTE: Include this in report
-    # https://math.stackexchange.com/questions/141101/minimizing-l-1-regularization
-    return np.sign(weights)
-
-
-def _l2(weights):
-    """The L2 norm."""
-    return np.linalg.norm(weights)
-
-
-def _l2_derivative(weights):
-    """The derivative of the L2 norm."""
-    # NOTE: Include this in report
-    # https://math.stackexchange.com/questions/2792390/derivative-of-
-    # euclidean-norm-l2-norm
-    return 2*weights
-
-
-class _OptimizerBase(abc.ABC):
-    """Base class for optimization."""
-
-    def __init__(self):
-        """No initialization needed."""
-
-    # def set_regularization_method(self, penalty):
-    #     """Set the penalty/regularization method to use."""
-
-    #     self.penalty = penalty
-
-    #     if penalty == "l1":
-    #         self._get_penalty = lambda x: 0.0
-    #     elif penalty == "l2":
-    #         self._get_penalty = lambda x: 0.0
-    #     elif penalty == None:
-    #         self._get_penalty = lambda x: 0.0
-    #     else:
-    #         raise KeyError(("{} not recognized as a regularization"
-    #                         " method.".format(penalty)))
-
-    # Abstract class methods makes it so that thet MUST be overwritten
-    @abc.abstractmethod
-    def optimize(self, f, x0):
-        pass
-
-
-class GradientDescent(_OptimizerBase):
-    pass
-
-
-class ConjugateGradient(_OptimizerBase):
-    def optimize(self, f, x0):
-        return scipy.optimize(f, x0, method="CG")
-
-
-class SGA(_OptimizerBase):
-    pass
-
-
-class NewtonRaphson(_OptimizerBase):
-    def optimize(self, f, x0):
-        return scipy.optimize.newton(f, x0)
+# TODO: validate SGD without minibatches
+# TODO: validate SGD with minibatches
+# TODO: validate Newton-Raphson
+# TODO: implement momentum
+# TODO: clean up cost function - move outside?
 
 
 class LogisticRegression:
     """An implementation of Logistic regression."""
     _fit_performed = False
 
-    def __init__(self, solver="gradient_descent", activation="sigmoid",
-                 max_iter=100, penalty="l2", tol=1e-4, lr=1.0, alpha=1.0,
-                 momentum=0.0):
+    def __init__(self, solver="gd", activation="sigmoid",
+                 max_iter=100, penalty="l2", tol=1e-8, alpha=1.0,
+                 momentum=0.0, mini_batch_size=50):
         """Sets up the linalg backend.
 
         Args:
             solver (str): what kind of solver method to use. Default is 
-                'gradient_descent'.
+                'gd' (gradient descent). Choices: 'gd', 'cg', 'sga', 
+                'sga-mb', 'nr'.
             activation (str): type of activation function to use. Optional, 
                 default is 'sigmoid'.
             max_iter (int): number of iterations to run gradient descent for,
@@ -101,60 +38,64 @@ class LogisticRegression:
             alpha (float): regularization strength. Default is 1.0.
             momentum (float): adds a momentum, in which the current gradient 
                 deepends on the last gradient. Default is 0.0.
+            mini_batch_size (int): size of mini-batches. Only available for 
+                sga-mb. Optional, default is 50.
         """
-
-        self._set_optimizer(solver)
-        self._set_activation_function(activation)
-        self._set_regularization_method(penalty)
 
         self.penalty = penalty
         self.max_iter = max_iter
         self.tol = tol
         self.alpha = alpha
         self.momentum = momentum
+        self.mini_batch_size = mini_batch_size
 
-    def _set_optimizer(self, solver):
+        self._set_optimizer(solver)
+        self._set_activation_function(activation)
+        self._set_regularization_method(penalty)
+
+    def _set_optimizer(self, solver_method):
         """Set the penalty/regularization method to use."""
-        self.solver = solver
+        self.solver_method = solver_method
 
-        if solver == "gradient_descent":  # aka Steepest descent
-            self._get_solver = None
-        elif solver == "conjugate_gradient":
-            self._get_solver = None
-        elif solver == "sga":  # Stochastic Gradient Descent
-            self._get_solver = None
-        elif solver == "nr":  # Newton-Raphson method
-            self._get_solver = None
+        if solver_method == "gd":
+            # aka Steepest descent
+            self.solver = uopt.GradientDescent(momentum=self.momentum)
+        elif solver_method == "cg":
+            self.solver = uopt.ConjugateGradient(momentum=self.momentum)
+        elif solver_method == "sga":
+            # Stochastic Gradient Descent
+            self.solver = uopt.SGA(momentum=self.momentum)
+        elif solver_method == "sga-mb":
+            # Stochastic Gradient Descent with mini batches
+            self.solver = uopt.SGA(momentum=self.momentum,
+                                   use_minibatches=True,
+                                   mini_batch_size=self.mini_batch_size)
+        elif solver_method == "nr":
+            # Newton-Raphson method
+            self.solver = uopt.NewtonRaphson(
+                momentum=self.momentum, tol=self.tol)
         else:
             raise KeyError(("{} not recognized as a solver"
-                            " method.".format(solver)))
+                            " method. Choices: {}.".format(
+                                solver_method,
+                                ", ".join(uopt.OPTIMIZERS_KEYWORDS))))
 
     def _set_regularization_method(self, penalty):
         """Set the penalty/regularization method to use."""
         self.penalty = penalty
 
         if penalty == "l1":
-            self._get_penalty = _l1
-            self._get_penalty_derivative = _l1_derivative
+            self._get_penalty = umath._l1
+            self._get_penalty_derivative = umath._l1_derivative
         elif penalty == "l2":
-            self._get_penalty = _l2
-            self._get_penalty_derivative = _l2_derivative
+            self._get_penalty = umath._l2
+            self._get_penalty_derivative = umath._l2_derivative
         elif isinstance(type(penalty), None):
             self._get_penalty = lambda x: 0.0
             self._get_penalty_derivative = lambda x: 0.0
         else:
             raise KeyError(("{} not recognized as a regularization"
                             " method.".format(penalty)))
-
-    def _set_learning_rate(self, eta):
-        """Sets the learning rate."""
-        if isinstance(eta, float):
-            self._update_learning_rate = lambda _i, _N: eta
-        elif eta == "inverse":
-            self._update_learning_rate = lambda _i, _N: 1 - _i/float(_N+1)
-        else:
-            raise KeyError(("Eta {} is not recognized learning"
-                            " rate.".format(eta)))
 
     def _set_activation_function(self, activation):
         """Sets the final layer activation."""
@@ -211,49 +152,43 @@ class LogisticRegression:
         self.coef = np.zeros((self.p, self.N_labels))
         self.coef[0, :] = np.ones(self.N_labels)
 
-        # Sets the learning rate
-        self._set_learning_rate(eta)
+        # import sklearn.linear_model.logistic as sk_modellog
+        # print(self.coef.shape, X.shape, y.shape)
+        # print(self.coef.ravel().shape, X.shape, y.ravel().shape)
+        # print(sk_modellog._logistic_loss_and_grad(
+        #     self.coef.ravel(), X, y.ravel(), self.alpha))
+        # print(self._cost_function(X, y, self.coef),
+        #       self._cost_function_gradient(X, y, self.coef))
+        # # exit(1)
 
-        # Sets up method for storing cost function values
-        self.cost_values = []
-        self.cost_values.append(self._cost_function(X, y, self.coef))
+        # Calls whatever solver-method that has been set.
+        self.coef = self.solver.solve(X, y, self.coef, self._cost_function,
+                                      self._cost_function_gradient, eta=eta,
+                                      max_iter=self.max_iter)
 
-        # Temp, clean this part up
-        def learning_rate(t, t0, t1):
-            return t0 / (t + t1)
+        print("My coef:", self.coef)
 
-        for i in range(self.max_iter):
-            # Updates the learning rate
-            eta_ = self._update_learning_rate(i, self.max_iter)
+        def fun(w0, X_, y_):
+            p = (1/(1 + np.exp(- X_ @ w0)))
+            loss = - np.sum(y_*np.log(p) + (1-y_)*np.log(1-p))
+            loss += np.dot(w0, w0)*0.5
+            return loss
 
-            # # OLD
-            self.coef = self._gradient_descent(X, y, self.coef, eta_)
-            # # self.coef += self._l2_regularization(self.coef)
+        def grad_fun(w0, X_, y_):
+            grad = X_.T @ (1/(1 + np.exp(- X_ @ w0)) - y_)
+            grad += w0*4
+            return grad
 
-            # Appends cost function values
-            self.cost_values.append(self._cost_function(X, y, self.coef))
+        from scipy.optimize import minimize as scp_minimize
+
+        scp_min_res = scp_minimize(fun, self.coef.ravel(), args=(
+            X, y.ravel()), method="L-BFGS-B", tol=1e-15)
+        # self.coef = scp_minimize(fun, self.coef.ravel(), args=(
+        #     X, y.ravel()), method="L-BFGS-B", jac=grad_fun)
+        self.coef = scp_min_res.x
+        print("Scipy-minimize coef:", self.coef)
 
         self._fit_performed = True
-
-    def _gradient_descent(self, X, y, weights, lr=1.0):
-        """Cost/loss function for logistic regression. Also known as the 
-        cross entropy in statistics.
-
-        Args:
-            X (ndarray): design matrix, shape (N, p).
-            y (ndarray): predicted values, shape (N, labels).
-            weights (ndarray): matrix of coefficients (p, labels).
-            lr (float): learning rate. Default is 0.1.
-        Returns:
-            (ndarray): 1D array of weights
-        """
-
-        # TODO: move this to outside? Make it take cost_function_gradient and features
-
-        gradient = self._cost_function_gradient(X, y, weights) / X.shape[0]
-
-        weights -= gradient*lr/X.shape[0]
-        return weights
 
     def _cost_function(self, X, y, weights, eps=1e-15):
         """Cost/loss function for logistic regression. Also known as the 
@@ -273,8 +208,15 @@ class LogisticRegression:
 
         # Removes bad values and replaces them with limiting values eps
         p_probabilities = np.clip(p_probabilities, eps, 1-eps)
+        # p_probabilities = 1 / (1 + np.exp(-X@weights))
 
         # Sets up cross-entropy cost function for binary output
+        # cost1 = - y * np.log(p_probabilities)
+        # cost2 = - (1 - y) * np.log(1 - p_probabilities)
+        # cost = np.sum(cost1 + cost2) + self._get_penalty(weights)*self.alpha*0.5
+
+        # cost = - np.sum(y*(X@weights) - np.log(1 + np.exp(X@weights)))
+
         cost1 = - y * np.log(p_probabilities)
         cost2 = (1 - y) * np.log(1 - p_probabilities)
         cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
@@ -287,7 +229,17 @@ class LogisticRegression:
             dC(W)/dw = - X^T * (y - p(X^T * w))
         """
         grad = X.T @ (self._activation(self._predict(X, weights)) - y)
+
+        # grad = X.T @ ((self._activation(self._predict(X, weights)) - 1) * y)
+        # grad = X.T @ (y - self._activation(self._predict(X, weights)))
+        # grad = X.T @ ((1 - self._activation(self._predict(X, weights)))*y)
+
+        # Result from deriving by hand:
+        # grad = X.T @ (y - self._activation(self._predict(X, weights)))
+        # grad += self.alpha*self._get_penalty_derivative(weights)*0.5
+
         grad += self.alpha*self._get_penalty_derivative(weights)
+
         return grad
 
     def _cost_function_laplacian(self, X, y, w):
@@ -343,9 +295,6 @@ class LogisticRegression:
         Args:
             X (ndarray): design matrix of shape (N, p - 1)
         """
-
-        # predict(X)  Predict class labels for samples in X.
-
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
 
@@ -368,9 +317,6 @@ class LogisticRegression:
 
     def predict_proba(self, X):
         """Predicts probability of a design matrix X of shape (N, p - 1)."""
-
-        # predict_proba(X)    Probability estimates.
-
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
 
@@ -396,17 +342,32 @@ def __test_logistic_regression():
 
     # SK-Learn logistic regression
     sk_log_reg = sk_model.LogisticRegression(
-        solver="liblinear", C=1.0, penalty="l2", max_iter=10000)
+        solver="sag", C=1.0, penalty="l2", max_iter=1000000, tol=1e-15)
     sk_log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
     X_new = np.linspace(0, 3, 100).reshape(-1, 1)
     y_sk_proba = sk_log_reg.predict_proba(X_new)
 
     print("SK-learn coefs: ", sk_log_reg.intercept_, sk_log_reg.coef_)
 
+    # Local implementation parameters
+    penalty = "l2"
+    learning_rate = 1.0
+    max_iter = 10000
+    solver = "gd"
+    activation = "sigmoid"
+    tol = 1e-8
+    alpha = 1.0
+    momentum = 0.0
+    mini_batch_size = 20
+
     # Manual logistic regression
-    log_reg = LogisticRegression(penalty="l1", lr=1.0, max_iter=10000)
+    log_reg = LogisticRegression(penalty=penalty, solver=solver,
+                                 activation=activation, tol=tol,
+                                 alpha=alpha, momentum=momentum,
+                                 mini_batch_size=mini_batch_size,
+                                 max_iter=max_iter)
     log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(
-        y_train).reshape(-1, 1), eta="inverse")
+        y_train).reshape(-1, 1), eta=learning_rate)
     y_proba = log_reg.predict_proba(X_new)
 
     print("Manual coefs:", log_reg.coef_)
@@ -446,6 +407,16 @@ def __test_logistic_regression():
     assert np.allclose(sk_score, local_score), (
         "Predicted score do not match: (SKLearn) {} != {} "
         "(local implementation)".format(sk_score, local_score))
+
+    # print("Checking the cost function.")
+    # X_design = np.hstack([np.ones((X.shape[0], 1)), X])
+    # print(log_reg.coef_.shape, X_test.shape, y.shape)
+    # print(log_reg.coef_.ravel().shape, X_test.shape, y.ravel().shape)
+    # print(sk_model.logistic._logistic_loss_and_grad(
+    #     log_reg.coef_.ravel(), X_design, y.ravel(), log_reg.alpha))
+    # # print(log_reg._cost_function(X_design, y.ravel(), log_reg.coef_),
+    # #       log_reg._cost_function_gradient(X_design, y.ravel(), log_reg.coef_))
+    # exit("exits @ 382")
 
     fig = plt.figure()
 
