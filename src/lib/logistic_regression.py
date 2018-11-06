@@ -3,47 +3,60 @@
 import numpy as np
 import scipy
 import copy as cp
+import abc
+import utils.math_tools as umath
+from utils.math_tools import AVAILABLE_OUTPUT_ACTIVATIONS
 
 
 def _l1(weights):
+    """The L1 norm."""
     return np.linalg.norm(weights, ord=1)
 
 
 def _l1_derivative(weights):
-    # NOTE: include this in report
+    """The derivative of the L1 norm."""
+    # NOTE: Include this in report
     # https://math.stackexchange.com/questions/141101/minimizing-l-1-regularization
     return np.sign(weights)
 
 
 def _l2(weights):
+    """The L2 norm."""
     return np.linalg.norm(weights)
 
 
 def _l2_derivative(weights):
-    # NOTE: include this in report
-    # https://math.stackexchange.com/questions/2792390/derivative-of-euclidean-norm-l2-norm
+    """The derivative of the L2 norm."""
+    # NOTE: Include this in report
+    # https://math.stackexchange.com/questions/2792390/derivative-of-
+    # euclidean-norm-l2-norm
     return 2*weights
 
 
-class _OptimizerBase:
+class _OptimizerBase(abc.ABC):
     """Base class for optimization."""
 
-    def set_regularization_method(self, penalty):
-        """Set the penalty/regularization method to use."""
+    def __init__(self):
+        """No initialization needed."""
 
-        self.penalty = penalty
+    # def set_regularization_method(self, penalty):
+    #     """Set the penalty/regularization method to use."""
 
-        if penalty == "l1":
-            self._get_penalty = lambda x: 0.0
-        elif penalty == "l2":
-            self._get_penalty = lambda x: 0.0
-        elif penalty == None:
-            self._get_penalty = lambda x: 0.0
-        else:
-            raise KeyError(("{} not recognized as a regularization"
-                            " method.".format(penalty)))
+    #     self.penalty = penalty
 
-    def optimize(self):
+    #     if penalty == "l1":
+    #         self._get_penalty = lambda x: 0.0
+    #     elif penalty == "l2":
+    #         self._get_penalty = lambda x: 0.0
+    #     elif penalty == None:
+    #         self._get_penalty = lambda x: 0.0
+    #     else:
+    #         raise KeyError(("{} not recognized as a regularization"
+    #                         " method.".format(penalty)))
+
+    # Abstract class methods makes it so that thet MUST be overwritten
+    @abc.abstractmethod
+    def optimize(self, f, x0):
         pass
 
 
@@ -52,7 +65,8 @@ class GradientDescent(_OptimizerBase):
 
 
 class ConjugateGradient(_OptimizerBase):
-    pass
+    def optimize(self, f, x0):
+        return scipy.optimize(f, x0, method="CG")
 
 
 class SGA(_OptimizerBase):
@@ -60,37 +74,44 @@ class SGA(_OptimizerBase):
 
 
 class NewtonRaphson(_OptimizerBase):
-    pass
+    def optimize(self, f, x0):
+        return scipy.optimize.newton(f, x0)
 
 
 class LogisticRegression:
     """An implementation of Logistic regression."""
     _fit_performed = False
 
-    def __init__(self, solver="gradient_descent", max_iter=100,
-                 penalty="l2", tol=1e-4, lr=1.0, alpha=1.0):
+    def __init__(self, solver="gradient_descent", activation="sigmoid",
+                 max_iter=100, penalty="l2", tol=1e-4, lr=1.0, alpha=1.0,
+                 momentum=0.0):
         """Sets up the linalg backend.
 
         Args:
             solver (str): what kind of solver method to use. Default is 
                 'gradient_descent'.
+            activation (str): type of activation function to use. Optional, 
+                default is 'sigmoid'.
             max_iter (int): number of iterations to run gradient descent for,
                 default is 100.
             penalty (str): what kind of regulizer to use, either 'l1' or 'l2'. 
                 Optional, default is 'l2'.
             tol (float): tolerance or when to cut of calculations. Optional, 
                 default is 1e-4.
-            lr (float): learning reate. Optional, default is 1.0.
             alpha (float): regularization strength. Default is 1.0.
+            momentum (float): adds a momentum, in which the current gradient 
+                deepends on the last gradient. Default is 0.0.
         """
 
         self._set_optimizer(solver)
+        self._set_activation_function(activation)
         self._set_regularization_method(penalty)
+
         self.penalty = penalty
         self.max_iter = max_iter
         self.tol = tol
-        self.lr = lr
         self.alpha = alpha
+        self.momentum = momentum
 
     def _set_optimizer(self, solver):
         """Set the penalty/regularization method to use."""
@@ -110,7 +131,6 @@ class LogisticRegression:
 
     def _set_regularization_method(self, penalty):
         """Set the penalty/regularization method to use."""
-
         self.penalty = penalty
 
         if penalty == "l1":
@@ -126,38 +146,57 @@ class LogisticRegression:
             raise KeyError(("{} not recognized as a regularization"
                             " method.".format(penalty)))
 
+    def _set_learning_rate(self, eta):
+        """Sets the learning rate."""
+        if isinstance(eta, float):
+            self._update_learning_rate = lambda _i, _N: eta
+        elif eta == "inverse":
+            self._update_learning_rate = lambda _i, _N: 1 - _i/float(_N+1)
+        else:
+            raise KeyError(("Eta {} is not recognized learning"
+                            " rate.".format(eta)))
+
+    def _set_activation_function(self, activation):
+        """Sets the final layer activation."""
+
+        assert activation in AVAILABLE_OUTPUT_ACTIVATIONS, (
+            "{} not among available output activation functions: "
+            "{}".format(activation, ", ".join(
+                AVAILABLE_OUTPUT_ACTIVATIONS)))
+
+        self.activation = activation
+
+        if activation == "sigmoid":
+            self._activation = umath.sigmoid
+        elif activation == "softmax":
+            self._activation = umath.softmax
+        else:
+            raise KeyError("Final layer activation type '{}' not "
+                           "recognized. Available activations:".format(
+                               activation, ", ".join(
+                                   AVAILABLE_OUTPUT_ACTIVATIONS)))
+
     @property
     def coef_(self):
         return self.coef
 
     @coef_.getter
     def coef_(self):
-        return self.coef
+        return cp.deepcopy(self.coef)
 
     @coef_.setter
     def coef_(self, value):
         self.coef = value
 
-    @property
-    def coef_var(self):
-        return self.beta_coefs_var
-
-    @coef_var.getter
-    def coef_var(self):
-        return self.beta_coefs_var
-
-    @coef_var.setter
-    def coef_var(self, value):
-        self.beta_coefs_var = value
-
-    def fit(self, X_train, y_train):
+    def fit(self, X_train, y_train, eta=1.0):
         """Performs a linear regression fit for data X_train and y_train.
 
         Args:
-            X_train (ndarray):
-            y_train (ndarray):
+            X_train (ndarray): input data.
+            y_train (ndarray): output one-hot labeled data.
+            eta (float): learning rate, optional. Choices: float(constant), 
+                "inverse". "Inverse" sets eta to 1 - i/(N+1). Default is 1.0.
         """
-
         X = cp.deepcopy(X_train)
         y = cp.deepcopy(y_train)
 
@@ -172,6 +211,9 @@ class LogisticRegression:
         self.coef = np.zeros((self.p, self.N_labels))
         self.coef[0, :] = np.ones(self.N_labels)
 
+        # Sets the learning rate
+        self._set_learning_rate(eta)
+
         # Sets up method for storing cost function values
         self.cost_values = []
         self.cost_values.append(self._cost_function(X, y, self.coef))
@@ -180,18 +222,16 @@ class LogisticRegression:
         def learning_rate(t, t0, t1):
             return t0 / (t + t1)
 
-        for i in range(int(self.max_iter)):
-            # Calls the optimizer class which
-            # self.coef = self._optimize(X, y, self.coef)
+        for i in range(self.max_iter):
+            # Updates the learning rate
+            eta_ = self._update_learning_rate(i, self.max_iter)
 
             # # OLD
-            self.coef = self._gradient_descent(X, y, self.coef, self.lr)
+            self.coef = self._gradient_descent(X, y, self.coef, eta_)
             # # self.coef += self._l2_regularization(self.coef)
 
             # Appends cost function values
             self.cost_values.append(self._cost_function(X, y, self.coef))
-
-        # self.coef[0, 0] = 2.61789264
 
         self._fit_performed = True
 
@@ -210,15 +250,12 @@ class LogisticRegression:
 
         # TODO: move this to outside? Make it take cost_function_gradient and features
 
-        # y_pred = self._predict(X, weights)
+        gradient = self._cost_function_gradient(X, y, weights) / X.shape[0]
 
-        gradient = self._cost_function_gradient(
-            X, y, weights) / X.shape[0]
-
-        weights -= gradient*lr
+        weights -= gradient*lr/X.shape[0]
         return weights
 
-    def _cost_function(self, X, y, weights):
+    def _cost_function(self, X, y, weights, eps=1e-15):
         """Cost/loss function for logistic regression. Also known as the 
         cross entropy in statistics.
 
@@ -232,16 +269,14 @@ class LogisticRegression:
 
         y_pred = self._predict(X, weights)
 
-        p_probabilities = self._sigmoid(y_pred)
+        p_probabilities = self._activation(y_pred)
 
-        # temp_val = [1 - p_probabilities[i] + 1e-11 if 1 - p_probabilities[i] < 1e-11 else 1 - p_probabilities[i] for i in range(len(p_probabilities))]
+        # Removes bad values and replaces them with limiting values eps
+        p_probabilities = np.clip(p_probabilities, eps, 1-eps)
 
+        # Sets up cross-entropy cost function for binary output
         cost1 = - y * np.log(p_probabilities)
-        # cost2 = (1 - y) * np.log(temp_val) #np.log(1 - p_probabilities)
-        cost2 = (1 - y) * np.log(np.where(1 - p_probabilities < 1e-11, 1 -
-                                          p_probabilities + 1e-11,
-                                          1 - p_probabilities))
-
+        cost2 = (1 - y) * np.log(1 - p_probabilities)
         cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
 
         return cost
@@ -251,7 +286,7 @@ class LogisticRegression:
 
             dC(W)/dw = - X^T * (y - p(X^T * w))
         """
-        grad = X.T @ (self._sigmoid(self._predict(X, weights)) - y)
+        grad = X.T @ (self._activation(self._predict(X, weights)) - y)
         grad += self.alpha*self._get_penalty_derivative(weights)
         return grad
 
@@ -263,23 +298,7 @@ class LogisticRegression:
             W = p(1 - X^T * w) * p(X^T * w)
         """
         y_pred = self._predict(X, w)
-        return X.T @ self._sigmoid(1 - y_pred) @ self._sigmoid(y_pred) @ X
-
-    def _sigmoid(self, y):
-        """Sigmoid function.
-
-        P(y) = 1 / (1 + exp(-y))
-
-        Args:
-            y (ndarray): array of predictions.
-        Returns:
-            (ndarray): probabilities for given y.
-        """
-
-        # exp_ = np.exp(y)
-        # return exp_ / (1 + exp_)
-
-        return 1./(1 + np.exp(-y))  # Alternative return
+        return X.T @ self._activation(1-y_pred) @ self._activation(y_pred) @ X
 
     def _predict(self, X, weights):
         """Performs a regular fit of parameters and sends them through 
@@ -291,23 +310,20 @@ class LogisticRegression:
         """
         return X @ weights
 
-    def score(self, X, Y):
+    def score(self, X, y):
         """Returns the mean accuracy of the fit.
 
         Args:
-            X (ndarray): array of shape (N, p - 1) to classify
-            Y (ndarray): true labels
+            X (ndarray): array of shape (N, p - 1) to classify.
+            Y (ndarray): true labels.
 
         Returns:
             (float): mean accuracy score for features_test values.
         """
-
         pred = self.predict(X)
+        accuracies = np.sum(self._indicator(pred, y))
 
-        nominator = np.sum(self._indicator(pred, Y))
-        denominator = float(Y.shape[0])
-
-        return nominator/denominator
+        return accuracies/float(y.shape[0])
 
     def _indicator(self, features_test, labels_test):
         """Returns 1 if features_test[i] == labels_test[i]
@@ -319,74 +335,117 @@ class LogisticRegression:
         Returns:
             (array): elements are 1 or 0
         """
-
-        # print (features_test.shape, len(labels_test))
-
-        indicator_array = np.where(features_test == labels_test, 1, 0)
-        # print(indicator_array)
-
-        return indicator_array
+        return np.where(features_test == labels_test, 1, 0)
 
     def predict(self, X):
-        """Predicts category 1 or 2 of a design matrix X of shape (N, p - 1)."""
+        """Predicts category 1 or 2 of X.
+
+        Args:
+            X (ndarray): design matrix of shape (N, p - 1)
+        """
+
+        # predict(X)  Predict class labels for samples in X.
 
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
 
+        # Adds intercept
         X = np.hstack([np.ones((X.shape[0], 1)), X])
 
-        # print (X.shape)
-        probabilities = self._sigmoid(self._predict(X, self.coef))
-        results_proba = np.asarray([1 - probabilities, probabilities])
-        results_proba = np.moveaxis(results_proba, 0, 1)
-        # print (results_proba[0, 0], results_proba[0, 1], len(results_proba), results_proba.shape)
+        # Retrieves probabilitites
+        probabilities = self._activation(self._predict(X, self.coef)).ravel()
 
-        results = np.array([0 if results_proba[i, 0] >= results_proba[i, 1]
-                            else 1 for i in range(len(results_proba))])
-        # unsure if it should be 0 if... else 1 or 1 if... else 0.
+        # Sets up binary probability
+        results_proba = np.asarray([1 - probabilities, probabilities])
+
+        # Moves axis from (2, N_probabilitites) to (N_probabilitites, 2)
+        results_proba = np.moveaxis(results_proba, 0, 1)
+
+        # Sets up binary prediction of either 0 or one
+        results = np.where(results_proba[:, 0] >= results_proba[:, 1], 0, 1).T
 
         return results
 
     def predict_proba(self, X):
         """Predicts probability of a design matrix X of shape (N, p - 1)."""
 
+        # predict_proba(X)    Probability estimates.
+
         if not self._fit_performed:
             raise UserWarning("Fit not performed.")
 
-        print(X.shape)
-
         X = np.hstack([np.ones((X.shape[0], 1)), X])
-
-        print(X.shape)
-        probabilities = self._sigmoid(self._predict(X, self.coef))
+        probabilities = self._activation(self._predict(X, self.coef)).ravel()
         results = np.asarray([1 - probabilities, probabilities])
+
         return np.moveaxis(results, 0, 1)
 
 
 def __test_logistic_regression():
     from sklearn import datasets
     import sklearn.linear_model as sk_model
+    import sklearn.model_selection as sk_modsel
     import matplotlib.pyplot as plt
 
     iris = datasets.load_iris()
     X = iris["data"][:, 3:]  # petal width
     y = (iris["target"] == 2).astype(np.int)  # 1 if Iris-Virginica, else 0
 
+    X_train, X_test, y_train, y_test = \
+        sk_modsel.train_test_split(X, y, test_size=0.25, shuffle=True)
+
     # SK-Learn logistic regression
     sk_log_reg = sk_model.LogisticRegression(
         solver="liblinear", C=1.0, penalty="l2", max_iter=10000)
-    sk_log_reg.fit(cp.deepcopy(X), cp.deepcopy(y))
-    X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
+    sk_log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
+    X_new = np.linspace(0, 3, 100).reshape(-1, 1)
     y_sk_proba = sk_log_reg.predict_proba(X_new)
 
     print("SK-learn coefs: ", sk_log_reg.intercept_, sk_log_reg.coef_)
 
     # Manual logistic regression
-    log_reg = LogisticRegression(penalty="l1", lr=1.0, max_iter=100000)
-    log_reg.fit(cp.deepcopy(X), cp.deepcopy(y.reshape(-1, 1)))
+    log_reg = LogisticRegression(penalty="l1", lr=1.0, max_iter=10000)
+    log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(
+        y_train).reshape(-1, 1), eta="inverse")
     y_proba = log_reg.predict_proba(X_new)
 
     print("Manual coefs:", log_reg.coef_)
+
+    # =========================================================================
+    # Runs tests with SK learn's coefficients, and checks that our
+    # implementation's predictions match SK-learn's predictions.
+    # =========================================================================
+
+    print("Score before using SK-learn's coefficients: {0:.16f}".format(
+        log_reg.score(X_test, y_test)))
+
+    # Sets the coefficients from the SK-Learn to local method
+    log_reg.coef_ = np.asarray(
+        [sk_log_reg.intercept_[0], sk_log_reg.coef_[0, 0]]).reshape((-1, 1))
+
+    print("Score after using SK-learn's coefficients: {0:.16f}".format(
+        log_reg.score(X_test, y_test)))
+
+    # Asserts that predicted probabilities matches.
+    y_sk_proba_compare = sk_log_reg.predict_proba(X_test)
+    y_proba_compare = log_reg.predict_proba(X_test)
+    assert np.allclose(y_sk_proba_compare, y_proba_compare), (
+        "Predicted probabilities do not match: (SKLearn) {} != {} "
+        "(local implementation)".format(y_sk_proba_compare, y_proba_compare))
+
+    # Asserts that the labels match
+    sk_predict = sk_log_reg.predict(X_test)
+    local_predict = log_reg.predict(X_test)
+    assert np.allclose(sk_predict, local_predict), (
+        "Predicted class labels do not match: (SKLearn) {} != {} "
+        "(local implementation)".format(sk_predict, local_predict))
+
+    # Assert that the scores match
+    sk_score = sk_log_reg.score(X_test, y_test)
+    local_score = log_reg.score(X_test, y_test)
+    assert np.allclose(sk_score, local_score), (
+        "Predicted score do not match: (SKLearn) {} != {} "
+        "(local implementation)".format(sk_score, local_score))
 
     fig = plt.figure()
 

@@ -2,12 +2,23 @@
 
 import numpy as np
 
+AVAILABLE_ACTIVATIONS = ["identity", "sigmoid", "relu", "tanh", "heaviside"]
+
+AVAILABLE_OUTPUT_ACTIVATIONS = [
+    "identity", "sigmoid", "softmax"]
+
+AVAILABLE_COST_FUNCTIONS = ["mse", "log_loss", "exponential_cost",
+                            "hellinger_distance",
+                            "kullback_leibler_divergence",
+                            "generalized_kullback_leibler_divergence",
+                            "itakura_saito_distance"]
+
 # =============================================================================
 # ACTIVATION FUNCTIONS
 # =============================================================================
 
 
-def logistic(x):
+def sigmoid(x):
     """Sigmoidal activation function.
 
     Args:
@@ -16,8 +27,8 @@ def logistic(x):
     return 1.0/(1.0 + np.exp(-x))
 
 
-def logistic_derivative(x):
-    s = logistic(x)
+def sigmoid_derivative(x):
+    s = sigmoid(x)
     return s*(1-s)
 
 
@@ -53,7 +64,6 @@ def softmax_derivative(x):
     Args:
         x (ndarray): weighted sum of inputs.
     """
-    raise ValueError("softmax_derivative not intended for hidden layers.")
     z_exp = softmax(x)
     z_id = np.einsum("i,j->ij", z_exp, np.eye(3))
     z_ij = np.einsum("i,j->ij", z_exp, z_exp)
@@ -122,28 +132,25 @@ def tanh_derivative(x):
 # =============================================================================
 
 
-def mse_cost(y, y_true):
+def mse_cost(y_pred, y_true):
     """Mean Square error cost function."""
-    return 0.5*np.sum((y - y_true)**2)  # /y.shape[0]
+    return 0.5*np.sum((y_pred - y_true)**2)  # /y.shape[0]
 
 
-def mse_cost_derivative(y, y_true):
+def mse_cost_derivative(y_pred, y_true):
     """Mean Square error cost function derivative."""
-    return (y - y_true)
+    return (y_pred - y_true)
 
 
-def log_entropy(y, y_true):
+def log_entropy(y_pred, y_true):
     """Cross entropy cost function."""
-
-    cost1 = y_true * np.log(y)
-    cost2 = (1 - y_true) * np.log(1 - y)
-    return - np.sum(cost1 + cost2)
+    return -np.sum(y_true * log(y))
 
 
-def log_entropy_derivative(y, y_true):
+def log_entropy_derivative(y_pred, y_true):
     """Derivative of cross entropy cost function."""
-    y = np.clip(y, 1e-10, 1 - 1e-10)
-    return (y - y_true) / (y*(1 - y))
+    y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+    return
 
 
 def exponential_cost(y, y_true, tau=0.1):
