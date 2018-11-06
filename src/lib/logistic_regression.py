@@ -161,32 +161,60 @@ class LogisticRegression:
         #       self._cost_function_gradient(X, y, self.coef))
         # # exit(1)
 
-        # Calls whatever solver-method that has been set.
-        self.coef = self.solver.solve(X, y, self.coef, self._cost_function,
-                                      self._cost_function_gradient, eta=eta,
-                                      max_iter=self.max_iter)
+        # # Calls whatever solver-method that has been set.
+        # self.coef = self.solver.solve(X, y, self.coef, self._cost_function,
+        #                               self._cost_function_gradient, eta=eta,
+        #                               max_iter=self.max_iter)
 
-        print("My coef:", self.coef)
 
         def fun(w0, X_, y_):
             p = (1/(1 + np.exp(- X_ @ w0)))
             loss = - np.sum(y_*np.log(p) + (1-y_)*np.log(1-p))
-            loss += np.dot(w0, w0)*0.5
+            # loss += np.dot(w0, w0)*0.5
+            # loss += np.linalg.norm(w0)**2
             return loss
 
         def grad_fun(w0, X_, y_):
             grad = X_.T @ (1/(1 + np.exp(- X_ @ w0)) - y_)
-            grad += w0*4
+            # grad += w0*4
             return grad
 
+        def fun_local(X_, y_, w0):
+            p = (1/(1 + np.exp(- X_ @ w0)))
+            loss = - np.sum(y_*np.log(p) + (1-y_)*np.log(1-p))
+            # loss += np.dot(w0, w0)*0.5
+            loss += np.linalg.norm(w0)**2
+            return loss
+
+        def grad_fun_local(X_, y_, w0):
+            grad = X_.T @ (1/(1 + np.exp(- X_ @ w0)) - y_)
+            # grad += w0*4
+            return grad
+
+
+        # coef_backup = self.coef
+        # # self.coef = np.array([[-2.78779828,  1.73756206]]).T
+        # self.solver = uopt.SGA()
+        # self.coef = self.solver.solve(X, y, self.coef, fun_local,
+        #                               grad_fun_local, eta=1.0,
+        #                               max_iter=self.max_iter)
+
+        # print("My coef:", self.coef)
+        
+
+        # self.coef=coef_backup
         from scipy.optimize import minimize as scp_minimize
 
         scp_min_res = scp_minimize(fun, self.coef.ravel(), args=(
             X, y.ravel()), method="L-BFGS-B", tol=1e-15)
+
         # self.coef = scp_minimize(fun, self.coef.ravel(), args=(
         #     X, y.ravel()), method="L-BFGS-B", jac=grad_fun)
+
         self.coef = scp_min_res.x
-        print("Scipy-minimize coef:", self.coef)
+        # print("Scipy-minimize coef:", self.coef)
+
+        # exit("exits @ 220")
 
         self._fit_performed = True
 
@@ -237,7 +265,6 @@ class LogisticRegression:
         # Result from deriving by hand:
         # grad = X.T @ (y - self._activation(self._predict(X, weights)))
         # grad += self.alpha*self._get_penalty_derivative(weights)*0.5
-
         grad += self.alpha*self._get_penalty_derivative(weights)
 
         return grad
@@ -342,7 +369,7 @@ def __test_logistic_regression():
 
     # SK-Learn logistic regression
     sk_log_reg = sk_model.LogisticRegression(
-        solver="sag", C=1.0, penalty="l2", max_iter=1000000, tol=1e-15)
+        solver="sag", C=10000000.0, penalty="l2", max_iter=1000000, tol=1e-15)
     sk_log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
     X_new = np.linspace(0, 3, 100).reshape(-1, 1)
     y_sk_proba = sk_log_reg.predict_proba(X_new)
@@ -352,11 +379,11 @@ def __test_logistic_regression():
     # Local implementation parameters
     penalty = "l2"
     learning_rate = 1.0
-    max_iter = 10000
+    max_iter = 100000
     solver = "gd"
     activation = "sigmoid"
     tol = 1e-8
-    alpha = 1.0
+    alpha = 0.0
     momentum = 0.0
     mini_batch_size = 20
 
@@ -436,7 +463,7 @@ def __test_logistic_regression():
     ax2.plot(X_new, y_proba[:, 0], "b--", label="Not Iris-Virginica(Manual)")
     ax2.set_ylabel(r"Probability")
     ax2.legend()
-    plt.show()
+    # plt.show()
 
 
 if __name__ == '__main__':
