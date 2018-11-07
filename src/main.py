@@ -480,6 +480,7 @@ def task1c(sk=False):
         sys.exit()
 
 def main():
+    task1c();exit()
     if len(sys.argv) < 2:
         print ("You must give keyword argument b, c, d or e",
                "\n b runs a function which finds the coupling constant for 1d Ising",

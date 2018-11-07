@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from scipy.special import expit
 
 AVAILABLE_ACTIVATIONS = ["identity", "sigmoid", "relu", "tanh", "heaviside"]
 
@@ -24,7 +25,8 @@ def sigmoid(x):
     Args:
         x (ndarray): weighted sum of inputs
     """
-    return 1.0/(1.0 + np.exp(-x))
+    return expit(x)
+    # return 1.0/(1.0 + np.exp(-x))
 
 
 def sigmoid_derivative(x):
@@ -149,8 +151,8 @@ def log_entropy(y_pred, y_true):
 
 def log_entropy_derivative(y_pred, y_true):
     """Derivative of cross entropy cost function."""
-    y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-    return
+    # y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+    # return (y_pred - y_true)
 
 
 def exponential_cost(y, y_true, tau=0.1):

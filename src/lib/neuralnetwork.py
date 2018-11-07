@@ -273,7 +273,8 @@ class MultilayerPerceptron:
         delta_b = [np.empty(b.shape) for b in self.biases]
 
         # Gets initial delta value, first of the four equations
-        delta = self._cost_function_derivative(self.activations[-1], y).T
+        # delta = self._cost_function_derivative(self.activations[-1], y).T
+        delta = (y*(1 - self.activations[-1])).T
 
         # No final derivative?
         # delta *= self._output_activation_derivative(z_list[-1])
@@ -645,5 +646,5 @@ def __test_nn_sklearn_comparison():
 
 
 if __name__ == '__main__':
-    # __test_mlp_mnist()
-    __test_nn_sklearn_comparison()
+    __test_mlp_mnist()
+    # __test_nn_sklearn_comparison()
