@@ -185,7 +185,7 @@ def _l1_derivative(weights):
 
 def _l2(weights):
     """The L2 norm."""
-    return np.linalg.norm(weights)
+    return 0.5*np.dot(weights, weights)
 
 
 def _l2_derivative(weights):
@@ -193,5 +193,5 @@ def _l2_derivative(weights):
     # NOTE: Include this in report
     # https://math.stackexchange.com/questions/2792390/derivative-of-
     # euclidean-norm-l2-norm
-    return 2*weights
+    return weights
 

@@ -31,3 +31,5 @@ fig
 
 # Test
 *.bat
+
+*test_logreg.py # Log-reg testing file 
