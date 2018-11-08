@@ -51,7 +51,12 @@ class _OptimizerBase(abc.ABC):
                 Default is 10000.
             store_coefs (bool): store the coefficients as they are calculated.
                 Default is False.
-            tol (float): tolerance, when we will cut-off the calculations. Default is 
+            tol (float): tolerance, when we will cut-off the calculations. 
+                Default is 1e-8.
+            alpha (float): passes the alpha. Only used in
+                LogRegGradientDescent.
+            scale (int): input data size. Scales the cutoff norm in regards 
+                to data set size. Required by LogRegGradientDescent.
         """
 
         # Sets the learning rate
@@ -75,6 +80,7 @@ class LogRegGradientDescent(_OptimizerBase):
         """Gradient descent solver.
         """
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
+
         # Initialize beta-parameters
         beta = np.zeros(X.shape[1])
         beta_prev = beta.copy()
@@ -93,8 +99,6 @@ class LogRegGradientDescent(_OptimizerBase):
 
         for k in range(1, max_iter):
 
-            if k%100==0:print(k, norm, alpha)
-
             z = np.dot(X, beta)
             p = expit(z)
 
@@ -109,6 +113,7 @@ class LogRegGradientDescent(_OptimizerBase):
 
             norm = np.linalg.norm(gradient)
 
+            # To see progress, uncomment
             # if(k % 10 == 0):
             #     print(norm, scale*norm)
 
@@ -118,41 +123,6 @@ class LogRegGradientDescent(_OptimizerBase):
             warnings.warn(("Solution did not converge for i={}"
                            " iterations".format(max_iter)), RuntimeWarning)
             return beta
-
-        # print (eta)
-        # coef_prev = np.zeros(coef.shape)
-
-        # for i in range(max_iter):
-
-        #     if np.abs(np.sum(coef - coef_prev)) < tol:
-        #         print("exits: i=", i, "coef:", coef, " diff:",
-        #               np.abs(np.sum(coef - coef_prev)))
-        #         return coef
-
-        #     coef_prev = coef
-
-        #     # Updates the learning rate
-        #     eta_ = self._update_learning_rate(i, max_iter)
-
-        #     # Updates coeficients using a gradient descent step
-        #     coef = self._gradient_descent_step(X, y, coef, cf_prime, eta_)
-
-        #     # Adds cost function value
-        #     self.cost_values[i] = cf(X, y, coef)
-
-        #     if store_coefs:
-        #         self.coefs[i] = coef
-        # else:
-        #     warnings.warn(("Solution did not converge for i={}"
-        #                    " iterations".format(max_iter)), RuntimeWarning)
-        #     return coef
-
-    @staticmethod
-    def _gradient_descent_step(X, y, coef, cf_prime, eta):
-        """Performs a single gradient descent step."""
-        gradient = cf_prime(X, y, coef)
-        coef = coef - gradient*eta  # / X.shape[0]
-        return coef
 
 
 class GradientDescent(_OptimizerBase):

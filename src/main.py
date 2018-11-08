@@ -381,9 +381,9 @@ def task1c(sk=False):
         print("lambda = ", lmbda)
 
         # define logistic regressor
-        logreg_SK = sk_model.LogisticRegression(fit_intercept=False,
-            C=1.0/lmbda, random_state=1, verbose=0, max_iter=max_iter,
-            tol=tolerance)
+        logreg_SK = sk_model.LogisticRegression(
+            fit_intercept=False, C=1.0/lmbda,
+            max_iter=max_iter, tol=tolerance)
 
         logreg = logistic_regression.LogisticRegression(
             solver="lr-gd", activation="sigmoid", penalty="l2",
@@ -391,7 +391,9 @@ def task1c(sk=False):
 
         # fit training data
 
-        logreg_SK.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            logreg_SK.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train))
         print("SK-learn method done")
 
         logreg.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train))
@@ -453,11 +455,11 @@ def task1c(sk=False):
         np.std(test_accuracy_SGD)))
 
     # plot accuracy against regularisation strength
-    plt.semilogx(lmbdas, train_accuracy, '*-b', label='HomeMade train')
-    plt.semilogx(lmbdas, test_accuracy, '*-r', label='HomeMade test')
+    plt.semilogx(lmbdas, train_accuracy, '.-b', label='HomeMade train')
+    plt.semilogx(lmbdas, test_accuracy, '.-r', label='HomeMade test')
 
-    plt.semilogx(lmbdas, train_accuracy_SK, '*--g', label='SK train')
-    plt.semilogx(lmbdas, test_accuracy_SK, '*--b', label='SK test')
+    plt.semilogx(lmbdas, train_accuracy_SK, '<--g', label='SK train')
+    plt.semilogx(lmbdas, test_accuracy_SK, '<--b', label='SK test')
 
     plt.semilogx(lmbdas, train_accuracy_SGD, '*r', label='SGD train')
     plt.semilogx(lmbdas, test_accuracy_SGD, '*g', label='SGD test')
@@ -468,7 +470,7 @@ def task1c(sk=False):
     plt.grid()
     plt.legend()
 
-    plt.savefig('../figures/accuracy.png')
+    plt.savefig('../fig/accuracy.png')
 
     plt.show()
 
