@@ -152,7 +152,8 @@ def log_entropy(y_pred, y_true):
 def log_entropy_derivative(y_pred, y_true):
     """Derivative of cross entropy cost function."""
     # y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-    # return (y_pred - y_true)
+    # TODO: Implement proper cost function
+    return (y_pred - y_true)
 
 
 def exponential_cost(y, y_true, tau=0.1):

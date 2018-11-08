@@ -4,13 +4,18 @@ import numpy as np
 import scipy
 import copy as cp
 import warnings
-import utils.math_tools as umath
-import utils.optimize as uopt
-from utils.math_tools import AVAILABLE_OUTPUT_ACTIVATIONS
+try:
+    import utils.math_tools as umath
+    import utils.optimize as uopt
+    from utils.math_tools import AVAILABLE_OUTPUT_ACTIVATIONS
+except ModuleNotFoundError:
+    import lib.utils.math_tools as umath
+    import lib.utils.optimize as uopt
+    from lib.utils.math_tools import AVAILABLE_OUTPUT_ACTIVATIONS
+
 
 # TODO: validate SGD without minibatches
 # TODO: validate SGD with minibatches
-# TODO: validate Newton-Raphson
 # TODO: implement momentum
 # TODO: clean up cost function - move outside?
 
@@ -156,7 +161,9 @@ class LogisticRegression:
 
         self.coef = self.solver.solve(X, y, self.coef, self._cost_function,
                                       self._cost_function_gradient, eta=0.01,
-                                      max_iter=100000, tol=1e-6)
+                                      max_iter=100000, tol=1e-6, 
+                                      scale=self.N_features, 
+                                      alpha=self.alpha)
 
         self._fit_performed = True
 

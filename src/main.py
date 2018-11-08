@@ -275,19 +275,18 @@ def task1b_bias_variance_analysis(pickle_fname):
     lasso_kfcv_var = select_value(data[8], "var")
 
     plot_dual_values(lambda_values, ridge_r2, lambda_values, lasso_r2,
-                       r"Ridge", r"Lasso", "ridge_lasso_lambda_r2", 
-                       r"$\lambda$", r"$R^2$")
+                     r"Ridge", r"Lasso", "ridge_lasso_lambda_r2",
+                     r"$\lambda$", r"$R^2$")
     plot_dual_values(lambda_values, ridge_mse, lambda_values, lasso_mse,
-                       r"Ridge", r"Lasso", "ridge_lasso_lambda_mse", 
-                       r"$\lambda$", r"$\mathrm{MSE}$")
+                     r"Ridge", r"Lasso", "ridge_lasso_lambda_mse",
+                     r"$\lambda$", r"$\mathrm{MSE}$")
     plot_dual_values(lambda_values, ridge_bias, lambda_values, lasso_bias,
-                       r"Ridge", r"Lasso", "ridge_lasso_lambda_bias", 
-                       r"$\lambda$", r"$\mathrm{Bias}$")
+                     r"Ridge", r"Lasso", "ridge_lasso_lambda_bias",
+                     r"$\lambda$", r"$\mathrm{Bias}$")
 
 
-
-def plot_dual_values(x1, y1, x2, y2, label1, label2, figname, xlabel, 
-    ylabel):
+def plot_dual_values(x1, y1, x2, y2, label1, label2, figname, xlabel,
+                     ylabel):
     """Plots two different values in a single window."""
     fig = plt.figure()
 
@@ -308,6 +307,9 @@ def task1c(sk=False):
 
     training_size = 0.8
     fract = 0.01
+    learning_rate = 1.0
+    max_iter = int(1e3)
+    tolerance = 1e-5
 
     print("Logistic regression")
 
@@ -345,7 +347,7 @@ def task1c(sk=False):
     # pick random data points from ordered and disordered states
     # to create the training and test sets
     X_train, X_test, Y_train, Y_test = sk_modsel.train_test_split(
-        X, Y, train_size=training_size)
+        X, Y, test_size=1-training_size)
 
     # full data set
     # X=np.concatenate((X_critical,X))
@@ -376,19 +378,24 @@ def task1c(sk=False):
 
     # loop over regularisation strength
     for i, lmbda in enumerate(lmbdas):
+        print("lambda = ", lmbda)
 
         # define logistic regressor
-        logreg_SK = sk_model.LogisticRegression(
-            C=1.0/lmbda, random_state=1, verbose=0, max_iter=1E3, tol=1E-5)
+        logreg_SK = sk_model.LogisticRegression(fit_intercept=False,
+            C=1.0/lmbda, random_state=1, verbose=0, max_iter=max_iter,
+            tol=tolerance)
 
         logreg = logistic_regression.LogisticRegression(
-            penalty="l1", lr=1.0, max_iter=1E3, alpha=lmbda)
+            solver="lr-gd", activation="sigmoid", penalty="l2",
+            tol=tolerance, max_iter=max_iter, alpha=lmbda)
 
         # fit training data
 
         logreg_SK.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train))
+        print("SK-learn method done")
 
-        logreg.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train.reshape(-1, 1)))
+        logreg.fit(cp.deepcopy(X_train), cp.deepcopy(Y_train))
+        print("Manual method done")
 
         # check accuracy
         train_accuracy_SK[i] = logreg_SK.score(X_train, Y_train)
@@ -426,39 +433,37 @@ def task1c(sk=False):
 
         print('finished computing %i/11 iterations' % (i+1))
 
-
     print('mean accuracy: train, test')
     print(r'HomeMade: %0.4f +/- %0.2f, %0.4f +/- %0.2f' % (
-            np.mean(train_accuracy),
-            np.std(train_accuracy), 
-            np.mean(test_accuracy),
-            np.std(test_accuracy)))
+        np.mean(train_accuracy),
+        np.std(train_accuracy),
+        np.mean(test_accuracy),
+        np.std(test_accuracy)))
 
     print('SK: %0.4f +/- %0.2f, %0.4f +/- %0.2f' % (
-            np.mean(train_accuracy_SK),
-            np.std(train_accuracy_SK), 
-            np.mean(test_accuracy_SK),
-            np.std(test_accuracy_SK)))
-
+        np.mean(train_accuracy_SK),
+        np.std(train_accuracy_SK),
+        np.mean(test_accuracy_SK),
+        np.std(test_accuracy_SK)))
 
     print('SGD: %0.4f +/- %0.2f, %0.4f +/- %0.2f' % (
-            np.mean(train_accuracy_SGD),
-            np.std(train_accuracy_SGD),
-            np.mean(test_accuracy_SGD), 
-            np.std(test_accuracy_SGD)))
+        np.mean(train_accuracy_SGD),
+        np.std(train_accuracy_SGD),
+        np.mean(test_accuracy_SGD),
+        np.std(test_accuracy_SGD)))
 
     # plot accuracy against regularisation strength
-    plt.semilogx(lmbdas,train_accuracy,'*-b',label='HomeMade train')
-    plt.semilogx(lmbdas,test_accuracy,'*-r',label='HomeMade test')
-    
-    plt.semilogx(lmbdas,train_accuracy_SK,'*--g',label='SK train')
-    plt.semilogx(lmbdas,test_accuracy_SK,'*--b',label='SK test')
-    
-    plt.semilogx(lmbdas,train_accuracy_SGD,'*r',label='SGD train')
-    plt.semilogx(lmbdas,test_accuracy_SGD,'*g',label='SGD test')
+    plt.semilogx(lmbdas, train_accuracy, '*-b', label='HomeMade train')
+    plt.semilogx(lmbdas, test_accuracy, '*-r', label='HomeMade test')
 
-    plt.xlabel('$\\lambda$')
-    plt.ylabel('$\\mathrm{accuracy}$')
+    plt.semilogx(lmbdas, train_accuracy_SK, '*--g', label='SK train')
+    plt.semilogx(lmbdas, test_accuracy_SK, '*--b', label='SK test')
+
+    plt.semilogx(lmbdas, train_accuracy_SGD, '*r', label='SGD train')
+    plt.semilogx(lmbdas, test_accuracy_SGD, '*g', label='SGD test')
+
+    plt.xlabel(r'$\lambda$')
+    plt.ylabel(r'$\mathrm{accuracy}$')
 
     plt.grid()
     plt.legend()
@@ -468,27 +473,61 @@ def task1c(sk=False):
     plt.show()
 
 
+def task1d():
+    """Task d) of project 2.
 
-    def task1d():
-        """Task d) of project 2."""
-        print ("Come back later")
-        sys.exit()
+    Task: train the NN and compare with Linear Regression results from b).
+    """
+    training_size = 0.8
+    fract = 0.01
+    learning_rate = 1.0
+    max_iter = int(1e3)
+    tolerance = 1e-8
 
-    def task1e():
-        """Task d) of project 2."""
-        print ("Come back later")
-        sys.exit()
+    print("Logistic regression")
+
+    data_path = "../datafiles/MehtaIsingData"
+    input_data = read_t("all", data_path)
+
+    labels_data = pickle.load(open(os.path.join(
+        data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
+
+    print("Come back later")
+    sys.exit()
+
+
+def task1e():
+    """Task e) of project 2.
+
+    Task: train the NN with the cross entropy function and compare with 
+    Logistic Regression results from c).
+    """
+    training_size = 0.8
+    fract = 0.01
+    learning_rate = 1.0
+    max_iter = int(1e3)
+    tolerance = 1e-8
+
+    print("Logistic regression")
+
+    data_path = "../datafiles/MehtaIsingData"
+    input_data = read_t("all", data_path)
+
+    labels_data = pickle.load(open(os.path.join(
+        data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
+
 
 def main():
-    task1c();exit()
+    task1c()
+    exit()
     if len(sys.argv) < 2:
-        print ("You must give keyword argument b, c, d or e",
-               "\n b runs a function which finds the coupling constant for 1d Ising",
-               "\n using Linear, Ridge and Lasso regression"
-               "\n c runs a function which finds the phase of Ising matrices at different temperatures",
-               "\n using logisitc regression",
-               "\n d runs a function which uses a neural net to perform the regression from b",
-               "\n e runs a function which uses a neural net to perform the classification from c")
+        print("You must give keyword argument b, c, d or e",
+              "\n b runs a function which finds the coupling constant for 1d Ising",
+              "\n using Linear, Ridge and Lasso regression"
+              "\n c runs a function which finds the phase of Ising matrices at different temperatures",
+              "\n using logisitc regression",
+              "\n d runs a function which uses a neural net to perform the regression from b",
+              "\n e runs a function which uses a neural net to perform the classification from c")
         sys.exit()
 
     if sys.argv[1] == "b":
@@ -502,8 +541,7 @@ def main():
     elif sys.argv[1] == "e":
         task1e()
     else:
-        print ("Please, write b, c, d or e as a command line argument.")
-
+        print("Please, write b, c, d or e as a command line argument.")
 
 
 if __name__ == '__main__':

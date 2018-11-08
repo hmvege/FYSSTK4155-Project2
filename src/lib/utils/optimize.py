@@ -36,7 +36,7 @@ class _OptimizerBase(abc.ABC):
     # Abstract class methods makes it so that they MUST be overwritten by child
     @abc.abstractmethod
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=10000,
-              store_coefs=False, tol=1e-15):
+              store_coefs=False, tol=1e-8, alpha=1.0, scale=None):
         """General solve method.
 
         Args:
@@ -51,6 +51,7 @@ class _OptimizerBase(abc.ABC):
                 Default is 10000.
             store_coefs (bool): store the coefficients as they are calculated.
                 Default is False.
+            tol (float): tolerance, when we will cut-off the calculations. Default is 
         """
 
         # Sets the learning rate
@@ -91,6 +92,8 @@ class LogRegGradientDescent(_OptimizerBase):
         gradient_prev = gradient.copy()
 
         for k in range(1, max_iter):
+
+            if k%100==0:print(k, norm, alpha)
 
             z = np.dot(X, beta)
             p = expit(z)

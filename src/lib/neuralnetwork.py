@@ -98,8 +98,6 @@ class MultilayerPerceptron:
                            "activations:".format(
                                activation, ", ".join(AVAILABLE_ACTIVATIONS)))
 
-# TODO: final activation derivative never used when backpropagating? Derive the backpropegation again perhaps
-
     def _set_output_layer_activation(self, output_activation):
         """Sets the final layer activation."""
 
@@ -273,8 +271,7 @@ class MultilayerPerceptron:
         delta_b = [np.empty(b.shape) for b in self.biases]
 
         # Gets initial delta value, first of the four equations
-        # delta = self._cost_function_derivative(self.activations[-1], y).T
-        delta = (y*(1 - self.activations[-1])).T
+        delta = self._cost_function_derivative(self.activations[-1], y).T
 
         # No final derivative?
         # delta *= self._output_activation_derivative(z_list[-1])
@@ -487,7 +484,7 @@ def __test_mlp_mnist():
     # Sets up my MLP.
     MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
                                activation="sigmoid",
-                               cost_function="log_loss",
+                               cost_function="mse",
                                output_activation="sigmoid",
                                alpha=0.0)
     MLP.train(data_train_samples, data_train_labels,
