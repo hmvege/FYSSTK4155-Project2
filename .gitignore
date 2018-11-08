@@ -32,4 +32,4 @@ fig
 # Test
 *.bat
 
-*test_logreg.py # Log-reg testing file 
+test_scripts/ # Testing scripts not to be uploaded
