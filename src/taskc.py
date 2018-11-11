@@ -25,7 +25,8 @@ import sklearn.utils as sk_utils
 
 from tqdm import tqdm
 
-from task_tools import read_t, load_pickle, save_pickle, print_parameters
+from task_tools import read_t, load_pickle, save_pickle, print_parameters, \
+    plot_accuracy_scores
 
 
 def task1c(sk=False, figure_folder="../fig"):
@@ -42,6 +43,7 @@ def task1c(sk=False, figure_folder="../fig"):
     momentum = 0.0
     mini_batch_size = 20
     data_path = "../datafiles/MehtaIsingData"
+    verbose=True
 
     # Available solvers:
     # ["lr-gd", "gd", "cg", "sga", "sga-mb", "nr", "newton-cg"]
@@ -128,63 +130,279 @@ def task1c(sk=False, figure_folder="../fig"):
 
     run_sk_comparison(X_train, X_test, y_train, y_test,
                       lmbdas=lmbdas,
-                      penalty=penalty,
+                      penalty="l2",
                       activation=activation,
                       solver=solver,
                       learning_rate=learning_rate,
                       momentum=momentum,
                       mini_batch_size=mini_batch_size,
                       max_iter=max_iter,
-                      tolerance=tolerance)
+                      tolerance=tolerance,
+                      verbose=verbose)
+
+    run_lambda_penalty(X_train, X_test, y_train, y_test,
+                       lmbdas=lmbdas,
+                       use_sk_learn=False,
+                       penalties=["l1", "l2", "elastic_net"],
+                       activation=activation,
+                       solver=solver,
+                       learning_rate=learning_rate,
+                       momentum=momentum,
+                       mini_batch_size=mini_batch_size,
+                       max_iter=max_iter,
+                       tolerance=tolerance,
+                       verbose=verbose)
+
+    run_lambda_solver(X_train, X_test, y_train, y_test,
+                      lmbdas=lmbdas,
+                      penalty="l2",
+                      activation=activation,
+                      solvers=["lr-gd", "cg", "newton-cg"],
+                      learning_rate="inverse",
+                      momentum=momentum,
+                      mini_batch_size=mini_batch_size,
+                      max_iter=max_iter,
+                      tolerance=tolerance,
+                      verbose=verbose)
+
+    run_lambda_learning_rate_comparison(X_train, X_test, y_train, y_test,
+                                        lmbdas=lmbdas,
+                                        penalty="l2",
+                                        activation=activation,
+                                        solver="lr-gd",
+                                        learning_rates=["inverse", 0.001,
+                                                        0.005, 0.01, 0.05,
+                                                        0.1, 0.5, 1.0],
+                                        momentum=momentum,
+                                        mini_batch_size=mini_batch_size,
+                                        max_iter=max_iter,
+                                        tolerance=tolerance,
+                                        verbose=verbose)
+
+    run_lambda_momentum(X_train, X_test, y_train, y_test,
+                        lmbdas=lmbdas,
+                        penalty="l2",
+                        activation=activation,
+                        solver="lr-gd",
+                        learning_rate=learning_rate,
+                        momentums=[0.0001, 0.0005, 0.001, 0.005, 0.01],
+                        mini_batch_size=mini_batch_size,
+                        max_iter=max_iter,
+                        tolerance=tolerance,
+                        verbose=verbose)
 
 
-def run_lambda_penalty(X_train, X_test, y_train, y_test, lmbdas=lmbdas,
-                       penalties=penalties, **kwargs):
-    pass
+def run_lambda_penalty(X_train, X_test, y_train, y_test,
+                       lmbdas=None,
+                       penalties=None,
+                       figure_folder="../fig",
+                       **kwargs):
+
+    param_dict = {"lmbdas": lmbdas,
+                  "sklearn": True,
+                  "figure_folder": figure_folder,
+                  "penalties": penalties}
+    param_dict.update(kwargs)
+    print_parameters(**param_dict)
+
+    test_accuracy_values = []
+    train_accuracy_values = []
+
+    for penalty in penalties:
+        print("Regularisation:", penalty)
+
+        pickle_fname = ("lambda_penalty_accuracy_penalty{}_actsigmoid"
+                        "_solver{}_lrinverse_mom0.0_tol1e-06."
+                        "pkl".format(penalty, kwargs["solver"]))
+
+        if os.path.isfile(pickle_fname):
+            res_ = load_pickle(pickle_fname)
+        else:
+            res_ = logreg_core(X_train, X_test, y_train, y_test,
+                               lmbdas=lmbdas,
+                               penalty=penalty,
+                               store_pickle=True,
+                               pickle_fname=pickle_fname,
+                               **kwargs)
+
+        train_accuracy, test_accuracy, critical_accuracy = res_
+
+        test_accuracy_values.append(test_accuracy)
+        train_accuracy_values.append(train_accuracy)
+
+    plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
+                         [r"$L^1$", r"$L^2$", r"Elastic net"],
+                         "accuracy_regularisation_scores", r"$\lambda$",
+                         r"Accuracy")
 
 
-def run_lambda_solver(X_train, X_test, y_train, y_test, lmbdas=lmbdas,
-                      solvers=solvers, **kwargs):
-    pass
+def run_lambda_solver(X_train, X_test, y_train, y_test,
+                      lmbdas=None,
+                      solvers=None,
+                      figure_folder="../fig",
+                      **kwargs):
+
+    param_dict = {"lmbdas": lmbdas,
+                  "sklearn": True,
+                  "figure_folder": figure_folder,
+                  "solver": solvers}
+    param_dict.update(kwargs)
+    print_parameters(**param_dict)
+
+    test_accuracy_values = []
+    train_accuracy_values = []
+
+    for solver in solvers:
+        print("Solver:", solver)
+
+        pickle_fname = ("lambda_solver_accuracy_penalty{}_actsigmoid"
+                        "_solver{}_lr{}_mom0.0_tol1e-06."
+                        "pkl".format(kwargs["penalty"], solver,
+                                     kwargs["learning_rate"]))
+
+        if os.path.isfile(pickle_fname):
+            res_ = load_pickle(pickle_fname)
+        else:
+            res_ = logreg_core(X_train, X_test, y_train, y_test,
+                               use_sk_learn=False,
+                               lmbdas=lmbdas,
+                               solver=solver,
+                               store_pickle=True,
+                               pickle_fname=pickle_fname,
+                               **kwargs)
+
+        train_accuracy, test_accuracy, critical_accuracy = res_
+
+        test_accuracy_values.append(test_accuracy)
+        train_accuracy_values.append(train_accuracy)
+
+    plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
+                         [r"Optimized Gradient Descent", r"Conjugate Gradient",
+                          r"Newtons-CG"],
+                         "accuracy_solver_scores", r"$\lambda$",
+                         r"Accuracy")
 
 
 def run_lambda_learning_rate_comparison(X_train, X_test, y_train, y_test,
-                                        lmbdas=lmbdas,
-                                        learning_rates=learning_rates,
+                                        lmbdas=None,
+                                        learning_rates=None,
+                                        figure_folder="../fig",
                                         **kwargs):
-    pass
+
+    param_dict = {"lmbdas": lmbdas,
+                  "sklearn": True,
+                  "figure_folder": figure_folder,
+                  "learning_rates": learning_rates}
+    param_dict.update(kwargs)
+    print_parameters(**param_dict)
+
+    test_accuracy_values = []
+    train_accuracy_values = []
+
+    for lr in learning_rates:
+        print ("Learning rate: ", lr)
+
+        pickle_fname = ("lambda_lr_accuracy_penalty{}_actsigmoid"
+                        "_solver{}_lr{}_mom0.0_tol1e-06."
+                        "pkl".format(kwargs["solver"],
+                                     kwargs["penalty"], str(lr)))
+
+        if os.path.isfile(pickle_fname):
+            res_ = load_pickle(pickle_fname)
+        else:
+            res_ = logreg_core(X_train, X_test, y_train, y_test,
+                               use_sk_learn=False,
+                               lmbdas=lmbdas,
+                               learning_rate=lr,
+                               store_pickle=True,
+                               pickle_fname=pickle_fname,
+                               **kwargs)
+
+        train_accuracy, test_accuracy, critical_accuracy = res_
+
+        test_accuracy_values.append(test_accuracy)
+        train_accuracy_values.append(train_accuracy)
+
+    lr_labels = [r"Optimized"]
+    lr_labels += [r"$\eta={0:.2f}$".format(lr) for lr in learning_rates[1:]]
+    plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
+                         lr_labels, "accuracy_learning_rate_scores",
+                         r"$\lambda$", r"Accuracy")
 
 
-def run_lambda_momentum(X_train, X_test, y_train, y_test, lmbdas=lmbdas,
-                        momentums=momentums, **kwargs):
-    pass
+def run_lambda_momentum(X_train, X_test, y_train, y_test,
+                        lmbdas=None,
+                        momentums=None,
+                        figure_folder="../fig",
+                        **kwargs):
+
+    param_dict = {"lmbdas": lmbdas,
+                  "sklearn": True,
+                  "figure_folder": figure_folder,
+                  "momentums": momentums}
+    param_dict.update(kwargs)
+    print_parameters(**param_dict)
+
+    test_accuracy_values = []
+    train_accuracy_values = []
+
+    for momentum in momentums:
+        print ("Momentum: ", momentum)
+        pickle_fname = ("lambda_mom_accuracy_penalty{}_actsigmoid"
+                        "_solverlr-gd_lrinverse_mom{}_tol1e-06."
+                        "pkl".format(kwargs["penalty"], str(momentum)))
+
+        if os.path.isfile(pickle_fname):
+            res_ = load_pickle(pickle_fname)
+        else:
+            res_ = logreg_core(X_train, X_test, y_train, y_test,
+                               use_sk_learn=False,
+                               lmbdas=lmbdas,
+                               momentum=momentum,
+                               store_pickle=True,
+                               pickle_fname=pickle_fname,
+                               **kwargs)
+
+        train_accuracy, test_accuracy, critical_accuracy = res_
+
+        test_accuracy_values.append(test_accuracy)
+        train_accuracy_values.append(train_accuracy)
+
+    plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
+                         [r"\gamma={0:.1e}".format(m) for m in momentums],
+                         "accuracy_momentum_scores", r"$\lambda$",
+                         r"Accuracy")
 
 
 def run_sk_comparison(X_train, X_test, y_train, y_test,
-                      lmbdas=lmbdas,
-                      penalty=penalty,
-                      activation=activation,
-                      solver=solver,
-                      learning_rate=learning_rate,
-                      momentum=momentum,
-                      mini_batch_size=mini_batch_size,
-                      max_iter=max_iter,
-                      tolerance=tolerance):
+                      lmbdas=None,
+                      penalty=None,
+                      activation=None,
+                      solver=None,
+                      learning_rate=None,
+                      momentum=None,
+                      mini_batch_size=None,
+                      max_iter=None,
+                      tolerance=None,
+                      verbose=False,
+                      figure_folder="../fig"):
     """Runs a comparison between sk learn and our method."""
 
-    print_parameters({"lambda": lambdas,
-                      "sklearn": True,
-                      "penalty": penalty,
-                      "activation": activation,
-                      "solver": solver,
-                      "learning_rate": learning_rate,
-                      "momentum": momentum,
-                      "mini_batch_size": mini_batch_size,
-                      "max_iter": max_iter,
-                      "tolerance": tolerance})
+    param_dict = {"lmbdas": lmbdas,
+                  "sklearn": True,
+                  "penalty": penalty,
+                  "activation": activation,
+                  "solver": solver,
+                  "learning_rate": learning_rate,
+                  "momentum": momentum,
+                  "mini_batch_size": mini_batch_size,
+                  "max_iter": max_iter,
+                  "tolerance": tolerance}
+    print_parameters(**param_dict)
 
-    pickle_fname = ("accuracy_sklearn_penaltyelastic_net_actsigmoid"
-                    "_solverlr-gd_lrinverse_mom0.0_tol1e-06.pkl")
+    pickle_fname = ("sk_comparison_accuracy_sklearn_penalty{}_actsigmoid"
+                    "_solverlr-gd_lrinverse_mom0.0_tol1e-06"
+                    ".pkl".format(penalty))
 
     if os.path.isfile(pickle_fname):
         res_ = load_pickle(pickle_fname)
@@ -201,7 +419,8 @@ def run_sk_comparison(X_train, X_test, y_train, y_test,
                            max_iter=max_iter,
                            tolerance=tolerance,
                            store_pickle=True,
-                           verbose=True)
+                           pickle_fname=pickle_fname,
+                           verbose=verbose)
 
     # Retrieves results
     train_accuracy, test_accuracy, critical_accuracy, \
@@ -290,7 +509,8 @@ def logreg_core(X_train, X_test, y_train, y_test, use_sk_learn=False,
                 lmbdas=[None], penalty=None,
                 activation=None, solver=None, learning_rate=None,
                 momentum=None, mini_batch_size=None, max_iter=None,
-                tolerance=None, store_pickle=False, verbose=False):
+                tolerance=None, store_pickle=False, pickle_fname=None,
+                verbose=False):
     """Method for retrieveing data for given lists of hyperparameters
 
     Args:
@@ -308,6 +528,8 @@ def logreg_core(X_train, X_test, y_train, y_test, use_sk_learn=False,
         mini_batch_size (float): minibatch size
         tolerance (float): tolerance, at what point we cut off the parameter 
             search.
+        store_pickle (bool): saves output as pickle
+        pickle_fname (str): pickle filename
         verbose (bool): more verbose output. Default is False
 
     Returns:
@@ -440,9 +662,12 @@ def logreg_core(X_train, X_test, y_train, y_test, use_sk_learn=False,
     if verbose:
         print("")
 
-    results = [train_accuracy, test_accuracy, critical_accuracy,
-               train_accuracy_SK, test_accuracy_SK, critical_accuracy_SK,
-               train_accuracy_SGD, test_accuracy_SGD, critical_accuracy_SGD]
+    results = [train_accuracy, test_accuracy, critical_accuracy]
+
+    if use_sk_learn:
+        results += [train_accuracy_SK, test_accuracy_SK,
+                    critical_accuracy_SK, train_accuracy_SGD,
+                    test_accuracy_SGD, critical_accuracy_SGD]
 
     if store_pickle:
         if use_sk_learn:
@@ -450,10 +675,13 @@ def logreg_core(X_train, X_test, y_train, y_test, use_sk_learn=False,
         else:
             sk_str = ""
 
-        fname = ("accuracy_{}penalty{}_act{}_solver{}_lr{}_mom{}_tol{}."
-                 "pkl".format(sk_str, penalty, activation, solver,
-                              str(learning_rate), str(momentum),
-                              str(tolerance)))
+        if isinstance(pickle_fname, type(None)):
+            fname = ("accuracy_{}penalty{}_act{}_solver{}_lr{}_mom{}_tol{}."
+                     "pkl".format(sk_str, penalty, activation, solver,
+                                  str(learning_rate), str(momentum),
+                                  str(tolerance)))
+        else:
+            fname = pickle_fname
         save_pickle(fname, results)
 
     return results
