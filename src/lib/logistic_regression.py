@@ -98,6 +98,9 @@ class LogisticRegression:
         elif penalty == "l2":
             self._get_penalty = umath._l2
             self._get_penalty_derivative = umath._l2_derivative
+        elif penalty == "elastic_net":
+            self._get_penalty = umath._elastic_net
+            self._get_penalty_derivative = umath._elastic_net_derivative
         elif isinstance(type(penalty), None):
             self._get_penalty = lambda x: 0.0
             self._get_penalty_derivative = lambda x: 0.0

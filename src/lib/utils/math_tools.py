@@ -251,3 +251,11 @@ def _l2_derivative(weights):
     # https://math.stackexchange.com/questions/2792390/derivative-of-
     # euclidean-norm-l2-norm
     return weights
+
+def _elastic_net(weights):
+    """The elastic net regularization, L_en = L1 + L2."""
+    return np.linalg.norm(weights, ord=1) + 0.5*np.dot(weights, weights)
+
+def _elastic_net_derivative(weights):
+    """Derivative of elastic net is just L1 and L2 derivatives combined."""
+    return np.sign(weights) + weights
