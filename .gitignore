@@ -33,3 +33,6 @@ fig
 *.bat
 
 test_scripts/ # Testing scripts not to be uploaded
+
+# Pickle files
+*.pkl

@@ -498,6 +498,7 @@ def __test_mlp_mnist():
                                activation="sigmoid",
                                cost_function="log_loss",
                                output_activation="sigmoid",
+                               weight_init="default",
                                alpha=0.0)
     MLP.train(data_train_samples, data_train_labels,
               data_test=data_test_samples,
