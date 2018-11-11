@@ -32,7 +32,7 @@ def task1c(sk=False, figure_folder="../fig"):
     print("Task c: Logistic regression classification")
 
     training_size = 0.8
-    fract = 0.01
+    data_percentage = 0.01
     learning_rate = 1.0
     max_iter = int(1e3)
     tolerance = 1e-5
@@ -69,19 +69,28 @@ def task1c(sk=False, figure_folder="../fig"):
     print("Data label shape: {} Bytes: {:.2f} MB".format(
         labels_data.shape, labels_data.nbytes / (1024*1024)))
 
+    # Checks that a good data percentage has been provided
+    assert (0 < data_percentage <= 1.0), ("bad data_percentage: "
+                                          "{}".format(data_percentage))
+
     # divide data into ordered, critical and disordered, as is done in Metha
-    X_ordered = input_data[:70000, :]
-    # X_ordered = input_data[:int(np.floor(70000*fract)), :]
-    Y_ordered = labels_data[:70000]
-    # Y_ordered = labels_data[:int(np.floor(70000*fract))]
+    # X_ordered = input_data[:70000, :]
+    # Y_ordered = labels_data[:70000]
+    # X_critical = input_data[70000:100000, :]
+    # Y_critical = labels_data[70000:100000]
+    # X_disordered = input_data[100000:, :]
+    # Y_disordered = labels_data[100000:]
 
-    X_critical = input_data[70000:100000, :]
-    Y_critical = labels_data[70000:100000]
+    X_ordered = input_data[:int(np.floor(70000*data_percentage)), :]
+    Y_ordered = labels_data[:int(np.floor(70000*data_percentage))]
 
-    X_disordered = input_data[100000:, :]
-    # X_disordered = input_data[100000:int(np.floor(100000*(1 + fract))), :]
-    Y_disordered = labels_data[100000:]
-    # Y_disordered = labels_data[100000:int(np.floor(100000*(1 + fract)))]
+    # X_critical = input_data[70000:int(np.floor(100000*data_percentage)), :]
+    # Y_critical = labels_data[70000:int(np.floor(100000*data_percentage))]
+
+    X_disordered = input_data[100000:int(
+        np.floor(100000*(1 + data_percentage))), :]
+    Y_disordered = labels_data[100000:int(
+        np.floor(100000*(1 + data_percentage)))]
 
     del input_data, labels_data
 
@@ -98,11 +107,27 @@ def task1c(sk=False, figure_folder="../fig"):
     # X=np.concatenate((X_critical,X))
     # Y=np.concatenate((Y_critical,Y))
 
-    print('X_train shape:', X_train.shape)
-    print('Y_train shape:', Y_train.shape)
-    print(X_train.shape[0], 'train samples')
-    # print(X_critical.shape[0], 'critical samples')
-    print(X_test.shape[0], 'test samples')
+    # CALL SAMPLER FUNCTION HERE FOR AND SEND IN WITH DIFFERENT HYPER PARAMERS
+
+    # Parameters to test for    
+    # Local implementation parameters
+    test_size = 0.1
+    penalty = "elastic_net"
+    learning_rate = 0.001
+    max_iter = 1000000
+    # Available solvers:
+    # ["lr-gd", "gd", "cg", "sga", "sga-mb", "nr", "newton-cg"]
+    solver = "lr-gd"
+    # solver = "newton-cg"
+    activation = "sigmoid"
+    tol = 1e-8
+    alpha = 0.1
+    momentum = 0.0
+    mini_batch_size = 20
+
+
+    print('X_train shape(samples, input):', X_train.shape)
+    print('Y_train shape(samples, input):', Y_train.shape)
 
     # define regularisation parameter
     lmbdas = np.logspace(-5, 5, 11)
@@ -181,23 +206,18 @@ def task1c(sk=False, figure_folder="../fig"):
         print('finished computing %i/11 iterations' % (i+1))
 
     print('mean accuracy: train, test')
-    print(r'HomeMade: %0.4f +/- %0.2f, %0.4f +/- %0.2f' % (
-        np.mean(train_accuracy),
-        np.std(train_accuracy),
-        np.mean(test_accuracy),
-        np.std(test_accuracy)))
 
-    print('SK: %0.4f +/- %0.2f, %0.4f +/- %0.2f' % (
-        np.mean(train_accuracy_SK),
-        np.std(train_accuracy_SK),
-        np.mean(test_accuracy_SK),
-        np.std(test_accuracy_SK)))
+    print("HomeMade: {0:0.4f} +/- {1:0.2f}, {2:0.4f} +/- {3:0.2f}".format(
+        np.mean(train_accuracy), np.std(train_accuracy),
+        np.mean(test_accuracy), np.std(test_accuracy)))
 
-    print('SGD: %0.4f +/- %0.2f, %0.4f +/- %0.2f' % (
-        np.mean(train_accuracy_SGD),
-        np.std(train_accuracy_SGD),
-        np.mean(test_accuracy_SGD),
-        np.std(test_accuracy_SGD)))
+    print("SK: {0:0.4f} +/- {1:0.2f}, {2:0.4f} +/- {3:0.2f}".format(
+        np.mean(train_accuracy_SK), np.std(train_accuracy_SK),
+        np.mean(test_accuracy_SK), np.std(test_accuracy_SK)))
+
+    print("SGD: {0:0.4f} +/- {1:0.2f}, {2:0.4f} +/- {3:0.2f}".format(
+        np.mean(train_accuracy_SGD), np.std(train_accuracy_SGD),
+        np.mean(test_accuracy_SGD), np.std(test_accuracy_SGD)))
 
     # plot accuracy against regularisation strength
     plt.semilogx(lmbdas, train_accuracy, '.-b', label='HomeMade train')

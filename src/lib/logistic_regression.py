@@ -32,7 +32,7 @@ class LogisticRegression:
         Args:
             solver (str): what kind of solver method to use. Default is 
                 'lr-gd' (gradient descent). Choices: 'lr-gd', 'gd', 'cg', 
-                'sga', 'sga-mb', 'nr'.
+                'sga', 'sga-mb', 'nr', 'newton-cg'.
             activation (str): type of activation function to use. Optional, 
                 default is 'sigmoid'.
             max_iter (int): number of iterations to run gradient descent for,
@@ -70,7 +70,9 @@ class LogisticRegression:
             # aka Steepest descent
             self.solver = uopt.GradientDescent(momentum=self.momentum)
         elif solver_method == "cg":
-            self.solver = uopt.ConjugateGradient(momentum=self.momentum)
+            # Conjugate gradient method
+            self._chech_momentum(solver_method)
+            self.solver = uopt.ConjugateGradient()
         elif solver_method == "sga":
             # Stochastic Gradient Descent
             self.solver = uopt.SGA(momentum=self.momentum)
@@ -81,12 +83,24 @@ class LogisticRegression:
                                    mini_batch_size=self.mini_batch_size)
         elif solver_method == "nr":
             # Newton-Raphson method
-            self.solver = uopt.NewtonRaphson(momentum=self.momentum)
+            self._chech_momentum(solver_method)
+            self.solver = uopt.NewtonRaphson()
+        elif solver_method == "newton-cg":
+            # Newton-Raphson method
+            self._chech_momentum(solver_method)
+            self.solver = uopt.NewtonCG()
         else:
             raise KeyError(("{} not recognized as a solver"
                             " method. Choices: {}.".format(
                                 solver_method,
                                 ", ".join(uopt.OPTIMIZERS_KEYWORDS))))
+
+    def _chech_momentum(self, solver_method):
+        """Raises error for given solver method if momentum is nonzero, 
+        as solver method do not have momentum capabilities."""
+        if self.momentum != 0:
+            raise ValueError("Momentum not available for "
+                "method {}".format(solver_method))
 
     def _set_regularization_method(self, penalty):
         """Set the penalty/regularization method to use."""
@@ -164,8 +178,8 @@ class LogisticRegression:
 
         self.coef = self.solver.solve(X, y, self.coef, self._cost_function,
                                       self._cost_function_gradient, eta=0.01,
-                                      max_iter=100000, tol=1e-6, 
-                                      scale=self.N_features, 
+                                      max_iter=100000, tol=1e-6,
+                                      scale=self.N_features,
                                       alpha=self.alpha)
 
         self._fit_performed = True
@@ -187,18 +201,18 @@ class LogisticRegression:
         loss += (0.5*self.alpha*np.dot(weights, weights))
         return loss
 
-        y_pred = self._predict(X, weights)
+        # y_pred = self._predict(X, weights)
 
-        p_probabilities = self._activation(y_pred)
+        # p_probabilities = self._activation(y_pred)
 
-        # Removes bad values and replaces them with limiting values eps
-        p_probabilities = np.clip(p_probabilities, eps, 1-eps)
+        # # Removes bad values and replaces them with limiting values eps
+        # p_probabilities = np.clip(p_probabilities, eps, 1-eps)
 
-        cost1 = - y * np.log(p_probabilities)
-        cost2 = (1 - y) * np.log(1 - p_probabilities)
-        cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
+        # cost1 = - y * np.log(p_probabilities)
+        # cost2 = (1 - y) * np.log(1 - p_probabilities)
+        # cost = np.sum(cost1 - cost2) + self._get_penalty(weights)*self.alpha
 
-        return cost
+        # return cost
 
     def _cost_function_gradient(self, X, y, weights):
         """Takes the gradient of the cost function w.r.t. the coefficients.
@@ -312,34 +326,28 @@ def __test_logistic_regression():
     X = iris["data"][:, 3:]  # petal width
     y = (iris["target"] == 2).astype(np.int)  # 1 if Iris-Virginica, else 0
 
-    X_train, X_test, y_train, y_test = \
-        sk_modsel.train_test_split(X, y, test_size=0.1, shuffle=True)
-
-    # SK-Learn logistic regression
-    sk_log_reg = sk_model.LogisticRegression(fit_intercept=True, 
-                                             C=1.0, penalty="l2", 
-                                             max_iter=1000000, tol=1e-8)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        # Removes annoing future-warning
-        sk_log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
-    X_new = np.linspace(0, 3, 100).reshape(-1, 1)
-    y_sk_proba = sk_log_reg.predict_proba(X_new)
-
-    print("SK-learn log-reg coefs: ", sk_log_reg.intercept_, sk_log_reg.coef_)
-
     # Local implementation parameters
-    penalty = "l2"
+    test_size = 0.1
+    penalty = "elastic_net"
     learning_rate = 0.001
     max_iter = 1000000
+    # Available solvers:
+    # ["lr-gd", "gd", "cg", "sga", "sga-mb", "nr", "newton-cg"]
     solver = "lr-gd"
+    # solver = "newton-cg"
     activation = "sigmoid"
     tol = 1e-8
-    alpha = 1.0
+    alpha = 0.1
     momentum = 0.0
     mini_batch_size = 20
 
+    # Sets up test and training data
+    X_train, X_test, y_train, y_test = \
+        sk_modsel.train_test_split(X, y, test_size=test_size, shuffle=True)
+    X_new = np.linspace(0, 3, 100).reshape(-1, 1)
+
     # Manual logistic regression
+    print ("Manual solver method:", solver)
     log_reg = LogisticRegression(penalty=penalty, solver=solver,
                                  activation=activation, tol=tol,
                                  alpha=alpha, momentum=momentum,
@@ -350,6 +358,24 @@ def __test_logistic_regression():
     y_proba = log_reg.predict_proba(X_new)
 
     print("Manual log-reg coefs:", log_reg.coef_)
+
+    # SK-Learn logistic regression
+    if penalty == "elastic_net":
+        sk_penalty = "l2"
+    else: 
+        sk_penalty = penalty
+    sk_log_reg = sk_model.LogisticRegression(fit_intercept=True,
+                                             C=1.0/alpha, penalty=sk_penalty,
+                                             max_iter=max_iter, tol=tol)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        # Removes annoing future-warning
+        sk_log_reg.fit(cp.deepcopy(X_train), cp.deepcopy(y_train))
+    y_sk_proba = sk_log_reg.predict_proba(X_new)
+
+    print("SK-learn log-reg coefs: ", sk_log_reg.intercept_, sk_log_reg.coef_)
+
+    # Sets coef with SK learns coef's for comparing outputs
     manual_coefs = log_reg.coef_
     sk_coefs = np.asarray(
         [sk_log_reg.intercept_[0], sk_log_reg.coef_[0, 0]])

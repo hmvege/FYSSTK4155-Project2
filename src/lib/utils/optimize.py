@@ -3,13 +3,13 @@
 import numpy as np
 import abc
 import warnings
-from scipy.optimize import minimize
+from scipy.optimize import minimize, newton
 from scipy.special import expit
 
 OPTIMIZERS = ["GradientDescent", "LogRegGradientDescent",
-              "ConjugateGradient", "SGA", "NewtonRaphson"]
+              "ConjugateGradient", "SGA", "NewtonRaphson", "Newton-CG"]
 
-OPTIMIZERS_KEYWORDS = ["lr-gd", "gd", "cg", "sga", "sga-mb", "nr"]
+OPTIMIZERS_KEYWORDS = ["lr-gd", "gd", "cg", "sga", "sga-mb", "nr", "newton-cg"]
 
 
 class _OptimizerBase(abc.ABC):
@@ -18,8 +18,6 @@ class _OptimizerBase(abc.ABC):
     def __init__(self, momentum=0.0):
         """Basic initialization."""
         self.momentum = momentum
-        if momentum != 0.0:
-            warnings.warn("momentum", NotImplementedError)
 
     def _set_learning_rate(self, eta):
         """Sets the learning rate."""
@@ -105,6 +103,10 @@ class LogRegGradientDescent(_OptimizerBase):
             gradient_prev = gradient.copy()
             gradient = -np.dot(X.T, y-p)/scale + alpha*beta/scale
 
+            # Adds momentum
+            if self.momentum != 0:
+                gradient += gradient_prev*self.momentum
+
             eta_k = np.dot((beta - beta_prev), gradient-gradient_prev) / \
                 np.linalg.norm(gradient-gradient_prev)**2
 
@@ -146,6 +148,10 @@ class GradientDescent(_OptimizerBase):
             # Updates coeficients using a gradient descent step
             coef = self._gradient_descent_step(X, y, coef, cf_prime, eta_)
 
+            # Adds momentum
+            if self.momentum != 0:
+                coef += coef_prev*self.momentum
+
             # Adds cost function value
             self.cost_values[i] = cf(X, y, coef)
 
@@ -177,11 +183,15 @@ class ConjugateGradient(_OptimizerBase):
               store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
 
-        def f(coef_, X_, y_): cf(X_, y_, coef_)
+        def f(coef_, X_, y_):
+            return cf(X_, y_, coef_)
 
-        def f_prime(coef_, X_, y_): cf_prime(X_, y_, coef_)
+        def f_prime(coef_, X_, y_):
+            return cf_prime(X_, y_, coef_)
+
         opt = minimize(f, coef, args=(X, y), jac=f_prime, method="CG",
-            tol=tol, options={"maxiter": max_iter})
+                       tol=tol, options={"maxiter": max_iter})
+
         return opt.x
 
 
@@ -194,7 +204,7 @@ class SGA(_OptimizerBase):
         self.mini_batch_size = mini_batch_size
 
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=1000,
-              store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
+              store_coefs=False, tol=1e-4, alpha=1.0, scale=None):
 
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
 
@@ -203,7 +213,11 @@ class SGA(_OptimizerBase):
         if self.use_minibatches:
             number_batches = N_size // self.mini_batch_size
 
+        coef_prev = coef.copy()
+
         for i in range(max_iter):
+
+            coef_prev = coef
 
             # Updates the learning rate
             eta_ = self._update_learning_rate(i, max_iter)
@@ -223,7 +237,7 @@ class SGA(_OptimizerBase):
                     shuffled_X[i:i+self.mini_batch_size, :]
                     for i in range(0, N_size, number_batches)]
                 shuffled_y = [
-                    shuffled_y[i:i+self.mini_batch_size, :]
+                    shuffled_y[i:i+self.mini_batch_size]
                     for i in range(0, N_size, number_batches)]
 
                 for mb_X, mb_y in zip(shuffled_X, shuffled_y):
@@ -232,13 +246,14 @@ class SGA(_OptimizerBase):
                         mb_X, mb_y, coef, cf_prime, eta_)
 
             else:
-                # coef = self._update_coef(shuffled_X, shuffled_y, coef,
-                #                          cf_prime, eta_)
                 coef = GradientDescent._gradient_descent_step(
                     shuffled_X, shuffled_y, coef, cf_prime, eta_)
 
             # Adds cost function value
             self.cost_values[i] = cf(X, y, coef)
+
+            if np.abs(np.sum(coef - coef_prev)) < tol:
+                return coef
 
             if store_coefs:
                 self.coefs[i] = coef
@@ -252,16 +267,21 @@ class NewtonRaphson(_OptimizerBase):
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=10000,
               store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
 
+        raise NotImplementedError("Method NewtonRaphson is not complete, "
+                                  "as results are off.")
+
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
 
-        def f(coef_, X_, y_): 
+        def f(coef_, X_, y_):
             return cf(X_, y_, coef_)
 
-        def f_prime(coef_, X_, y_): 
+        def f_prime(coef_, X_, y_):
             return cf_prime(X_, y_, coef_)
-        opt = minimize(f, coef, args=(X, y), jac=f_prime, method="Newton-CG",
-            tol=tol, options={"maxiter": max_iter})
-        return opt.x
+
+        x = newton(f, coef, fprime=f_prime, args=(X, y),
+                   tol=tol, maxiter=max_iter)
+
+        return x
         # eta = 1e-3
         # coef_prev = np.zeros(coef.shape)
 
@@ -299,10 +319,30 @@ class NewtonRaphson(_OptimizerBase):
         #     return coef
 
 
+class NewtonCG(_OptimizerBase):
+    """Newton Conjugate Gradient solver."""
+
+    def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=10000,
+              store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
+
+        super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
+
+        def f(coef_, X_, y_):
+            return cf(X_, y_, coef_)
+
+        def f_prime(coef_, X_, y_):
+            return cf_prime(X_, y_, coef_)
+
+        opt = minimize(f, coef, args=(X, y), jac=f_prime, method="Newton-CG",
+                       tol=tol, options={"maxiter": max_iter})
+
+        return opt.x
+
+
 def _test_minimizers():
     import copy as cp
 
-    max_iter=int(1e5)
+    max_iter = int(1e5)
     tol = 1e-8
     eta = 1e-2
 
@@ -335,7 +375,7 @@ def _test_minimizers():
     # SGA_MB_x0 = SGA_MB_Solver.solve(x, a, b, f, f_prime, eta=1e-2, max_iter=int(1e6))
 
     print("GradientDescent", f(a, b, SD_x0), f_prime(a, b, SD_x0), SD_x0)
-    print("Newton-CG", f(a,b,NR_x0), f_prime(a,b,NR_x0), NR_x0)
+    print("Newton-CG", f(a, b, NR_x0), f_prime(a, b, NR_x0), NR_x0)
 
     assert np.abs(SD_x0[0] - answer) < 1e-5, (
         "GradientDescent is incorrect: {}".format(SD_x0[0]))

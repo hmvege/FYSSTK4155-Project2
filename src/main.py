@@ -26,53 +26,9 @@ import sklearn.metrics as sk_metrics
 import sklearn.utils as sk_utils
 
 from taskb import task1b, task1b_bias_variance_analysis
-
-
-
-def task1d(figure_path="../fig"):
-    """Task d) of project 2.
-
-    Task: train the NN and compare with Linear Regression results from b).
-    """
-    print("="*80)
-    print("Task d: neural network regression")
-    training_size = 0.8
-    fract = 0.01
-    learning_rate = 1.0
-    max_iter = int(1e3)
-    tolerance = 1e-8
-
-    data_path = "../datafiles/MehtaIsingData"
-    input_data = read_t("all", data_path)
-
-    labels_data = pickle.load(open(os.path.join(
-        data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
-
-    print("Come back later")
-    sys.exit()
-
-
-def task1e(figure_path="../fig"):
-    """Task e) of project 2.
-
-    Task: train the NN with the cross entropy function and compare with 
-    Logistic Regression results from c).
-    """
-    print("="*80)
-    print("Task e: neural network classification")
-    training_size = 0.8
-    fract = 0.01
-    learning_rate = 1.0
-    max_iter = int(1e3)
-    tolerance = 1e-8
-
-    print("Logistic regression")
-
-    data_path = "../datafiles/MehtaIsingData"
-    input_data = read_t("all", data_path)
-
-    labels_data = pickle.load(open(os.path.join(
-        data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
+from taskc import task1c
+from taskd import task1d
+from taske import task1e
 
 
 def main():

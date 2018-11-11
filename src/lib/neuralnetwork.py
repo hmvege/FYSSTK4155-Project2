@@ -164,9 +164,7 @@ class MultilayerPerceptron:
         elif cost_function == "log_loss":
             self._cost = umath.LogEntropyCost()
         elif cost_function == "exponential_cost":
-            self._base_cost_function = umath.exponential_cost
-            self._base_cost_function_derivative = \
-                umath.exponential_cost_derivative
+            self._cost = umath.ExponentialCost()
         elif cost_function == "hellinger_distance":
             raise NotImplementedError(cost_function)
         elif cost_function == "kullback_leibler_divergence":
@@ -180,28 +178,8 @@ class MultilayerPerceptron:
                            " functions: {}".format(cost_function, ", ".join(
                                AVAILABLE_COST_FUNCTIONS)))
 
-    def _cost_function(self, layer, x, y):
-        """Cost function.
+# TODO: add different regularization methods, L1, L2 and Elastic Net
 
-        Args:
-            layer (int): which layer we are in
-            x (ndarray): input values.
-            y (ndarray): output values, one-hot vector.
-        """
-        base_cost = self._base_cost_function(x, y)
-
-        return base_cost + self._regularization(layer)*0.5/x.shape[0]
-
-    def _cost_function_derivative(self, y, y_true):
-        """Derivative of the cost function.
-
-        Args:
-            y (ndarray): input values.
-            y_true (ndarray): output values, one-hot vector.
-        """
-        base_cost_derivative = self._base_cost_function_derivative(y, y_true)
-
-        return base_cost_derivative
 
     def _regularization(self, layer):
         """Computes the L2 regularization.
