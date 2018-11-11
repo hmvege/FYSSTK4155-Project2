@@ -461,8 +461,8 @@ def task1c(sk=False):
     plt.semilogx(lmbdas, train_accuracy_SK, '<--g', label='SK train')
     plt.semilogx(lmbdas, test_accuracy_SK, '<--b', label='SK test')
 
-    plt.semilogx(lmbdas, train_accuracy_SGD, '*r', label='SGD train')
-    plt.semilogx(lmbdas, test_accuracy_SGD, '*g', label='SGD test')
+    plt.semilogx(lmbdas, train_accuracy_SGD, '*:r', label='SGD train')
+    plt.semilogx(lmbdas, test_accuracy_SGD, '*:g', label='SGD test')
 
     plt.xlabel(r'$\lambda$')
     plt.ylabel(r'$\mathrm{accuracy}$')

@@ -23,7 +23,7 @@ def plot_image(sample_, label, pred):
 class MultilayerPerceptron:
     def __init__(self, layer_sizes, activation="sigmoid",
                  output_activation="sigmoid", cost_function="mse", alpha=0.0,
-                 momentum=0.0):
+                 momentum=0.0, weight_init="default"):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -40,7 +40,11 @@ class MultilayerPerceptron:
             cost_function (str): Cost function. Choices is "mse", "log_loss". 
                 Optional, default "mse".
             alpha (float): L2 regularization term. Default is 0.0.
-            momentum (float): adds a dependency on previous gradient
+            momentum (float): adds a dependency on previous gradient.
+            weight_init (str): weight initialization. Choices: 'large', 
+                'default'. Large weight sets initial weights to a gaussian 
+                distribution with sigma=1 and mean=0. Default sets to
+                sigma=1/sqrt(N_samples) and mean=0.
         Raises:
             AssertionError: if input_data_size is not a list.
             AssertionError: if layer_sizes is less than two.
@@ -61,10 +65,18 @@ class MultilayerPerceptron:
         assert momentum >= 0.0, "momentum must be positive"
         self.momentum = momentum
 
-        # Sets up weights and biases
-        self.weights = [
-            np.random.randn(l_j, l_i)
-            for l_i, l_j in zip(layer_sizes[:-1], layer_sizes[1:])]
+        # Sets up weights
+        if weight_init=="large":
+            # l_i, l_j is the layer input-output sizes.
+            self.weights = [
+                np.random.randn(l_j, l_i)
+                for l_i, l_j in zip(layer_sizes[:-1], layer_sizes[1:])]
+        else:
+            self.weights = [
+                np.random.randn(l_j, l_i) / np.sqrt(l_i)
+                for l_i, l_j in zip(layer_sizes[:-1], layer_sizes[1:])]
+
+        # Sets up biases
         self.biases = [np.random.randn(l_j, 1) for l_j in layer_sizes[1:]]
 
         self.layer_sizes = layer_sizes
@@ -148,11 +160,9 @@ class MultilayerPerceptron:
         """
         self.cost_function = cost_function
         if cost_function == "mse":
-            self._base_cost_function = umath.mse_cost
-            self._base_cost_function_derivative = umath.mse_cost_derivative
+            self._cost = umath.MSECost()
         elif cost_function == "log_loss":
-            self._base_cost_function = umath.log_entropy
-            self._base_cost_function_derivative = umath.log_entropy_derivative
+            self._cost = umath.LogEntropyCost()
         elif cost_function == "exponential_cost":
             self._base_cost_function = umath.exponential_cost
             self._base_cost_function_derivative = \
@@ -271,7 +281,9 @@ class MultilayerPerceptron:
         delta_b = [np.empty(b.shape) for b in self.biases]
 
         # Gets initial delta value, first of the four equations
-        delta = self._cost_function_derivative(self.activations[-1], y).T
+        # delta = self._cost_function_derivative(self.activations[-1], y).T
+        delta = self._cost.delta(self.activations[-1], y, 
+            self._output_activation(z_list[-1]).T).T
 
         # No final derivative?
         # delta *= self._output_activation_derivative(z_list[-1])
@@ -484,7 +496,7 @@ def __test_mlp_mnist():
     # Sets up my MLP.
     MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
                                activation="sigmoid",
-                               cost_function="mse",
+                               cost_function="log_loss",
                                output_activation="sigmoid",
                                alpha=0.0)
     MLP.train(data_train_samples, data_train_labels,

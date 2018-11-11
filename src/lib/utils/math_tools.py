@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import abc
 from scipy.special import expit
 
 AVAILABLE_ACTIVATIONS = ["identity", "sigmoid", "relu", "tanh", "heaviside"]
@@ -133,27 +134,83 @@ def tanh_derivative(x):
 # COST FUNCTIONS
 # =============================================================================
 
+class _BaseCost:
+    """Base cost function class."""
+    @staticmethod
+    @abc.abstractmethod
+    def cost(a, y):
+        """Returns cost function.
 
-def mse_cost(y_pred, y_true):
-    """Mean Square error cost function."""
-    return 0.5*np.sum((y_pred - y_true)**2)  # /y.shape[0]
+        Args:
+            a (ndarray): layer output.
+            y (ndarray): true output.
+        Return:
+            (float): cost function output.
+        """
+        return None
+
+    @staticmethod
+    @abc.abstractmethod
+    def delta(a, y, z):
+        return None
 
 
-def mse_cost_derivative(y_pred, y_true):
-    """Mean Square error cost function derivative."""
-    return (y_pred - y_true)
+class MSECost(_BaseCost):
+    @staticmethod
+    def cost(a, y):
+        """Returns cost function.
+
+        Args:
+            a (ndarray): layer output.
+            y (ndarray): true output.
+        Return:
+            (float): cost function output.
+        """
+        return 0.5*np.sum((a - y)**2)
+
+    @staticmethod
+    def delta(a, y, z):
+        return (a - y) * z
 
 
-def log_entropy(y_pred, y_true):
-    """Cross entropy cost function."""
-    return -np.sum(y_true * log(y))
+class LogEntropyCost(_BaseCost):
+    @staticmethod
+    def cost(a, y):
+        """Returns cost function.
+
+        Args:
+            a (ndarray): layer output.
+            y (ndarray): true output.
+        Return:
+            (float): cost function output.
+        """
+        return - np.sum(y*log(a) + (1 - y)*np.log(1 - a))
+
+    @staticmethod
+    def delta(a, y, z):
+        return (a - y)
 
 
-def log_entropy_derivative(y_pred, y_true):
-    """Derivative of cross entropy cost function."""
-    # y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
-    # TODO: Implement proper cost function
-    return (y_pred - y_true)
+# def mse_cost(y_pred, y_true):
+#     """Mean Square error cost function."""
+#     return 0.5*np.sum((y_pred - y_true)**2)  # /y.shape[0]
+
+
+# def mse_cost_derivative(y_pred, y_true):
+#     """Mean Square error cost function derivative."""
+#     return (y_pred - y_true)
+
+
+# def log_entropy(y_pred, y_true):
+#     """Cross entropy cost function."""
+#     return -np.sum(y_true * log(y))
+
+
+# def log_entropy_derivative(y_pred, y_true):
+#     """Derivative of cross entropy cost function."""
+#     # y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+#     # TODO: Implement proper cost function
+#     return (y_pred - y_true)
 
 
 def exponential_cost(y, y_true, tau=0.1):
@@ -161,10 +218,9 @@ def exponential_cost(y, y_true, tau=0.1):
     return tau*np.exp(1/tau * np.sum((y-y_true)**2))
 
 
-def exponential_cost_derivative(y, y_true, tau=0.1):
+def exponential_cost_derivative(y, y_true, z, tau=0.1):
     """Exponential cost function gradient."""
     return 2/tau * (y-y_true)*exponential_cost(y, y_true, tau)
-
 
 
 # =============================================================================
@@ -195,4 +251,3 @@ def _l2_derivative(weights):
     # https://math.stackexchange.com/questions/2792390/derivative-of-
     # euclidean-norm-l2-norm
     return weights
-

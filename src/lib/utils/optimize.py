@@ -129,7 +129,7 @@ class GradientDescent(_OptimizerBase):
     """Class tailored to logistic regression."""
 
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=1000,
-              store_coefs=False, tol=1e-15, alpha=1.0):
+              store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
         """Gradient descent solver.
         """
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
@@ -174,7 +174,7 @@ class ConjugateGradient(_OptimizerBase):
     """Conjugate gradient solver."""
 
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=1000,
-              store_coefs=False, tol=1e-15, alpha=1.0):
+              store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
 
         def f(coef_, X_, y_): cf(X_, y_, coef_)
@@ -194,7 +194,7 @@ class SGA(_OptimizerBase):
         self.mini_batch_size = mini_batch_size
 
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=1000,
-              store_coefs=False, tol=1e-15, alpha=1.0):
+              store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
 
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
 
@@ -250,7 +250,7 @@ class NewtonRaphson(_OptimizerBase):
     """Newton-Raphson solver."""
 
     def solve(self, X, y, coef, cf, cf_prime, eta=1.0, max_iter=10000,
-              store_coefs=False, tol=1e-15, alpha=1.0):
+              store_coefs=False, tol=1e-15, alpha=1.0, scale=None):
 
         super().solve(X, y, coef, cf, cf_prime, eta, max_iter, store_coefs)
 

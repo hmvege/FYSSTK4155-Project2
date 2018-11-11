@@ -313,7 +313,7 @@ def __test_logistic_regression():
         sk_modsel.train_test_split(X, y, test_size=0.1, shuffle=True)
 
     # SK-Learn logistic regression
-    sk_log_reg = sk_model.LogisticRegression(fit_intercept=True,
+    sk_log_reg = sk_model.LogisticRegression(fit_intercept=True, 
                                              C=1.0, penalty="l2", 
                                              max_iter=1000000, tol=1e-8)
     with warnings.catch_warnings():
