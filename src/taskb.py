@@ -433,7 +433,7 @@ def plot_dual_values(x1, y1, x2, y2, x3, y3, label1, label2, label3,
     figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
     fig.savefig(figure_path)
     print("Figure saved at {}".format(figure_path))
-
+    plt.close(fig)
 
 def plot_bias_variance(x, bias, variance, mse, figname, figure_folder,
                        x_hline=False):
@@ -471,6 +471,7 @@ def plot_bias_variance(x, bias, variance, mse, figname, figure_folder,
     figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
     fig.savefig(figure_path)
     print("Figure saved at {}".format(figure_path))
+    plt.close(fig)    
 
 
 def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,

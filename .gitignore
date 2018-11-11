@@ -26,7 +26,6 @@
 datafiles/
 
 # Figures
-fig
 *.png
 
 # Test

@@ -15,11 +15,23 @@ def read_t(t="all", root="."):
 
     return np.unpackbits(data).astype(int).reshape(-1, 1600)
 
-def load_pickle(picke_file_name):
-    """Loads a pickle from given picke_file_name."""
-    with open(picke_file_name, "rb") as f:
+def load_pickle(pickle_file_name):
+    """Loads a pickle from given pickle_file_name."""
+    with open(pickle_file_name, "rb") as f:
         data = pickle.load(f)
-        print("Pickle file loaded: {}".format(picke_file_name))
+        print("Pickle file loaded: {}".format(pickle_file_name))
     return data
 
+def save_pickle(pickle_file_name, data):
+    """Saves data as a pickle."""
+    with open(pickle_file_name, "wb") as f:
+        pickle.dump(data, f)
+        print("Data pickled and dumped to: {:s}".format(pickle_file_name))
+
+
+def print_parameters(**kwargs):
+    """Prints run parameters."""
+    print("RUN PARAMETERS:")
+    for key, val in kwargs:
+        print("{}: {}".format(key.capitalize(), val))
 

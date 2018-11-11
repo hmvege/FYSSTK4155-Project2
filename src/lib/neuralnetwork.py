@@ -471,19 +471,36 @@ def __test_mlp_mnist():
     data_test_labels = np.asarray(
         [convert_output(l, 10) for l in data_test[1]])
 
+    ################################################
+    # Parameters 
+    ################################################
+    # Activation options: "sigmoid", "identity", "relu", "tanh", "heaviside"
+    activation = "sigmoid"
+    # Cost function options: "mse", "log_loss", "exponential_cost"
+    cost_function = "log_loss"
+    # Output activation options:  "identity", "sigmoid", "softmax"
+    output_activation = "sigmoid"
+    # Weight initialization options: 
+    # default(sigma=1/sqrt(N_samples)), large(sigma=1.0)
+    weight_init = "default"
+    alpha = 0.0
+    mini_batch_size = 20
+    epochs = 100
+    eta = "inverse" # Options: float, 'inverse'
+
     # Sets up my MLP.
     MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
-                               activation="sigmoid",
-                               cost_function="log_loss",
-                               output_activation="sigmoid",
-                               weight_init="default",
-                               alpha=0.0)
+                               activation=activation,
+                               cost_function=cost_function,
+                               output_activation=output_activation,
+                               weight_init=weight_init,
+                               alpha=alpha)
     MLP.train(data_train_samples, data_train_labels,
               data_test=data_test_samples,
               data_test_labels=data_test_labels,
-              mini_batch_size=20,
-              epochs=100,
-              eta="inverse")
+              mini_batch_size=mini_batch_size,
+              epochs=epochs,
+              eta=eta)
     MLP.evaluate(data_test_samples, data_test_labels, show_image=True)
 
 

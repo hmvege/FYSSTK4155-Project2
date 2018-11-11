@@ -84,13 +84,17 @@ def main():
                    "classification from c"))
     taske_parser.add_argument("-pk", "--pickle-filename")
 
+    taskall_parser = subparser.add_parser("all", help=("Runs all tasks."))
+
     # args = parser.parse_args()
 
     if len(sys.argv) < 2:
         # Manually specify your arguments if you prefer that
-        args = parser.parse_args(["b", "-use_pk"])
+        # args = parser.parse_args(["b", "-use_pk"])
         # args = parser.parse_args(["b"])
-        # args = parser.parse_args(["c"])
+        args = parser.parse_args(["c"])
+        args = parser.parse_args(["d"])
+        args = parser.parse_args(["e"])
     else:
         # Or run from terminal
         args = parser.parse_args()
@@ -114,6 +118,13 @@ def main():
     elif args.subparser == "d":
         task1d(figure_folder=args.figure_folder)
     elif args.subparser == "e":
+        task1e(figure_folder=args.figure_folder)
+    elif args.subparser == "all":
+        task1b(args.pickle_filename, figure_folder=args.figure_folder)
+        task1b_bias_variance_analysis(args.pickle_filename,
+                                      figure_folder=args.figure_folder)
+        task1c(figure_folder=args.figure_folder)
+        task1d(figure_folder=args.figure_folder)
         task1e(figure_folder=args.figure_folder)
     else:
         exit("Parse error: {} \n--> exiting".format(args))
