@@ -32,6 +32,7 @@ datafiles/
 *.bat
 
 test_scripts/ # Testing scripts not to be uploaded
+test_scripts
 
 # Pickle files
 *.pkl
