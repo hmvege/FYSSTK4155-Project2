@@ -1,8 +1,13 @@
 import numpy as np
 import copy as cp
-import utils.math_tools as umath
-from utils.math_tools import AVAILABLE_ACTIVATIONS, \
-    AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS
+try:
+    import utils.math_tools as umath
+    from utils.math_tools import AVAILABLE_ACTIVATIONS, \
+        AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS
+except ModuleNotFoundError:
+    import lib.utils.math_tools as umath
+    from lib.utils.math_tools import AVAILABLE_ACTIVATIONS, \
+        AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS
 
 
 def plot_image(sample_, label, pred):
@@ -23,7 +28,7 @@ def plot_image(sample_, label, pred):
 class MultilayerPerceptron:
     def __init__(self, layer_sizes, activation="sigmoid",
                  output_activation="sigmoid", cost_function="mse", alpha=0.0,
-                 momentum=0.0, weight_init="default"):
+                 regularization="L2", momentum=0.0, weight_init="default"):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -40,6 +45,8 @@ class MultilayerPerceptron:
             cost_function (str): Cost function. Choices is "mse", "log_loss". 
                 Optional, default "mse".
             alpha (float): L2 regularization term. Default is 0.0.
+            regularization (str): Regularization type. Choices: L1, L2, 
+                elastic_net.
             momentum (float): adds a dependency on previous gradient.
             weight_init (str): weight initialization. Choices: 'large', 
                 'default'. Large weight sets initial weights to a gaussian 
@@ -57,6 +64,7 @@ class MultilayerPerceptron:
         self._set_layer_activation(activation)
         self._set_output_layer_activation(output_activation)
         self._set_cost_function(cost_function)
+        self._set_regularization(regularization)
 
         # L2 regularization term
         self.alpha = alpha
@@ -369,7 +377,7 @@ class MultilayerPerceptron:
             # If we have provided testing data, we perform an epoch evaluation
             if perform_eval:
                 print("Epoch: {} Score: {}/{}".format(
-                    epoch, self.evaluate(data_test, data_test_labels),
+                    epoch, np.sum(self.evaluate(data_test, data_test_labels)),
                     len(data_test_labels)))
             else:
                 print("Epoch {}".format(epoch))
@@ -416,7 +424,7 @@ class MultilayerPerceptron:
             if show_image:
                 plot_image(test, np.argmax(label), np.argmax(pred))
 
-        return sum(results)
+        return results
 
     def score(self, test_data, test_labels, verbose=False):
         """Returns the accuracy score for given test data.
@@ -429,9 +437,9 @@ class MultilayerPerceptron:
         """
         results = self.evaluate(test_data, test_labels)
         if verbose:
-            print("Accuracy = {}/{} = {}".format(results, len(results),
-                                                 results/len(results)))
-        return results/len(results)
+            print("Accuracy = {}/{} = {}".format(np.sum(results), len(results),
+                                                 np.mean(results)))
+        return np.mean(results)
 
 
 def __test_mlp_mnist():
@@ -479,13 +487,13 @@ def __test_mlp_mnist():
     # Cost function options: "mse", "log_loss", "exponential_cost"
     cost_function = "log_loss"
     # Output activation options:  "identity", "sigmoid", "softmax"
-    output_activation = "sigmoid"
+    output_activation = "softmax"
     # Weight initialization options: 
     # default(sigma=1/sqrt(N_samples)), large(sigma=1.0)
     weight_init = "default"
     alpha = 0.0
     mini_batch_size = 20
-    epochs = 100
+    epochs = 1000
     eta = "inverse" # Options: float, 'inverse'
 
     # Sets up my MLP.
@@ -501,7 +509,10 @@ def __test_mlp_mnist():
               mini_batch_size=mini_batch_size,
               epochs=epochs,
               eta=eta)
-    MLP.evaluate(data_test_samples, data_test_labels, show_image=True)
+    print (MLP.score(data_test_samples, data_test_labels))
+    MLP.evaluate(data_test_samples, data_test_labels, show_image=False)
+
+
 
 
 def __test_nn_sklearn_comparison():

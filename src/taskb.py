@@ -10,12 +10,12 @@ import warnings
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from lib import ising_1d as ising
 from lib import regression as reg
 from lib import metrics
 from lib import bootstrap as bs
 from lib import cross_validation as cv
 from lib import logistic_regression
+from lib.ising_1d import generate_1d_ising_data
 
 import sklearn.model_selection as sk_modsel
 import sklearn.preprocessing as sk_preproc
@@ -31,28 +31,7 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
     print("="*80)
     print("Task b")
 
-    np.random.seed(1234)
-
-    # system size
-    L = L_system_size
-
-    # create 10000 random Ising states
-    states = np.random.choice([-1, 1], size=(N_samples, L))
-
-    # calculate Ising energies
-    energies = ising.ising_energies(states, L)
-    energies = energies.reshape((energies.shape[0], 1))
-
-    # reshape Ising states into RL samples: S_iS_j --> X_p
-    states = np.einsum('...i,...j->...ij', states, states)
-
-    # Reshaping to correspond to energies.
-    # Shamelessly stolen a lot of from:
-    # https://physics.bu.edu/~pankajm/ML-Notebooks/HTML/NB_CVI-linreg_ising.html
-    # E.g. why did no-one ever tell me about einsum?
-    # That's awesome - no way I would have discovered that by myself.
-    stat_shape = states.shape
-    states = states.reshape((stat_shape[0], stat_shape[1]*stat_shape[2]))
+    states, energies = generate_1d_ising_data(L_system_size, N_samples)
 
     X_train, X_test, y_train, y_test = \
         sk_modsel.train_test_split(states, energies, test_size=1-training_size,
@@ -84,7 +63,7 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
     # print("Beta coefs: {}".format(linreg.coef_))
     # print("Beta coefs variances: {}".format(linreg.coef_var))
 
-    J_leastsq = np.asarray(linreg.coef_).reshape((L, L))
+    J_leastsq = np.asarray(linreg.coef_).reshape((L_system_size, L_system_size))
 
     linreg_bs_results = bs.BootstrapWrapper(X_train, y_train,
                                             sk_model.LinearRegression(

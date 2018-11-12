@@ -10,7 +10,6 @@ import warnings
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from lib import ising_1d as ising
 from lib import regression as reg
 from lib import metrics
 from lib import bootstrap as bs
@@ -26,7 +25,7 @@ import sklearn.utils as sk_utils
 from tqdm import tqdm
 
 from task_tools import read_t, load_pickle, save_pickle, print_parameters, \
-    plot_accuracy_scores
+    plot_accuracy_scores, retrieve_2d_ising_data
 
 
 def task1c(sk=False, figure_folder="../fig"):
@@ -56,70 +55,12 @@ def task1c(sk=False, figure_folder="../fig"):
     # Define regularisation parameter
     lmbdas = np.logspace(-5, 5, 11)
 
-    # data_ordered = []  # Defined as data less than T/J=2.0
-    # data_critical = []  # Defined as data between T/J=2.0 and T/J=2.5
-    # data_disordered = []  # Defined as data greater than T/J=2.5
-
-    # for T in np.arange(0.25, 4.25, 0.25):
-    #     fpath = os.path.join(data_path,
-    #                          "Ising2DFM_reSample_L40_T={0:.2f}.pkl".format(T))
-
-    #     print("Loads data for T={0:2.2f} from {1}".format(T, fpath))
-    #     with open(fpath, "rb") as f:
-    #         if T < 2.0:
-    #             data_ordered.append(pickle.load(f))
-    #         elif 2.0 <= T <= 2.5:
-    #             data_critical.append(pickle.load(f))
-    #         else:
-    #             data_disordered.append(pickle.load(f))
-
-    # data_ordered = np.asarray(data_ordered)
-    # data_critical = np.asarray(data_critical)
-    # data_disordered = np.asarray(data_disordered)
-
-    input_data = read_t("all", data_path)
-
-    labels_data = pickle.load(open(os.path.join(
-        data_path, "Ising2DFM_reSample_L40_T=All_labels.pkl"), "rb"))
-
-    print("Data shape: {} Bytes: {:.2f} MB".format(
-        input_data.shape, input_data.nbytes / (1024*1024)))
-    print("Data label shape: {} Bytes: {:.2f} MB".format(
-        labels_data.shape, labels_data.nbytes / (1024*1024)))
-
-    # Checks that a good data percentage has been provided
-    assert (0 < data_percentage <= 1.0), ("bad data_percentage: "
-                                          "{}".format(data_percentage))
-
-    # divide data into ordered, critical and disordered, as is done in Metha
-    # X_ordered = input_data[:70000, :]
-    # Y_ordered = labels_data[:70000]
-    # X_critical = input_data[70000:100000, :]
-    # Y_critical = labels_data[70000:100000]
-    # X_disordered = input_data[100000:, :]
-    # Y_disordered = labels_data[100000:]
-
-    X_ordered = input_data[:int(np.floor(70000*data_percentage)), :]
-    Y_ordered = labels_data[:int(np.floor(70000*data_percentage))]
-
-    # X_critical = input_data[70000:int(np.floor(100000*data_percentage)), :]
-    # Y_critical = labels_data[70000:int(np.floor(100000*data_percentage))]
-
-    X_disordered = input_data[100000:int(
-        np.floor(100000*(1 + data_percentage))), :]
-    Y_disordered = labels_data[100000:int(
-        np.floor(100000*(1 + data_percentage)))]
-
-    del input_data, labels_data
-
-    # define training and test data sets
-    X = np.concatenate((X_ordered, X_disordered))
-    Y = np.concatenate((Y_ordered, Y_disordered))
+    X, y = retrieve_2d_ising_data(data_path, data_percentage)
 
     # pick random data points from ordered and disordered states
     # to create the training and test sets
     X_train, X_test, y_train, y_test = sk_modsel.train_test_split(
-        X, Y, test_size=1-training_size)
+        X, y, test_size=1-training_size)
 
     # full data set
     # X=np.concatenate((X_critical,X))
