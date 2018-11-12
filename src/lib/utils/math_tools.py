@@ -15,6 +15,8 @@ AVAILABLE_COST_FUNCTIONS = ["mse", "log_loss", "exponential_cost",
                             "generalized_kullback_leibler_divergence",
                             "itakura_saito_distance"]
 
+AVAILABLE_REGULARIZATIONS = ["l1", "l2", "elastic_net"]
+
 # =============================================================================
 # ACTIVATION FUNCTIONS
 # =============================================================================
@@ -240,10 +242,59 @@ def _l2_derivative(weights):
     # euclidean-norm-l2-norm
     return weights
 
+
 def _elastic_net(weights):
     """The elastic net regularization, L_en = L1 + L2."""
     return np.linalg.norm(weights, ord=1) + 0.5*np.dot(weights, weights)
 
+
 def _elastic_net_derivative(weights):
     """Derivative of elastic net is just L1 and L2 derivatives combined."""
     return np.sign(weights) + weights
+
+
+class _BaseRegularization:
+    """Base cost function class."""
+    @staticmethod
+    @abc.abstractmethod
+    def __call__(weights):
+        """Returns the regularization."""
+        return None
+
+    @staticmethod
+    @abc.abstractmethod
+    def delta(weights):
+        return None
+
+
+class L1Regularization(_BaseRegularization):
+    @staticmethod
+    def __call__(weights):
+        """Returns the regularization."""
+        return np.linalg.norm(weights, ord=1)
+
+    @staticmethod
+    def derivative(weights):
+        return np.sign(weights)
+
+
+class L2Regularization(_BaseRegularization):
+    @staticmethod
+    def __call__(weights):
+        """Returns the regularization."""
+        return 0.5*np.dot(weights, weights)
+
+    @staticmethod
+    def derivative(weights):
+        return weights
+
+
+class ElasticNetRegularization(_BaseRegularization):
+    @staticmethod
+    def __call__(weights):
+        """Returns the regularization."""
+        return np.linalg.norm(weights, ord=1) + 0.5*np.dot(weights, weights)
+
+    @staticmethod
+    def derivative(weights):
+        return np.sign(weights) + weights

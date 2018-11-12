@@ -3,11 +3,13 @@ import copy as cp
 try:
     import utils.math_tools as umath
     from utils.math_tools import AVAILABLE_ACTIVATIONS, \
-        AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS
+        AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS, \
+        AVAILABLE_REGULARIZATIONS
 except ModuleNotFoundError:
     import lib.utils.math_tools as umath
     from lib.utils.math_tools import AVAILABLE_ACTIVATIONS, \
-        AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS
+        AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS, \
+        AVAILABLE_REGULARIZATIONS
 
 
 def plot_image(sample_, label, pred):
@@ -28,7 +30,7 @@ def plot_image(sample_, label, pred):
 class MultilayerPerceptron:
     def __init__(self, layer_sizes, activation="sigmoid",
                  output_activation="sigmoid", cost_function="mse", alpha=0.0,
-                 regularization="L2", momentum=0.0, weight_init="default"):
+                 regularization="l2", momentum=0.0, weight_init="default"):
         """Initializer for multilayer perceptron.
 
         Number of layers is always minimum N_layers + 2.
@@ -45,7 +47,7 @@ class MultilayerPerceptron:
             cost_function (str): Cost function. Choices is "mse", "log_loss". 
                 Optional, default "mse".
             alpha (float): L2 regularization term. Default is 0.0.
-            regularization (str): Regularization type. Choices: L1, L2, 
+            regularization (str): Regularization type. Choices: l1, l2, 
                 elastic_net.
             momentum (float): adds a dependency on previous gradient.
             weight_init (str): weight initialization. Choices: 'large', 
@@ -74,7 +76,7 @@ class MultilayerPerceptron:
         self.momentum = momentum
 
         # Sets up weights
-        if weight_init=="large":
+        if weight_init == "large":
             # l_i, l_j is the layer input-output sizes.
             self.weights = [
                 np.random.randn(l_j, l_i)
@@ -143,12 +145,13 @@ class MultilayerPerceptron:
                                activation, ", ".join(
                                    AVAILABLE_OUTPUT_ACTIVATIONS)))
 
-    def _set_learning_rate(self, eta):
+    def _set_learning_rate(self, eta, eta0=1.0):
         """Sets the learning rate."""
         if isinstance(eta, float):
             self._update_learning_rate = lambda _i, _N: eta
         elif eta == "inverse":
-            self._update_learning_rate = lambda _i, _N: 1 - _i/float(_N+1)
+            self._update_learning_rate = lambda _i, _N: eta0 * \
+                (1 - _i/float(_N+1))
         else:
             raise KeyError(("Eta {} is not recognized learning"
                             " rate.".format(eta)))
@@ -186,10 +189,22 @@ class MultilayerPerceptron:
                            " functions: {}".format(cost_function, ", ".join(
                                AVAILABLE_COST_FUNCTIONS)))
 
-# TODO: add different regularization methods, L1, L2 and Elastic Net
+    def _set_regularization(self, regularization):
+        """Sets the regularization."""
+        self.regularization = regularization
+        if regularization == "l1":
+            self._regularization = umath.L1Regularization()
+        elif regularization == "l2":
+            self._regularization = umath.L2Regularization()
+        elif regularization == "elastic_net":
+            self._regularization = umath.ElasticNetRegularization()
+        else:
+            raise KeyError("Regularization {} not recognized. Available"
+                           " regularizations: {}".format(
+                               regularization,
+                               ", ".join(AVAILABLE_REGULARIZATIONS)))
 
-
-    def _regularization(self, layer):
+    def _get_reg(self, layer):
         """Computes the L2 regularization.
 
         Args:
@@ -199,11 +214,12 @@ class MultilayerPerceptron:
             (float) l2-norm of given layer.
         """
         if self.alpha != 0.0:
-            return self.alpha*np.sum(self.weights[layer]**2)
+            return self.alpha * \
+                self._regularization(self.weights[layer])
         else:
             return 0.0
 
-    def _regularization_derivative(self, layer):
+    def _get_reg_delta(self, layer):
         """Computes the L2 regularization derivative.
 
         Args:
@@ -213,7 +229,8 @@ class MultilayerPerceptron:
             (ndarray) derivative of the l2-norm of given layer.
         """
         if self.alpha != 0.0:
-            return self.alpha*self.weights[layer]
+            return self.alpha * \
+                self._regularization.derivative(self.weights[layer])
         else:
             return 0.0
 
@@ -268,8 +285,8 @@ class MultilayerPerceptron:
 
         # Gets initial delta value, first of the four equations
         # delta = self._cost_function_derivative(self.activations[-1], y).T
-        delta = self._cost.delta(self.activations[-1], y, 
-            self._output_activation(z_list[-1]).T).T
+        delta = self._cost.delta(self.activations[-1], y,
+                                 self._output_activation(z_list[-1]).T).T
 
         # No final derivative?
         # delta *= self._output_activation_derivative(z_list[-1])
@@ -277,7 +294,7 @@ class MultilayerPerceptron:
         # Sets last element before back-propagating
         delta_b[-1] = delta
         delta_w[-1] = delta @ self.activations[-2].T
-        delta_w[-1] += self._regularization_derivative(-1)  # /x.shape[0]
+        delta_w[-1] += self._get_reg_delta(-1)  # /x.shape[0]
 
         # delta_b, delta_w = self._compute_gradient_derivatives(layer, delta_b,
         #     delta_w, delta)
@@ -295,13 +312,13 @@ class MultilayerPerceptron:
 
             delta_b[-l] = delta  # np.sum(delta, axis=1)
             delta_w[-l] = delta @ self.activations[-l-1].T
-            delta_w[-l] += self._regularization_derivative(-l)
+            delta_w[-l] += self._get_reg_delta(-l)
 
         return delta_w, delta_b
 
     def train(self, data_train, data_train_labels, epochs=10,
-              mini_batch_size=50, eta=1.0, data_test=None,
-              data_test_labels=None):
+              mini_batch_size=50, eta=1.0, eta0=1.0,
+              data_test=None, data_test_labels=None):
         """Trains the neural-net on provided data. Assumes data size 
         is the same as what provided in the initialization.
 
@@ -317,7 +334,8 @@ class MultilayerPerceptron:
                 is 10.
             mini_batch_size (int): size of mini batch. Optional, default is 50.
             eta (float): learning rate, optional. Choices: float(constant), 
-                "inverse". "Inverse" sets eta to 1 - i/(N+1). Default is 1.0.
+                'inverse'. "Inverse" sets eta to 1 - i/(N+1). Default is 1.0.
+            eta0 (float): learning rate start for 'inverse'.
             data_test (ndarray): data to run tests for. Shape:
                 (samples, input_size, 1)
             data_test_labels (ndarray): training data labels. Shape: 
@@ -345,7 +363,7 @@ class MultilayerPerceptron:
         # Gets the number of batches
         number_batches = N_train_size // mini_batch_size
 
-        self._set_learning_rate(eta)
+        self._set_learning_rate(eta, eta0)
 
         for epoch in range(epochs):
 
@@ -480,7 +498,7 @@ def __test_mlp_mnist():
         [convert_output(l, 10) for l in data_test[1]])
 
     ################################################
-    # Parameters 
+    # Parameters
     ################################################
     # Activation options: "sigmoid", "identity", "relu", "tanh", "heaviside"
     activation = "sigmoid"
@@ -488,13 +506,15 @@ def __test_mlp_mnist():
     cost_function = "log_loss"
     # Output activation options:  "identity", "sigmoid", "softmax"
     output_activation = "softmax"
-    # Weight initialization options: 
+    # Weight initialization options:
     # default(sigma=1/sqrt(N_samples)), large(sigma=1.0)
     weight_init = "default"
     alpha = 0.0
+    regularization = "l2"
     mini_batch_size = 20
     epochs = 1000
-    eta = "inverse" # Options: float, 'inverse'
+    eta = "inverse"  # Options: float, 'inverse'
+    eta0 = 1.0
 
     # Sets up my MLP.
     MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
@@ -502,17 +522,17 @@ def __test_mlp_mnist():
                                cost_function=cost_function,
                                output_activation=output_activation,
                                weight_init=weight_init,
-                               alpha=alpha)
+                               alpha=alpha,
+                               regularization=regularization)
     MLP.train(data_train_samples, data_train_labels,
               data_test=data_test_samples,
               data_test_labels=data_test_labels,
               mini_batch_size=mini_batch_size,
               epochs=epochs,
-              eta=eta)
-    print (MLP.score(data_test_samples, data_test_labels))
+              eta=eta,
+              eta0=eta0)
+    print(MLP.score(data_test_samples, data_test_labels))
     MLP.evaluate(data_test_samples, data_test_labels, show_image=False)
-
-
 
 
 def __test_nn_sklearn_comparison():

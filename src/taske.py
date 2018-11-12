@@ -10,7 +10,8 @@ import sklearn.model_selection as sk_modsel
 from lib import neuralnetwork as nn
 
 from task_tools import load_pickle, save_pickle, print_parameters, \
-    plot_accuracy_scores, retrieve_2d_ising_data, convert_output
+    plot_accuracy_scores, retrieve_2d_ising_data, convert_output, \
+    nn_core
 
 
 def task1e(figure_path="../fig"):
@@ -28,7 +29,7 @@ def task1e(figure_path="../fig"):
     max_iter = int(1e3)
     verbose = True
 
-    print("Logistic regression")
+    print("Neural Network classification")
 
     X, y = retrieve_2d_ising_data(data_path, data_percentage)
 
@@ -73,6 +74,8 @@ def task1e(figure_path="../fig"):
     default_output_activation = "softmax"
     default_cost_function = "log_loss"
     default_learning_rate = "inverse"
+    default_eta0 = 1.0
+    default_regularization = "l2"
     default_mini_batch_size = 20
     default_hidden_layer_size = 10
     default_weight_init = "default"
@@ -84,6 +87,8 @@ def task1e(figure_path="../fig"):
     default_input_dict = {
         "lmbda": default_lambda_value,
         "learning_rate": default_learning_rate,
+        "eta0": default_eta0,
+        "regularization": default_regularization,
         "cost_function": default_cost_function,
         "penalty": default_penalty,
         "activation": default_activation,
@@ -205,77 +210,6 @@ def nn_loop_wrapper(loop_arg, store_pickle, pickle_fname, *args, **kwargs):
     return results
 
 
-def nn_core(X_train, X_test, y_train, y_test,
-            layers, lmbda=None, penalty=None,
-            activation=None, output_activation=None,
-            cost_function=None,
-            learning_rate=None,
-            weight_init=None,
-            epochs=None,
-            mini_batch_size=None, max_iter=None,
-            tolerance=None, verbose=False):
-    """Method for retrieveing data for a given set of hyperparameters
-
-    Args:
-        X_train (ndarray)
-        X_test (ndarray)
-        y_train (ndarray)
-        y_test (ndarray)
-        layers (list(int)): list of layer sizes
-        lmbdas (float): list of lmbdas
-        penalty (str): penalty type. Choices: l1, l2, elastic_net
-        activation (str): activation function.
-        output_activation (str): output activation function. Choices: 
-            sigmoidal, softmax, identity.
-        learning_rate (str|float): learning rate. Options: float, inverse
-        mini_batch_size (float): minibatch size
-        tolerance (float): tolerance, at what point we cut off the parameter 
-            search.
-        verbose (bool): more verbose output. Default is False
-
-    Returns:
-        Dictionary with logreg accuracy scores and times
-        SK-learn dictionary with accuracy scores and times
-        SGD-SK-learn dictionary with accuracy scores and times
-    """
-
-    if verbose:
-        print("")
-        print("="*80)
-        print("Lambda = ", lmbda)
-
-    # Our implementation of logistic regression
-    # Sets up my MLP.
-    MLP = nn.MultilayerPerceptron(layers,
-                                  activation=activation,
-                                  cost_function=cost_function,
-                                  output_activation=output_activation,
-                                  weight_init=weight_init,
-                                  alpha=lmbda)
-
-    MLP.train(X_train, y_train,
-              data_test=X_test,
-              data_test_labels=y_test,
-              mini_batch_size=mini_batch_size,
-              epochs=epochs,
-              eta=learning_rate)
-
-    # Accuracy score for our implementation
-    train_accuracy = MLP.score(X_train, y_train)
-    test_accuracy = MLP.score(X_test, y_test)
-
-    train_accuracy_epochs = MLP.evaluate(X_train, y_train)
-    test_accuracy_epochs = MLP.evaluate(X_test, y_test)
-    # critical_accuracy[i]=log_reg.score(X_critical,Y_critical)
-
-    # Prints result from single lambda run
-    if verbose:
-        print('Accuracy scores: train, test')
-        print('MultilayerPerceptron: {0:0.4f}, {1:0.4f}'.format(
-            train_accuracy, test_accuracy))
-
-    return train_accuracy, test_accuracy, train_accuracy_epochs, \
-        test_accuracy_epochs
 
 
 if __name__ == '__main__':

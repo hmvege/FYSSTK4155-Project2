@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from lib import ising_1d as ising
+from lib import neuralnetwork as nn
 
 
 def read_t(t="all", root="."):
@@ -173,11 +174,87 @@ def retrieve_2d_ising_data(data_path, data_percentage):
     return X, Y
 
 
+def nn_core(X_train, X_test, y_train, y_test,
+            layers, lmbda=None, penalty=None,
+            activation=None, output_activation=None,
+            cost_function=None,
+            learning_rate=None,
+            eta0=None,
+            regularization=None,
+            weight_init=None,
+            epochs=None,
+            mini_batch_size=None, max_iter=None,
+            tolerance=None, return_weights=False, verbose=False):
+    """Method for retrieveing data for a given set of hyperparameters
 
-class StoreValues:
-    def __init__(self, name):
-        self.name = name
-        self.values_dict = {}
+    Args:
+        X_train (ndarray)
+        X_test (ndarray)
+        y_train (ndarray)
+        y_test (ndarray)
+        layers (list(int)): list of layer sizes
+        lmbdas (float): list of lmbdas
+        penalty (str): penalty type. Choices: l1, l2, elastic_net
+        activation (str): activation function.
+        output_activation (str): output activation function. Choices: 
+            sigmoidal, softmax, identity.
+        learning_rate (str|float): learning rate. Options: float, inverse
+        eta0 (float): start eta for 'inverse'.
+        regularization (str): regularization, choices: l1, l2, elastic_net
+        mini_batch_size (float): minibatch size
+        tolerance (float): tolerance, at what point we cut off the parameter 
+            search.
+        return_weights (bool): returns the weight matrices
+        verbose (bool): more verbose output. Default is False
 
-    def update(self, value_dict):
-        self.values_dict.update(value_dict)
+    Returns:
+        Dictionary with logreg accuracy scores and times
+        SK-learn dictionary with accuracy scores and times
+        SGD-SK-learn dictionary with accuracy scores and times
+    """
+
+    if verbose:
+        print("")
+        print("="*80)
+        print("Lambda = ", lmbda)
+
+    # Our implementation of logistic regression
+    # Sets up my MLP.
+    MLP = nn.MultilayerPerceptron(layers,
+                                  activation=activation,
+                                  cost_function=cost_function,
+                                  output_activation=output_activation,
+                                  weight_init=weight_init,
+                                  regularization=regularization,
+                                  alpha=lmbda)
+
+    MLP.train(X_train, y_train,
+              data_test=X_test,
+              data_test_labels=y_test,
+              mini_batch_size=mini_batch_size,
+              epochs=epochs,
+              eta=learning_rate,
+              eta0=eta0)
+
+    # Accuracy score for our implementation
+    train_accuracy = MLP.score(X_train, y_train)
+    test_accuracy = MLP.score(X_test, y_test)
+
+    train_accuracy_epochs = MLP.evaluate(X_train, y_train)
+    test_accuracy_epochs = MLP.evaluate(X_test, y_test)
+    # critical_accuracy[i]=log_reg.score(X_critical,Y_critical)
+
+    # Prints result from single lambda run
+    if verbose:
+        print('Accuracy scores: train, test')
+        print('MultilayerPerceptron: {0:0.4f}, {1:0.4f}'.format(
+            train_accuracy, test_accuracy))
+
+    res = [train_accuracy, test_accuracy, train_accuracy_epochs, \
+        test_accuracy_epochs]
+    
+    if return_weights:
+        res.append(MLP.weights)
+        res.append(MLP.biases)
+
+    return res
