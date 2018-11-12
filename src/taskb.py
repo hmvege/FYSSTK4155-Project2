@@ -8,7 +8,6 @@ import sys
 import warnings
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from lib import regression as reg
 from lib import metrics
@@ -23,7 +22,8 @@ import sklearn.linear_model as sk_model
 import sklearn.metrics as sk_metrics
 import sklearn.utils as sk_utils
 
-from task_tools import load_pickle
+from task_tools import load_pickle, plot_heatmap
+
 
 def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
            L_system_size=20, figure_folder="../fig"):
@@ -38,6 +38,9 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
                                    shuffle=False)
 
     lambda_values = np.logspace(-4, 5, 10)
+
+    print("Train size:  ", X_train.shape)
+    print("Test size:   ", X_test.shape)
 
     # y_pred_list (80, 10000)
     # y_test (80, 1)
@@ -63,7 +66,8 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
     # print("Beta coefs: {}".format(linreg.coef_))
     # print("Beta coefs variances: {}".format(linreg.coef_var))
 
-    J_leastsq = np.asarray(linreg.coef_).reshape((L_system_size, L_system_size))
+    J_leastsq = np.asarray(linreg.coef_).reshape(
+        (L_system_size, L_system_size))
 
     linreg_bs_results = bs.BootstrapWrapper(X_train, y_train,
                                             sk_model.LinearRegression(
@@ -172,42 +176,48 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
                                   sk_model.Lasso(lmbda), k=4,
                                   X_test=X_test, y_test=y_test))
 
-        J_ridge = np.asarray(ridge_reg.coef_).reshape((L, L))
-        J_lasso = np.asarray(lasso_reg.coef_).reshape((L, L))
+        J_ridge = np.asarray(ridge_reg.coef_).reshape(
+            (L_system_size, L_system_size))
+        J_lasso = np.asarray(lasso_reg.coef_).reshape(
+            (L_system_size, L_system_size))
 
-        cmap_args = dict(vmin=-1., vmax=1., cmap='seismic')
+        plot_heatmap(J_leastsq, J_ridge, J_lasso,
+                     L_system_size, lmbda, figure_folder,
+                     "regression_ising_1d_heatmap_lambda{}.pdf".format(lmbda))
 
-        fig, axarr = plt.subplots(nrows=1, ncols=3)
+        # cmap_args = dict(vmin=-1., vmax=1., cmap='seismic')
 
-        axarr[0].imshow(J_leastsq, **cmap_args)
-        axarr[0].set_title(r'$\mathrm{OLS}$', fontsize=16)
-        axarr[0].tick_params(labelsize=16)
+        # fig, axarr = plt.subplots(nrows=1, ncols=3)
 
-        axarr[1].imshow(J_ridge, **cmap_args)
-        axarr[1].set_title(
-            r'$\mathrm{Ridge}, \lambda=%.4f$' % (lmbda), fontsize=16)
-        axarr[1].tick_params(labelsize=16)
+        # axarr[0].imshow(J_leastsq, **cmap_args)
+        # axarr[0].set_title(r'$\mathrm{OLS}$', fontsize=16)
+        # axarr[0].tick_params(labelsize=16)
 
-        im = axarr[2].imshow(J_lasso, **cmap_args)
-        axarr[2].set_title(
-            r'$\mathrm{LASSO}, \lambda=%.4f$' % (lmbda), fontsize=16)
-        axarr[2].tick_params(labelsize=16)
+        # axarr[1].imshow(J_ridge, **cmap_args)
+        # axarr[1].set_title(
+        #     r'$\mathrm{Ridge}, \lambda=%.4f$' % (lmbda), fontsize=16)
+        # axarr[1].tick_params(labelsize=16)
 
-        divider = make_axes_locatable(axarr[2])
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        cbar = fig.colorbar(im, cax=cax)
+        # im = axarr[2].imshow(J_lasso, **cmap_args)
+        # axarr[2].set_title(
+        #     r'$\mathrm{LASSO}, \lambda=%.4f$' % (lmbda), fontsize=16)
+        # axarr[2].tick_params(labelsize=16)
 
-        cbar.ax.set_yticklabels(np.arange(-1.0, 1.0+0.25, 0.25), fontsize=14)
-        cbar.set_label(r'$J_{i,j}$', labelpad=-40,
-                       y=1.12, fontsize=16, rotation=0)
+        # divider = make_axes_locatable(axarr[2])
+        # cax = divider.append_axes("right", size="5%", pad=0.05)
+        # cbar = fig.colorbar(im, cax=cax)
 
-        # plt.show()
-        figure_path = os.path.join(
-            figure_folder, "ising_1d_heatmap_lambda{}.pdf".format(lmbda))
-        fig.savefig(figure_path)
-        print("Figure for lambda={} stored at {}.".format(lmbda, figure_path))
+        # cbar.ax.set_yticklabels(np.arange(-1.0, 1.0+0.25, 0.25), fontsize=14)
+        # cbar.set_label(r'$J_{i,j}$', labelpad=-40,
+        #                y=1.12, fontsize=16, rotation=0)
 
-        plt.close(fig)
+        # # plt.show()
+        # figure_path = os.path.join(
+        #     figure_folder, "ising_1d_heatmap_lambda{}.pdf".format(lmbda))
+        # fig.savefig(figure_path)
+        # print("Figure for lambda={} stored at {}.".format(lmbda, figure_path))
+
+        # plt.close(fig)
 
     with open(pickle_fname, "wb") as f:
         pickle.dump({
@@ -414,6 +424,7 @@ def plot_dual_values(x1, y1, x2, y2, x3, y3, label1, label2, label3,
     print("Figure saved at {}".format(figure_path))
     plt.close(fig)
 
+
 def plot_bias_variance(x, bias, variance, mse, figname, figure_folder,
                        x_hline=False):
     """Plots the bias-variance."""
@@ -450,7 +461,7 @@ def plot_bias_variance(x, bias, variance, mse, figname, figure_folder,
     figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
     fig.savefig(figure_path)
     print("Figure saved at {}".format(figure_path))
-    plt.close(fig)    
+    plt.close(fig)
 
 
 def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
@@ -464,11 +475,11 @@ def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
 
     # OLS
     ax1.axhline(r2_ols_test, label=r"OLS test",
-                 marker="o", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
-                 color="#7570b3")
+                marker="o", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
+                color="#7570b3")
     ax1.axhline(r2_ols_train, label=r"OLS train",
-                 marker="x", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
-                 color="#7570b3")
+                marker="x", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
+                color="#7570b3")
 
     # Ridge
     ax1.semilogx(lmbda_values, r2_ridge_test, label=r"Ridge test",
@@ -495,6 +506,7 @@ def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
     figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
     fig.savefig(figure_path)
     print("Figure saved at {}".format(figure_path))
+
 
 if __name__ == '__main__':
     pickle_fname = "bs_kf_data_1b.pkl"

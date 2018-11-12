@@ -4,6 +4,8 @@ import os
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 
 from lib import ising_1d as ising
 from lib import neuralnetwork as nn
@@ -106,7 +108,7 @@ def convert_output(label_, output_size):
     return y_
 
 
-def retrieve_2d_ising_data(data_path, data_percentage):
+def retrieve_2d_ising_data(data_path, data_size):
     """Simple retriever."""
 
     # data_ordered = []  # Defined as data less than T/J=2.0
@@ -140,51 +142,50 @@ def retrieve_2d_ising_data(data_path, data_percentage):
     print("Data label shape: {} Bytes: {:.2f} MB".format(
         labels_data.shape, labels_data.nbytes / (1024*1024)))
 
-    # Checks that a good data percentage has been provided
-    assert (0 < data_percentage <= 1.0), ("bad data_percentage: "
-                                          "{}".format(data_percentage))
-
     # divide data into ordered, critical and disordered, as is done in Metha
-    # X_ordered = input_data[:70000, :]
-    # Y_ordered = labels_data[:70000]
-    # X_critical = input_data[70000:100000, :]
-    # Y_critical = labels_data[70000:100000]
-    # X_disordered = input_data[100000:, :]
-    # Y_disordered = labels_data[100000:]
+    X_ordered = input_data[:70000, :]
+    Y_ordered = labels_data[:70000]
+    X_critical = input_data[70000:100000, :]
+    Y_critical = labels_data[70000:100000]
+    X_disordered = input_data[100000:, :]
+    Y_disordered = labels_data[100000:]
 
-    X_ordered = input_data[:int(np.floor(70000*data_percentage)), :]
-    Y_ordered = labels_data[:int(np.floor(70000*data_percentage))]
+    # X_ordered = input_data[:int(np.floor(70000*data_percentage)), :]
+    # Y_ordered = labels_data[:int(np.floor(70000*data_percentage))]
 
     # X_critical = input_data[70000:int(np.floor(100000*data_percentage)), :]
     # Y_critical = labels_data[70000:int(np.floor(100000*data_percentage))]
 
-    X_disordered = input_data[100000:int(
-        np.floor(100000*(1 + data_percentage))), :]
-    Y_disordered = labels_data[100000:int(
-        np.floor(100000*(1 + data_percentage)))]
+    # X_disordered = input_data[100000:int(
+    #     np.floor(100000*(1 + data_percentage))), :]
+    # Y_disordered = labels_data[100000:int(
+    #     np.floor(100000*(1 + data_percentage)))]
 
     del input_data, labels_data
 
     # define training and test data sets
-    X = np.concatenate((X_ordered, X_disordered))
-    Y = np.concatenate((Y_ordered, Y_disordered))
+    X = np.concatenate((X_ordered[:data_size//2], X_disordered[:data_size//2]))
+    Y = np.concatenate((Y_ordered[:data_size//2], Y_disordered[:data_size//2]))
 
-    print(int(np.floor(70000*data_percentage)), int(np.floor(100000*(1 + data_percentage))))
+    # Splits 50/50 into ordered, disordered states
 
     return X, Y
 
 
 def nn_core(X_train, X_test, y_train, y_test,
-            layers, lmbda=None, penalty=None,
-            activation=None, output_activation=None,
+            layers, lmbda=None,
+            activation=None,
+            output_activation=None,
             cost_function=None,
             learning_rate=None,
             eta0=None,
             regularization=None,
             weight_init=None,
             epochs=None,
-            mini_batch_size=None, max_iter=None,
-            tolerance=None, return_weights=False, verbose=False):
+            mini_batch_size=None,
+            tolerance=None, 
+            return_weights=False, 
+            verbose=False):
     """Method for retrieveing data for a given set of hyperparameters
 
     Args:
@@ -194,7 +195,6 @@ def nn_core(X_train, X_test, y_train, y_test,
         y_test (ndarray)
         layers (list(int)): list of layer sizes
         lmbdas (float): list of lmbdas
-        penalty (str): penalty type. Choices: l1, l2, elastic_net
         activation (str): activation function.
         output_activation (str): output activation function. Choices: 
             sigmoidal, softmax, identity.
@@ -228,33 +228,85 @@ def nn_core(X_train, X_test, y_train, y_test,
                                   regularization=regularization,
                                   alpha=lmbda)
 
+
     MLP.train(X_train, y_train,
               data_test=X_test,
               data_test_labels=y_test,
               mini_batch_size=mini_batch_size,
               epochs=epochs,
               eta=learning_rate,
-              eta0=eta0)
+              eta0=eta0,
+              verbose=verbose)
 
-    # Accuracy score for our implementation
-    train_accuracy = MLP.score(X_train, y_train)
-    test_accuracy = MLP.score(X_test, y_test)
+    # Results list
+    res = []
 
-    train_accuracy_epochs = MLP.evaluate(X_train, y_train)
-    test_accuracy_epochs = MLP.evaluate(X_test, y_test)
-    # critical_accuracy[i]=log_reg.score(X_critical,Y_critical)
+    if (not isinstance(X_test, type(None))) and \
+        (not isinstance(y_test, type(None))):
 
-    # Prints result from single lambda run
-    if verbose:
-        print('Accuracy scores: train, test')
-        print('MultilayerPerceptron: {0:0.4f}, {1:0.4f}'.format(
-            train_accuracy, test_accuracy))
+        # Accuracy score for our implementation
+        train_accuracy = MLP.score(X_train, y_train)
+        test_accuracy = MLP.score(X_test, y_test)
 
-    res = [train_accuracy, test_accuracy, train_accuracy_epochs, \
-        test_accuracy_epochs]
-    
+        train_accuracy_epochs = MLP.evaluate(X_train, y_train)
+        test_accuracy_epochs = MLP.evaluate(X_test, y_test)
+        # critical_accuracy[i]=log_reg.score(X_critical,Y_critical)
+
+        # Prints result from single lambda run
+        if verbose:
+            print('Accuracy scores: train, test')
+            print('MultilayerPerceptron: {0:.3f}, {1:.3f}'.format(
+                train_accuracy, test_accuracy))
+
+        res += [train_accuracy, test_accuracy, train_accuracy_epochs,
+               test_accuracy_epochs]
+
     if return_weights:
         res.append(MLP.weights)
         res.append(MLP.biases)
+        res.append(MLP.epoch_evaluations)
 
     return res
+
+
+def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
+                 filename):
+    """Plots and saves a heatmap for task b) and d)."""
+    cmap_args = dict(vmin=-1., vmax=1., cmap='seismic')
+
+    fig, axarr = plt.subplots(nrows=1, ncols=3)
+
+    fontsize = 8
+    labelsize = 10
+    yticksize = 8
+
+    axarr[0].imshow(J_leastsq, **cmap_args)
+    axarr[0].set_title(r'$\mathrm{OLS}$', fontsize=fontsize)
+    axarr[0].tick_params(labelsize=labelsize)
+
+    axarr[1].imshow(J_ridge, **cmap_args)
+    axarr[1].set_title(
+        r'$\mathrm{Ridge}, \lambda=%.4f$' % (lmbda), fontsize=fontsize)
+    axarr[1].tick_params(labelsize=labelsize)
+
+    im = axarr[2].imshow(J_lasso, **cmap_args)
+    axarr[2].set_title(
+        r'$\mathrm{LASSO}, \lambda=%.4f$' % (lmbda), fontsize=fontsize)
+    axarr[2].tick_params(labelsize=labelsize)
+
+    divider = make_axes_locatable(axarr[2])
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = fig.colorbar(im, cax=cax)
+
+    cbar.ax.set_yticklabels(
+        np.arange(-1.0, 1.0+0.25, 0.25), fontsize=yticksize)
+    cbar.set_label(r'$J_{i,j}$', labelpad=-40,
+                   y=1.12, fontsize=fontsize, rotation=0)
+
+    # plt.show()
+    figure_path = os.path.join(
+        figure_folder, filename)
+    fig.savefig(figure_path)
+    print("Figure for lambda={} stored at {}.".format(lmbda, figure_path))
+
+    plt.close(fig)

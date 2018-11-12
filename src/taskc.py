@@ -34,7 +34,7 @@ def task1c(sk=False, figure_folder="../fig"):
     print("Task c: Logistic regression classification")
 
     training_size = 0.8
-    data_percentage = 0.01
+    data_size = 10000
     # options: float, inverse
     learning_rate = "inverse"
     max_iter = int(1e3)
@@ -55,7 +55,7 @@ def task1c(sk=False, figure_folder="../fig"):
     # Define regularisation parameter
     lmbdas = np.logspace(-5, 5, 11)
 
-    X, y = retrieve_2d_ising_data(data_path, data_percentage)
+    X, y = retrieve_2d_ising_data(data_path, data_size)
 
     # pick random data points from ordered and disordered states
     # to create the training and test sets

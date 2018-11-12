@@ -23,7 +23,7 @@ def task1e(figure_path="../fig"):
     print("="*80)
     print("Task e: neural network classification")
     data_path = "../datafiles/MehtaIsingData"
-    data_percentage = 0.3
+    data_size = 10000
     training_size = 0.8
     learning_rate = 1.0
     max_iter = int(1e3)
@@ -31,7 +31,7 @@ def task1e(figure_path="../fig"):
 
     print("Neural Network classification")
 
-    X, y = retrieve_2d_ising_data(data_path, data_percentage)
+    X, y = retrieve_2d_ising_data(data_path, data_size)
 
     # pick random data points from ordered and disordered states
     # to create the training and test sets
@@ -46,9 +46,9 @@ def task1e(figure_path="../fig"):
     X_train = X_train.reshape((*X_train.shape, 1))
     X_test = X_test.reshape((*X_test.shape, 1))
 
-    data_train_labels = np.asarray(
+    y_train = np.asarray(
         [convert_output(l, output_layer_shape) for l in y_train])
-    data_test_labels = np.asarray(
+    y_test = np.asarray(
         [convert_output(l, output_layer_shape) for l in y_test])
 
     # data_train_labels = np.a
@@ -69,12 +69,11 @@ def task1e(figure_path="../fig"):
     eta = "inverse"  # Options: float, 'inverse'
 
     # Default hyperparameters
-    default_penalty = "l2"
     default_activation = "sigmoid"
     default_output_activation = "softmax"
     default_cost_function = "log_loss"
     default_learning_rate = "inverse"
-    default_eta0 = 1.0
+    default_eta0 = 0.1
     default_regularization = "l2"
     default_mini_batch_size = 20
     default_hidden_layer_size = 10
@@ -90,13 +89,11 @@ def task1e(figure_path="../fig"):
         "eta0": default_eta0,
         "regularization": default_regularization,
         "cost_function": default_cost_function,
-        "penalty": default_penalty,
         "activation": default_activation,
         "output_activation": default_output_activation,
         "mini_batch_size": default_mini_batch_size,
         "weight_init": default_weight_init,
         "epochs": default_epochs,
-        "max_iter": max_iter,
         "verbose": verbose,
     }
 
@@ -105,7 +102,6 @@ def task1e(figure_path="../fig"):
     output_activation = ["sigmoid", "identity", "softmax"]
     cost_function = ["mse", "log_loss", "exponential_cost"]
     learning_rates = np.logspace(-6, -1, 6)
-    learning_rate = ["inverse"]
     mini_batch_size = [10, 20, 30, 40, 50]
     layer_neurons = [5, 10, 15, 20, 25, 30, 40, 50]
     weight_init = ["default", "large"]
@@ -120,8 +116,9 @@ def task1e(figure_path="../fig"):
                    lmbdas=lambda_values, learning_rates=learning_rates,
                    **lmbda_eta_params)
 
-    print_parameters(**default_input_dict)
-    nn_core(X_train, X_test, y_train, y_test, layers, **default_input_dict)
+
+    # The following run produces near perfect accuracy
+    nn_core(X_train, X_test, y_train, y_test, default_layers, **default_input_dict)
 
 
 def run_lambda_mini_batches():

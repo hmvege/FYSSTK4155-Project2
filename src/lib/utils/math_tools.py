@@ -59,6 +59,7 @@ def softmax(x):
         x (ndarray): weighted sum of inputs.
     """
     z_exp = np.exp(x)
+    # print(x.shape, z_exp.shape)
     z_exp_sum = np.sum(z_exp)
     return z_exp/z_exp_sum
 
@@ -140,7 +141,7 @@ class _BaseCost:
     """Base cost function class."""
     @staticmethod
     @abc.abstractmethod
-    def cost(a, y):
+    def __call__(a, y):
         """Returns cost function.
 
         Args:
@@ -153,31 +154,31 @@ class _BaseCost:
 
     @staticmethod
     @abc.abstractmethod
-    def delta(a, y, z):
+    def delta(a, y, x):
         return None
 
 
 class MSECost(_BaseCost):
     @staticmethod
-    def cost(a, y):
+    def __call__(a, y):
         """Returns cost function.
 
         Args:
-            a (ndarray): layer output.
-            y (ndarray): true output.
+            a (ndarray): all layer outputs.
+            y (ndarray): all true outputs.
         Return:
             (float): cost function output.
         """
-        return 0.5*np.sum((a - y)**2)
+        return 0.5*np.mean(np.linalg.norm(a - y, axis=1)**2, axis=0)
 
     @staticmethod
-    def delta(a, y, z):
-        return (a - y) * z
+    def delta(a, y, x):
+        return (a - y) * x
 
 
 class LogEntropyCost(_BaseCost):
     @staticmethod
-    def cost(a, y):
+    def __call__(a, y):
         """Returns cost function.
 
         Args:
@@ -186,11 +187,11 @@ class LogEntropyCost(_BaseCost):
         Return:
             (float): cost function output.
         """
-        return - np.sum(y*log(a) + (1 - y)*np.log(1 - a))
+        return - np.mean(y*np.log(a) + (1 - y)*np.log(1 - a))
 
     @staticmethod
-    def delta(a, y, z):
-        return (a - y)
+    def delta(a, y, x):
+        return (a - y.reshape(a.shape))
 
 
 class ExponentialCost(_BaseCost):
@@ -208,7 +209,7 @@ class ExponentialCost(_BaseCost):
         return tau*np.exp(1/tau * np.sum((y-y_true)**2))
 
     @staticmethod
-    def delta(a, y, z, tua=0.1):
+    def delta(a, y, x, tua=0.1):
         """Exponential cost function gradient."""
         return 2/tau * (y-y_true)*exponential_cost(y, y_true, tau)
 

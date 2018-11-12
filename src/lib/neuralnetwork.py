@@ -1,5 +1,6 @@
 import numpy as np
 import copy as cp
+from tqdm import tqdm, trange
 try:
     import utils.math_tools as umath
     from utils.math_tools import AVAILABLE_ACTIVATIONS, \
@@ -70,6 +71,9 @@ class MultilayerPerceptron:
 
         # L2 regularization term
         self.alpha = alpha
+
+        # For storing epoch evaluation scores
+        self.epoch_evaluations = []
 
         # Sets momentum given it is valid
         assert momentum >= 0.0, "momentum must be positive"
@@ -285,23 +289,22 @@ class MultilayerPerceptron:
 
         # Gets initial delta value, first of the four equations
         # delta = self._cost_function_derivative(self.activations[-1], y).T
+        # print(self._output_activation(z_list[-1]), self.activations[-1])
         delta = self._cost.delta(self.activations[-1], y,
-                                 self._output_activation(z_list[-1]).T).T
+                                 z_list[-2]).T
+        # delta = self._cost.delta(self.activations[-1], y,
+        #                          self._output_activation(z_list[-1]).T).T
 
-        # No final derivative?
-        # delta *= self._output_activation_derivative(z_list[-1])
 
         # Sets last element before back-propagating
         delta_b[-1] = delta
         delta_w[-1] = delta @ self.activations[-2].T
-        delta_w[-1] += self._get_reg_delta(-1)  # /x.shape[0]
+        # delta_w[-1] = np.einsum("ijk,ilk->ijl", delta, self.activations[-2].T)
 
-        # delta_b, delta_w = self._compute_gradient_derivatives(layer, delta_b,
-        #     delta_w, delta)
+        delta_w[-1] += self._get_reg_delta(-1)  # /x.shape[0]
 
         # Loops over layers
         for l in range(2, self.N_layers):
-            # Second equation: delta^l = delta^{l+1} W^l * dsigma(z^l)
             # Retrieves the z and gets it's derivative
             z = z_list[-l]
             sp = self._activation_derivative(z)
@@ -312,13 +315,15 @@ class MultilayerPerceptron:
 
             delta_b[-l] = delta  # np.sum(delta, axis=1)
             delta_w[-l] = delta @ self.activations[-l-1].T
+            # delta_w[-l] = np.einsum("ijk,ilk->ijl", delta, self.activations[-l-1].T)
+
             delta_w[-l] += self._get_reg_delta(-l)
 
         return delta_w, delta_b
 
     def train(self, data_train, data_train_labels, epochs=10,
               mini_batch_size=50, eta=1.0, eta0=1.0,
-              data_test=None, data_test_labels=None):
+              data_test=None, data_test_labels=None, verbose=False):
         """Trains the neural-net on provided data. Assumes data size 
         is the same as what provided in the initialization.
 
@@ -340,6 +345,7 @@ class MultilayerPerceptron:
                 (samples, input_size, 1)
             data_test_labels (ndarray): training data labels. Shape: 
                 (samples, output_size)
+            verbose (bool): if prompted, will print cost and evaluation scores.
 
         Raises:
             AssertionError: if input data to not match the specified layer 
@@ -365,7 +371,11 @@ class MultilayerPerceptron:
 
         self._set_learning_rate(eta, eta0)
 
-        for epoch in range(epochs):
+        for epoch in trange(epochs, desc="Epoch"):
+
+            if epoch==0:
+                tqdm.write("Cost: {}".format(
+                        self.cost(data_train, data_train_labels)))
 
             # Updates the learning rate
             eta_ = self._update_learning_rate(epoch, epochs)
@@ -394,14 +404,25 @@ class MultilayerPerceptron:
 
             # If we have provided testing data, we perform an epoch evaluation
             if perform_eval:
-                print("Epoch: {} Score: {}/{}".format(
-                    epoch, np.sum(self.evaluate(data_test, data_test_labels)),
-                    len(data_test_labels)))
-            else:
-                print("Epoch {}".format(epoch))
+                self.epoch_evaluations.append(
+                    np.sum(self.evaluate(data_test, data_test_labels)))
+
+                if verbose:
+                    tqdm.write("Cost: {}".format(
+                        self.cost(data_train, data_train_labels)))
+
+                    tqdm.write("Score: {}/{}".format(
+                        self.epoch_evaluations[-1],
+                        len(data_test_labels)))
 
     def update_mini_batch(self, mb_data, mb_labels, eta):
         """Trains the network on the mini batch."""
+
+        # delta_w, delta_b = self._back_propagate(mb_data, mb_labels)
+
+        # for l in range(self.N_layers - 1):
+        #     self.weights[l] -= np.mean(delta_w[l], axis=0)*eta
+        #     self.biases[l] -= np.mean(delta_b[l], axis=0)*eta
 
         # Resets gradient sums
         delta_w_sum = [np.zeros(w.shape) for w in self.weights]
@@ -414,13 +435,18 @@ class MultilayerPerceptron:
             delta_w, delta_b = self._back_propagate(sample, label)
 
             # Sums the derivatives into a single list of derivative-arrays.
-            delta_w_sum = [dw + dws for dw, dws in zip(delta_w, delta_w_sum)]
-            delta_b_sum = [db + dbs for db, dbs in zip(delta_b, delta_b_sum)]
+            delta_w_sum = [dws + dw for dw, dws in zip(delta_w, delta_w_sum)]
+            delta_b_sum = [dbs + db for db, dbs in zip(delta_b, delta_b_sum)]
 
         # Updates weights and biases by subtracting their gradients
         for l in range(self.N_layers - 1):
             self.weights[l] -= (delta_w_sum[l]*eta/len(mb_data))
             self.biases[l] -= (delta_b_sum[l]*eta/len(mb_data))
+
+    def cost(self, X, y):
+        """Calculates the cost."""
+        y_pred = np.asarray([self.predict(ix) for ix in X]).reshape(*y.shape)
+        return self._cost(y_pred, y)
 
     def evaluate(self, test_data, test_labels, show_image=False):
         """Evaluates test data.
@@ -512,12 +538,13 @@ def __test_mlp_mnist():
     alpha = 0.0
     regularization = "l2"
     mini_batch_size = 20
-    epochs = 1000
+    epochs = 100
     eta = "inverse"  # Options: float, 'inverse'
     eta0 = 1.0
+    verbose = True
 
     # Sets up my MLP.
-    MLP = MultilayerPerceptron([data_train_samples.shape[1], 50, 10],
+    MLP = MultilayerPerceptron([data_train_samples.shape[1], 30, 10],
                                activation=activation,
                                cost_function=cost_function,
                                output_activation=output_activation,
@@ -530,7 +557,8 @@ def __test_mlp_mnist():
               mini_batch_size=mini_batch_size,
               epochs=epochs,
               eta=eta,
-              eta0=eta0)
+              eta0=eta0,
+              verbose=verbose)
     print(MLP.score(data_test_samples, data_test_labels))
     MLP.evaluate(data_test_samples, data_test_labels, show_image=False)
 

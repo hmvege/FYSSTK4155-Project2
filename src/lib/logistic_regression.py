@@ -224,7 +224,7 @@ class LogisticRegression:
         # loss = - X.T @ (y - p_) + self.alpha * weights
         # return loss
 
-        grad = X.T @ (self._activation(self._predict(X, weights)) - y)
+        grad = np.dot(X.T, (self._activation(self._predict(X, weights)) - y), keepdims=True)
 
         # Adds regularization
         grad += self.alpha*weights
