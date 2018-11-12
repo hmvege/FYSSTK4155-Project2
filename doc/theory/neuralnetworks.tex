@@ -1,27 +1,27 @@
-\documentclass[11pt]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage[toc,page]{appendix}
-\usepackage{hyperref}
-\usepackage{amsmath}
-\usepackage{mathtools}
-\usepackage{amsfonts}
-\usepackage{url}
-
-% For having latex symbols in section titles
-\usepackage{epstopdf}
-
-% Remembrance 
-\newcommand{\husk}[1]{\color{red}#1\color{black}}
-
-% For proper citations
-% \usepackage[round, authoryear]{natbib}
-\usepackage[numbers]{natbib} 
-
-% For fixing large table height
-\usepackage{a4wide}
-
-\begin{document}
+%\documentclass[11pt]{article}
+%
+%\usepackage[utf8]{inputenc}
+%\usepackage[toc,page]{appendix}
+%\usepackage{hyperref}
+%\usepackage{amsmath}
+%\usepackage{mathtools}
+%\usepackage{amsfonts}
+%\usepackage{url}
+%
+%% For having latex symbols in section titles
+%\usepackage{epstopdf}
+%
+%% Remembrance 
+%\newcommand{\husk}[1]{\color{red}#1\color{black}}
+%
+%% For proper citations
+%% \usepackage[round, authoryear]{natbib}
+%\usepackage[numbers]{natbib} 
+%
+%% For fixing large table height
+%\usepackage{a4wide}
+%
+%\begin{document}
 \subsection{Neural Networks}
 Among the many methods developed for machine learning, neural networks, and especially deep neural networks, are among the most popular. Neural networks were suggested already in 1943 \cite{McCulloch1943} and have had many renaissances since. Currently we are experiencing such a renaissance, but in contrast to earlier periods of resurfaced interest, we now have the computer power to use neural nets efficiently. \\ \\
 A neural net bases itself loosely upon the biological model of neurons communicating together in the brain. A neuron cell contains most of what a normal cell contains, but it also has a long tail called an axon and some antenna like extension called dendrites. The axon of one cell can extend quite far and attach to some of the dendrites of another neural cell. Thus, the biological neural net consists of neural cells receiving input through their dendrites from many other cells and sending output through one output \cite{Geron}[p. 257]. \\ \\
@@ -33,7 +33,29 @@ a = \sigma(\vec{w}^T \cdot \vec{x} + b)
 \end{equation}
 where $a$ is the output, $\vec{w}$ are the weights, $\vec{x}$ are the inputs and $b$ is the bias term. Note that if we had used a stepfunction instead of the logit function in the equation above, the neuron would either give an output of 1 or nothing, i.e. 0. When we instead use the sigmoid function, the output can be in the range of 0 to 1. \\ \\
 Once all neurons have been calculated in a layer, we can move on to the next and continue until we reach our output layer. Each layer can have as many neurons as the user wants. Optimizing the number of neurons in each layer is an art and requires both experience and a bit of luck. The output layer needs one neuron for each class we wish to identify. \\ \\
-After initial calculation of the outer layer, you will most likely have an answer that is completely rubbish. It is clear that we have to optimize the neural net. As each neurons activation function is calculated using equation \eqref{eqT:activation}, we can see that we can optimize the weights between the neurons and the bias between the layers. This is done through a method called backwards propagation where one uses the cost function to identify the magnitude of the error (the cost) of a neural net and then one goes backwards throught the neural net to update the weights and biases. \\ \\
-
-Mathais skriver mer om backwards nedenfor dette.
-\end{document}
+After initial calculation of the outer layer, you will most likely have an answer that is completely rubbish. It is clear that we have to optimize the neural net. As each neurons activation function is calculated using equation \eqref{eqT:activation}, we can see that we can optimize the weights between the neurons and the bias between the layers. This is done through a method called backwards propagation where one uses the cost function to identify the magnitude of the error (the cost) of a neural net and then one goes backwards through the neural net to update the weights and biases. \\ \\
+The basic procedure of backpropagation is this (heavily influenced by the work of Michael Nielsen \cite{Nielsen}):
+\begin{itemize}
+\item Compute the output error vector for the final layer (L) given by
+\begin{equation*}
+\delta^L = \nabla_a C \odot \sigma^{'}(\vec{w}^T \cdot \vec{x} + b)
+\end{equation*}
+where C is the cost function and $\nabla_a$ is a vector who has components that are the partial derivatives $\frac{\partial C}{\partial a_j^L}$ where $a_j$ is the j'th output found by using equation \eqref{eqT:activation} for $a$.
+\item Go back through all the previous layers l = L-1, L-2, ..., 2 and compute
+\begin{equation*}
+\delta^l ((\vec{w}^{l + 1})^T \delta^{l + 1}) \odot \sigma^{'}(\vec{w}^T \cdot \vec{x} + b)
+\end{equation*}
+this is where we backpropagate the error.
+\item Finally, find the gradient of the cost function for the two parameters we want to change, $\vec{w}$ and $b$ by:
+\begin{align*}
+\frac{\partial C}{\partial \vec{w}_{jk}^l} &= a_k^{l-1}\delta_{j}^{l} \\
+\frac{\partial C}{\partial b_{j}^l} &= \delta_{j}^{l}
+\end{align*}
+where $k$ indicates the column of $\vec{w}^l$ as $j$ indicates the row.
+\end{itemize}
+Once all layers have been adjusted through backpropagation, one can run through the whole network again and repeat the process. A common cost function may be the quadratic loss function given by:
+\begin{equation}
+C = \frac{1}{N} \sum\limits_{j} (y_j - a_j^L)^2
+\end{equation}
+where N are the total numbers of outputs in $j$ and $y$ are the true answers.
+%\end{document}
