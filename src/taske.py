@@ -33,7 +33,7 @@ def task1e(figure_path="../fig"):
     learning_rate = 1.0
     max_iter = int(1e3)
     verbose = False
-    try_get_pickle=True
+    try_get_pickle=False
 
     print("Neural Network classification")
 
