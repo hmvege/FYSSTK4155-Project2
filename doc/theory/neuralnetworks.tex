@@ -45,23 +45,58 @@ Once all layers have been adjusted through back propagation, one can run through
 where N are the total numbers of outputs in $j$ and $y$ are the true answers.
 
 Let us start by deriving the back propagation algorithm for $L$ layers and a general layer activation function $a^L(z)$. We start with some cost function $\CO(w^L, y)$, where $W^L$ is the output layer weights and $y$ is the \textit{true} values which we want to approach. In order to move towards optimal weights(and biases), we can perform a gradient descent by subtracting the gradient of the cost function w.r.t. the weights and biases. We begin by finding the gradient of the $\CO$ for $W^L$. Using the chain rule we get,
-\begin{align*}
-\frac{\partial \CO}{\partial w^L} &= \frac{\partial z^L}{\partial w^L} \frac{\partial a^L}{\partial z^L} \frac{\partial \CO}{\partial a^L}
-\end{align*}
+\begin{align}
+    \frac{\partial \mathcal{C}}{\partial w^L} &= \frac{\partial z^L}{\partial w^L} \frac{\partial a^L}{\partial z^L} \frac{\partial \CO}{\partial a^L}
+    \label{eq:mlp-gradient-chain}
+\end{align}
 From this we simply have to find each of the partial derivatives. Without specifying the cost function and the activation layer, we can only state that the first partial derivative is given as,
 \begin{align*}
-\frac{\partial z^L}{\partial w^L} = a^L
+\frac{\partial z^L}{\partial w^L} = a^{L-1}
 \end{align*}
+In order to find the full expression, let us look at the MSE cost function,
 
+\subsubsection{Mean square error(MSE) cost function}
+The mean square error cost function is given as (for one sample)
+\begin{align}
+    \mathcal{C}_\mathrm{MSE} = \frac{1}{2} (a^L - y)^2
+    \label{eq:mse-mlp-cost}
+\end{align}
+We can then insert this expression into the cost chain rule expression \eqref{eq:mlp-gradient-chain}, and we get that the partial derivative
 \begin{align*}
-s
+    \frac{\partial \mathcal{C}_\mathrm{CE}}{\partial w^L} &= a^{L-1}(a^L - y)\sigma'(z^L) \\
+    &= a^{L-1} \delta^L
+\end{align*}
+If we now take the derivative for layer $L-1$, we get
+\begin{align*}
+    \frac{\partial \mathcal{C}_\mathrm{CE}}{\partial w^{L-1}} &= \frac{\partial a^{L-1}}{\partial w^{L-1}} \delta^L \\
+    &= \frac{\partial z^{L-1}}{\partial w^{L-1}} \frac{\partial a^{L-1}}{\partial z^{L-1}} \delta^L \\
+    &= a^{L-2}\sigma'(z^{L-1})\delta^L
 \end{align*}
 
-
-\subsubsection{Mean square error}
-The mean square error cost function is given as 
-
-\subsubsection{Cross entropy}
+\subsubsection{Cross entropy(CE) cost function}
+The CE cost function is given as
+\begin{align}
+    \mathcal{C}_\mathrm{CE} = - \sum_{i=1} y_i \log a^L
+    \label{eq:ce-mlp-cost}
+\end{align}
+with its derivative as 
+\begin{align}
+    \frac{\partial \mathcal{C}_\mathrm{CE}}{\partial a^L} = - \sum_{i=1} \frac{y_i} {a^L}
+    \label{eq:ce-mlp-cost-der}
+\end{align}
+If we use softmax as the layer output activation function,
+\begin{align}
+    z_i = \frac{\exp{z_i}}{\sum_k \exp(z_k) }
+    \label{eq:softmax}
+\end{align}
+with $i,k$ being output classes and its derivative,
+\begin{align}
+    z_i = z_i(\delta_{ij} - z_j),
+\end{align}
+we can write the initial gradient $\delta^L$ as
+\begin{align}
+    \delta^L = y - a^L
+\end{align}
 
 \subsubsection{Activation layers} \label{sec:layer-acts}
 The hidden layer activations can greatly affect the outcome of the neural network. We will focus on four different hidden layer activations, the first being \textbf{sigmoidal activation}.
@@ -84,7 +119,6 @@ with its derivative
     \sigma'_\mathrm{tanh}(z) = 1 - \tanh^2(z)
     \label{eq:act-tanh-der}
 \end{align}
-
 The \textbf{relu} or rectifier activation is given as,
 \begin{align}
     \sigma_\mathrm{relu}(z) = 
@@ -103,7 +137,6 @@ with its derivative
     \end{cases}
     \label{eq:act-relu-der}
 \end{align}
-
 The \textbf{Heaviside} activation function is given as
 \begin{align}
     \sigma_\mathrm{Heaviside}(z) = 

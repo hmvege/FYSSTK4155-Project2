@@ -112,12 +112,12 @@ def task1e(figure_path="../fig"):
     activations = ["sigmoid", "relu", "tanh", "heaviside"]
     output_activations = ["sigmoid", "identity", "softmax"]
     cost_functions = ["mse", "log_loss"]  # , "exponential_cost"]
-    learning_rates = np.logspace(-6, -1, 6)
+    learning_rates = np.logspace(-4, -1, 4)
     mini_batch_sizes = [5, 10, 20, 30]
-    layer_neurons = [1, 5, 10, 20, 30, 40]
+    layer_neurons = [1, 5, 10, 20]
     training_sizes = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     weight_inits = ["default", "large"]
-    lambda_values = np.logspace(-4, 3, 8)
+    lambda_values = np.logspace(-4, 0, 5)
 
     # # Test run parameters!
     # learning_rates = np.logspace(-6, -1, 6)[:3]
@@ -136,7 +136,6 @@ def task1e(figure_path="../fig"):
     #                try_get_pickle=try_get_pickle,
     #                **lmbda_eta_params)
 
-    # Currently running on stationary
     # lmbda_neurons_params = default_input_dict.copy()
     # lmbda_neurons_params.pop("lmbda")
     # lmbda_neurons_params["figure_folder"] = figure_path
@@ -145,18 +144,16 @@ def task1e(figure_path="../fig"):
     #                    try_get_pickle=try_get_pickle,
     #                    **lmbda_neurons_params)
 
-    # TODO: run this!
-    # lmbda_mini_batches_params = default_input_dict.copy()
-    # lmbda_mini_batches_params.pop("lmbda")
-    # lmbda_mini_batches_params.pop("mini_batch_size")
-    # lmbda_mini_batches_params["figure_folder"] = figure_path
-    # run_lambda_mini_batches(X_train, X_test, y_train, y_test, default_layers,
-    #                         lmbdas=lambda_values,
-    #                         mini_batch_sizes=mini_batch_sizes,
-    #                         try_get_pickle=try_get_pickle,
-    #                         **lmbda_mini_batches_params)
+    lmbda_mini_batches_params = default_input_dict.copy()
+    lmbda_mini_batches_params.pop("lmbda")
+    lmbda_mini_batches_params.pop("mini_batch_size")
+    lmbda_mini_batches_params["figure_folder"] = figure_path
+    run_lambda_mini_batches(X_train, X_test, y_train, y_test, default_layers,
+                            lmbdas=lambda_values,
+                            mini_batch_sizes=mini_batch_sizes,
+                            try_get_pickle=try_get_pickle,
+                            **lmbda_mini_batches_params)
 
-    # TODO: run this!
     neurons_eta_params = default_input_dict.copy()
     neurons_eta_params.pop("learning_rate")
     neurons_eta_params["figure_folder"] = figure_path
