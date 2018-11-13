@@ -95,6 +95,9 @@ def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None,
                  color=col,
                  label=lab)
 
+        print("Activation: {} accuracy mean {} accuracy std {}".format(
+            key, data[key["y"]][-50:].mean(), data[key["y"]][-50:].std()))
+
     ax1.set_xlabel(ylabel)
     ax1.set_ylabel(xlabel)
 
@@ -102,6 +105,7 @@ def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None,
 
     ax1.grid(True)
     ax1.legend(fontsize=8)
+
 
     figure_path = os.path.join(figure_folder, figname)
     fig.savefig(figure_path)
