@@ -31,7 +31,7 @@ rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
 rcParams["font.family"] += ["serif"]
 
 
-def task1b(pickle_fname, N_samples=10000, training_size=0.1, N_bs=200,
+def task1b(pickle_fname, N_samples=10000, training_size=0.5, N_bs=200,
            L_system_size=20, figure_folder="../fig"):
     """Task b of project 2"""
     print("="*80)

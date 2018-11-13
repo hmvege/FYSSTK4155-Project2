@@ -13,11 +13,11 @@ where the $N$ is number of particles(or lattice size). Our goal will be to predi
 We begin by labeling each site as coupled with $J$.
 \begin{align}
     E_\mathrm{model}[\bm{s}^i] = -\sum^N_{j=1} \sum^N_{k=1} J_{j,k} s^i_j s^i_k,
-    \label{eq:1d-ising-linreg}
 \end{align}
 where $i$ is the index over lattice configurations. The coupling strength $J_{j,k}$  can now be cast as a matrix, and we end up with
 \begin{align}
     E_\mathrm{model}^i \equiv \bm{X}^i \cdot \bm{J},
+    \label{eq:1d-ising-linreg}
 \end{align}
 where $\bm{X}^i$ is the design matrix consisting of all two-body interactions $\{s^i_j s^i_k\}^N_{j,k=1}$, and $\bm{J}$ the weight matrix we wish to find later using machine learning techniques.
 
