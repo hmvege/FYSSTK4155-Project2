@@ -91,7 +91,9 @@ def task1b(pickle_fname, N_samples=10000, training_size=0.1, N_bs=200,
     lasso_bs_results = []
     lasso_cvkf_results = []
 
-    for lmbda in lambda_values:
+    heatmap_data = {}
+
+    for i, lmbda in enumerate(lambda_values):
 
         # Ridge regression
         ridge_reg = reg.RidgeRegression(lmbda)
@@ -184,9 +186,11 @@ def task1b(pickle_fname, N_samples=10000, training_size=0.1, N_bs=200,
         J_lasso = np.asarray(lasso_reg.coef_).reshape(
             (L_system_size, L_system_size))
 
-        plot_heatmap(J_leastsq, J_ridge, J_lasso,
-                     L_system_size, lmbda, figure_folder,
-                     "regression_ising_1d_heatmap_lambda{}.pdf".format(lmbda))
+        heatmap_data[i] = [J_leastsq, J_ridge, J_lasso]
+
+        # plot_heatmap(J_leastsq, J_ridge, J_lasso,
+        #              L_system_size, lmbda, figure_folder,
+        #              "regression_ising_1d_heatmap_lambda{}.pdf".format(lmbda))
 
         # cmap_args = dict(vmin=-1., vmax=1., cmap='seismic')
 
@@ -224,6 +228,7 @@ def task1b(pickle_fname, N_samples=10000, training_size=0.1, N_bs=200,
 
     with open(pickle_fname, "wb") as f:
         pickle.dump({
+            "L_system_size": L_system_size,
             "ols": linreg_general_results,
             "ols_bs": linreg_bs_results,
             "ols_cv": linreg_cvkf_results,
@@ -232,7 +237,8 @@ def task1b(pickle_fname, N_samples=10000, training_size=0.1, N_bs=200,
             "ridge_cv": ridge_cvkf_results,
             "lasso": lasso_general_results,
             "lasso_bs": lasso_bs_results,
-            "lasso_cv": lasso_cvkf_results}, f)
+            "lasso_cv": lasso_cvkf_results,
+            "heatmap_data": heatmap_data}, f)
         print("Data pickled and dumped to: {:s}".format(pickle_fname))
 
 
@@ -267,6 +273,18 @@ def task1b_bias_variance_analysis(pickle_fname, figure_folder="../fig"):
     ols_cv_mse = data["ols_cv"]["mse"]
     ols_cv_bias = data["ols_cv"]["bias"]
     ols_cv_var = data["ols_cv"]["var"]
+    heatmap_data = data["heatmap_data"]
+    L_system_size = data["L_system_size"]
+
+    # Plots the heatmap data
+    for i, lmbda in enumerate(lambda_values):
+        J_leastsq, J_ridge, J_lasso = heatmap_data[i]
+
+        plot_heatmap(J_leastsq, J_ridge, J_lasso,
+                     L_system_size, lmbda, figure_folder,
+                     "regression_ising_1d_heatmap_lambda{}.pdf".format(lmbda))
+
+
 
     # General Ridge values
     ridge_r2 = select_value(data["ridge"], "r2", with_train=True)
