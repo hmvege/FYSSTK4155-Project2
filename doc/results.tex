@@ -1,62 +1,3 @@
-\documentclass[11pt]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage{mathtools}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{enumerate}
-
-% For proper referencing in article
-\usepackage{hyperref}
-\usepackage{url}
-
-% For figures and graphics'n stuff
-\usepackage{graphicx}
-\usepackage{caption}
-\usepackage{subcaption}
-% \usepackage{tabularx}
-\usepackage{float}
-
-% For proper appendices
-\usepackage[toc,page]{appendix}
-
-% Algorithm packages
-\usepackage{algorithm}
-\usepackage{algorithmicx}
-\usepackage{algpseudocode}
-
-% For bold math symbols
-\usepackage{bm}
-\usepackage{xcolor}
-
-% For customized hlines in tables
-\usepackage{ctable}
-
-% For having latex symbols in section titles
-\usepackage{epstopdf}
-
-% For proper citations
-% \usepackage[round, authoryear]{natbib}
-\usepackage[numbers]{natbib} 
-
-% For fixing large table height
-\usepackage{a4wide}
-
-% Remembrance and checking
-\newcommand{\husk}[1]{\color{red} #1 \color{black}}
-\newcommand{\sjekk}[1]{\color{violet} #1 \color{black}}
-
-\DeclareMathOperator{\sign}{sign}
-\DeclareMathOperator*{\argmin}{argmin}
-\DeclareMathOperator*{\CO}{\mathcal{C}}
-
-
-% \title{FYS-STK4155: Project 2}
-\title{Exploring the hyperspace of Machine Learning parameters}
-\author{Eirik Ramsli Hauge, Joakim Kalsnes, Hans Mathias Mamen Vege}
-\date{\today}
-
-\begin{document}
 \section{Results}
 Results for two different cases are being presented, one the one-dimensional Ising Model and another for the the two-dimensional Ising model. We begin with looking at the. 1D Ising model.
 
@@ -253,9 +194,29 @@ We then move on to an investigation for different L$^2$ regularization strengths
     \label{fig:mlp-eta-lambda}
 \end{figure}
 
-Add results on lambda vs neurons
+A comparison of the accuracy score\eqref{eq:mlp-accuracy} as a function L$^2$ regularization parameter and hidden layer size(the neurons) can be viewed in figure \ref{fig:mlp-lambda-neurons}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_lambda_neurons.pdf}
+    \caption{The accuracy score as function of the L$^2$ regularization parameter $\lambda$ and the number of neurons. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
+    \label{fig:mlp-lambda-neurons}
+\end{figure}
+
+The accuracy score\eqref{eq:mlp-accuracy} as a function of the hidden layer size(the neurons) and the training data size as percentage of of a $N_\mathrm{samples}=10000$ training data, can be viewed in figure \ref{fig:mlp-neurons-ts}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_neurons_training_size.pdf}
+    \caption{The accuracy score as function of the number of neurons and the training data size percentage of $N_\mathrm{samples}=10000$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
+    \label{fig:mlp-neurons-ts}
+\end{figure}
+
 Add results on lambda vs minibatches
 Add results on neurons vs eta
-Add results on neurons vs training size
 
-\end{document}
+The accuracy score\eqref{eq:mlp-accuracy} as a function of the hidden layer size(the neurons) and the learning rate $\eta$, can be viewed in figure \ref{fig:mlp-neurons-ts}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_neurons_eta.pdf}
+    \caption{The accuracy score as function of the number of neurons and the learning rate $\eta$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
+    \label{fig:mlp-neurons-eta}
+\end{figure}

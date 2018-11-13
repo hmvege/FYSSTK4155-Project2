@@ -293,10 +293,15 @@ class MultilayerPerceptron:
         delta_b = [np.empty(b.shape) for b in self.biases]
 
         # Gets initial delta value, first of the four equations
+        if self.cost_function == "mse":
+            delta = self._cost.delta(
+                self.activations[-1], y, 
+                self._output_activation_derivative(z_list[-1]).T).T
+        else: # cross entropy
+            delta = self._cost.delta(self.activations[-1], y,
+                                     None).T
         # delta = self._cost.delta(self.activations[-1], y,
-        #                          self._output_activation_derivative(z_list[-1]).T).T
-        delta = self._cost.delta(self.activations[-1], y,
-                                 None).T
+        #                              None).T
 
         # Sets last element before back-propagating
         delta_b[-1] = delta

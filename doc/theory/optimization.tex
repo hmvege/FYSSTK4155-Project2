@@ -1,6 +1,6 @@
-As well as in logistic regression as in neural networks, minimizing(or maximizing depending on your setup) the cost function is a central problem, and can to some extent be stated as \textit{the} problem. Having a method which is both efficient and converges towards the minimum is, luckily, not a new problem in computer science. In the logistic regression optimization, three main methods will be utilized, while in the neural network we will focus on the stochastic conjugate gradient descent. For logistic regression we will use an learning rate optimized gradient descent method, and 
+As well as in logistic regression as in neural networks, minimizing(or maximizing depending on your setup) the cost function is a central problem, and can to some extent be stated as \textit{the} problem. Having a method which is both efficient and converges towards the minimum is, luckily, not a new problem in computer science. In the logistic regression optimization, three main methods will be utilized, while in the neural network we will focus on the stochastic conjugate gradient descent. For logistic regression we will use a learning rate optimized gradient descent method and conjugate gradient. For Conjugate Gradient\cite{Press:2007:NRE:1403886}, we will use SciPy's library\cite{scipy} and simply refer the reader to their implementation.
 
-For two of the four optimizers - that is Newtons Conjugate Gradient\cite{} and Conjugate Gradient\cite{Press:2007:NRE:1403886}, we will use SciPy's library\cite{scipy} and simply refer the reader to their implementation.
+Gradient descent measures the local gradient of the cost function, with regards to the weights $\bm{w}$(or $\beta$. Since the gradient goes in the direction of fastest increase, we will go in the opposite direction, i.e. negative gradient. We start by choosing random values for $\bm{w}$ (since our cost function is convex any choice should give correct results), calculate the gradient, update the $\bm{w}$ values, and do this iteratively until the algorithm converges to a minimum. The size of the steps is important, and is determined by the learning rate. If the learning rate is too small, we will need many iterations which is time consuming. However, if the learning rate is too high, we might overshoot and miss the minimum. One way to choose the learning rate is too let it depend on the size of the gradient. If the gradient is large, i.e a steep slope, the learning rate can be relatively high. When the gradient is small, the learning rate is also small.
 
 \subsubsection{Gradient descent}
 Gradient descent is set up in a general fashion as, utilizing an optimized learning rate $\eta_k$ find and a scaling parameter $\gamma$. The scaling parameter $\gamma$ is introduced in order to prevent results from blowing up.
@@ -26,19 +26,35 @@ Gradient descent is set up in a general fashion as, utilizing an optimized learn
 The full implementation with the optimized learning rate $\eta_k$ can be seen in the article \citet{optimal-learning-rate}.
 
 \subsubsection{Stochastic gradient descent}
+Stochastic gradient descent is similar to gradient descent, expect that we first randomly shuffle our data, then divide our data into mini batches, $N_\mathrm{mb}$. Then we run gradient descent on each of the mini batches, and take the average of the outputted gradients as our gradient descent step. We repeat this $N_\mathrm{epochs}$.
+\begin{algorithm}[H]
+    \caption{Stochastic gradient descent(SGD).}
+    \label{alg:sgd}
+    \begin{algorithmic}[1]
+        \For $i_e$ in $N_\mathrm{epochs}$ epochs
+            \State Shuffle data $\bm{X}_\mathrm{train}$, $\bm{y}_\mathrm{train}$
+            \State Split into mini batches, $\bm{X}_\mathrm{train}$, $\bm{y}_\mathrm{train}$
+            \For $i_\mathrm{mb}$ in mini batches,
+                \State Perform gradient descent step, and retrieve $\nabla\bm{w}_{i_\mathrm{mb}}$
+            \EndFor
+            \State Take the average of the $\nabla\bm{w}_{i_\mathrm{mb}}$ and update the weight matrix $\bm{w}$.
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
 
 
-To minimize this cost function we use gradient descent. \husk{Gradient descent measures the local gradient of the cost function, with regards to $\beta$ in our case. Since the gradient goes in the direction of fastest increase, we will go in the opposite direction, i.e. negative gradient. We start by choosing random values for $\beta$ (since our cost function is convex any choice should give correct results), calculate the gradient, update the $\beta$ values, and do this iteratively until the algorithm converges to a minimum. The size of the steps is important, and is determined by the learning rate. If the learning rate is too small, we will need many iterations which is time consuming. However, if the learning rate is too high, we might overshoot and miss the minimum. One way to choose the learning rate is too let it depend on the size of the gradient. If the gradient is large, i.e a steep slope, the learning rate can be relatively high. When the gradient is small, the learning rate is also small.}
 
-\sjekk{Returning to the logistic regression problem, the derivative of the cost function is
-\begin{equation}\label{eqT:diff_cost}
-\begin{split}
-\frac{\partial J(\beta)}{\partial \beta} &=-\frac{1}{N}\bm{X}^T(\bm{y}-\bm{p})\\
- &= \frac{1}{N}\bm{X}^T(\bm{p}-\bm{y}),
-\end{split}
-\end{equation}
-where $\bm{X}$ is the $N\times(p+1)$ matrix of $x_i$ values, $\bm{p}$ is the vector of fitted probabilities with $i$th element $p(x_i;\beta)$ and $\bm{y}$ is the vector of $y_i$ values. The new $\beta$ using gradient descent is then\\
-$\beta_{new} = \beta_{old}\ -\ \frac{\partial J(\beta)}{\partial \beta}lr$, where $lr$ is the learning rate (step size).} \husk{This is done iteratively until we reach the set max iterations or $\frac{\partial J(\beta)}{\partial \beta}$ is within a given tolerance of zero.}
+% To minimize this cost function we use gradient descent. \husk{Gradient descent measures the local gradient of the cost function, with regards to $\beta$ in our case. Since the gradient goes in the direction of fastest increase, we will go in the opposite direction, i.e. negative gradient. We start by choosing random values for $\beta$ (since our cost function is convex any choice should give correct results), calculate the gradient, update the $\beta$ values, and do this iteratively until the algorithm converges to a minimum. The size of the steps is important, and is determined by the learning rate. If the learning rate is too small, we will need many iterations which is time consuming. However, if the learning rate is too high, we might overshoot and miss the minimum. One way to choose the learning rate is too let it depend on the size of the gradient. If the gradient is large, i.e a steep slope, the learning rate can be relatively high. When the gradient is small, the learning rate is also small.}
+
+% \sjekk{Returning to the logistic regression problem, the derivative of the cost function is
+% \begin{equation}\label{eqT:diff_cost}
+% \begin{split}
+% \frac{\partial J(\beta)}{\partial \beta} &=-\frac{1}{N}\bm{X}^T(\bm{y}-\bm{p})\\
+%  &= \frac{1}{N}\bm{X}^T(\bm{p}-\bm{y}),
+% \end{split}
+% \end{equation}
+% where $\bm{X}$ is the $N\times(p+1)$ matrix of $x_i$ values, $\bm{p}$ is the vector of fitted probabilities with $i$th element $p(x_i;\beta)$ and $\bm{y}$ is the vector of $y_i$ values. The new $\beta$ using gradient descent is then\\
+% $\beta_{new} = \beta_{old}\ -\ \frac{\partial J(\beta)}{\partial \beta}lr$, where $lr$ is the learning rate (step size).} \husk{This is done iteratively until we reach the set max iterations or $\frac{\partial J(\beta)}{\partial \beta}$ is within a given tolerance of zero.}
 
 % \sjekk{Like we introduced Lasso and Ridge regression to avoid overfitting in Project 1, we can add a penalty term to the cost function in Equation \ref{eq:Geron_cost}. In our project we used two different penalties: $L1 = \lambda|\beta|$ and $L2 = \lambda||\beta||^2$. When fitting the model we need to include the derivatives of the penalty term in Equation \ref{eqT:diff_cost}.} \husk{The gradient with the penalty term is,
 % \begin{equation}
