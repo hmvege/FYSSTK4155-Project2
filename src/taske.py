@@ -75,7 +75,7 @@ def task1e(figure_path="../fig"):
     weight_init = "default"
     alpha = 0.0
     mini_batch_size = 20
-    epochs = 100  # Production run should have 500
+    epochs = 500  # Production run should have 500
     eta = "inverse"  # Options: float, 'inverse'
 
     # Default hyperparameters
@@ -127,33 +127,36 @@ def task1e(figure_path="../fig"):
     # weight_inits = ["default", "large"]
     # lambda_values = np.logspace(-5, 4, 10)[:5]
 
-    lmbda_eta_params = default_input_dict.copy()
-    lmbda_eta_params.pop("lmbda")
-    lmbda_eta_params.pop("learning_rate")
-    lmbda_eta_params["figure_folder"] = figure_path
-    run_lambda_eta(X_train, X_test, y_train, y_test, default_layers,
-                   lmbdas=lambda_values, learning_rates=learning_rates,
-                   try_get_pickle=try_get_pickle,
-                   **lmbda_eta_params)
+    # lmbda_eta_params = default_input_dict.copy()
+    # lmbda_eta_params.pop("lmbda")
+    # lmbda_eta_params.pop("learning_rate")
+    # lmbda_eta_params["figure_folder"] = figure_path
+    # run_lambda_eta(X_train, X_test, y_train, y_test, default_layers,
+    #                lmbdas=lambda_values, learning_rates=learning_rates,
+    #                try_get_pickle=try_get_pickle,
+    #                **lmbda_eta_params)
 
-    lmbda_neurons_params = default_input_dict.copy()
-    lmbda_neurons_params.pop("lmbda")
-    lmbda_neurons_params["figure_folder"] = figure_path
-    run_lambda_neurons(X_train, X_test, y_train, y_test, default_layers,
-                       lmbdas=lambda_values, neurons=layer_neurons,
-                       try_get_pickle=try_get_pickle,
-                       **lmbda_neurons_params)
+    # Currently running on stationary
+    # lmbda_neurons_params = default_input_dict.copy()
+    # lmbda_neurons_params.pop("lmbda")
+    # lmbda_neurons_params["figure_folder"] = figure_path
+    # run_lambda_neurons(X_train, X_test, y_train, y_test, default_layers,
+    #                    lmbdas=lambda_values, neurons=layer_neurons,
+    #                    try_get_pickle=try_get_pickle,
+    #                    **lmbda_neurons_params)
 
-    lmbda_mini_batches_params = default_input_dict.copy()
-    lmbda_mini_batches_params.pop("lmbda")
-    lmbda_mini_batches_params.pop("mini_batch_size")
-    lmbda_mini_batches_params["figure_folder"] = figure_path
-    run_lambda_mini_batches(X_train, X_test, y_train, y_test, default_layers,
-                            lmbdas=lambda_values,
-                            mini_batch_sizes=mini_batch_sizes,
-                            try_get_pickle=try_get_pickle,
-                            **lmbda_mini_batches_params)
+    # TODO: run this!
+    # lmbda_mini_batches_params = default_input_dict.copy()
+    # lmbda_mini_batches_params.pop("lmbda")
+    # lmbda_mini_batches_params.pop("mini_batch_size")
+    # lmbda_mini_batches_params["figure_folder"] = figure_path
+    # run_lambda_mini_batches(X_train, X_test, y_train, y_test, default_layers,
+    #                         lmbdas=lambda_values,
+    #                         mini_batch_sizes=mini_batch_sizes,
+    #                         try_get_pickle=try_get_pickle,
+    #                         **lmbda_mini_batches_params)
 
+    # TODO: run this!
     neurons_eta_params = default_input_dict.copy()
     neurons_eta_params.pop("learning_rate")
     neurons_eta_params["figure_folder"] = figure_path
@@ -163,43 +166,44 @@ def task1e(figure_path="../fig"):
                     try_get_pickle=try_get_pickle,
                     **neurons_eta_params)
 
-    neurons_training_size_params = default_input_dict.copy()
-    neurons_training_size_params["figure_folder"] = figure_path
-    run_neurons_training_size(default_layers, layer_neurons, training_sizes,
-                              data_size, data_path,
-                              try_get_pickle=try_get_pickle,
-                              **neurons_training_size_params)
+    # Currently running on mac
+    # neurons_training_size_params = default_input_dict.copy()
+    # neurons_training_size_params["figure_folder"] = figure_path
+    # run_neurons_training_size(default_layers, layer_neurons, training_sizes,
+    #                           data_size, data_path,
+    #                           try_get_pickle=try_get_pickle,
+    #                           **neurons_training_size_params)
 
-    epoch_weight_init_params = default_input_dict.copy()
-    epoch_weight_init_params.pop("epochs")
-    epoch_weight_init_params.pop("weight_init")
-    run_epoch_weight_init(X_train, X_test, y_train, y_test, default_layers,
-                          epochs, weight_inits,
-                          try_get_pickle=try_get_pickle,
-                          **epoch_weight_init_params)
+    # epoch_weight_init_params = default_input_dict.copy()
+    # epoch_weight_init_params.pop("epochs")
+    # epoch_weight_init_params.pop("weight_init")
+    # run_epoch_weight_init(X_train, X_test, y_train, y_test, default_layers,
+    #                       epochs, weight_inits,
+    #                       try_get_pickle=try_get_pickle,
+    #                       **epoch_weight_init_params)
 
-    epoch_cost_function_params = default_input_dict.copy()
-    epoch_cost_function_params.pop("epochs")
-    epoch_cost_function_params.pop("cost_function")
-    run_epoch_cost_functions(X_train, X_test, y_train, y_test, default_layers,
-                             epochs, cost_functions,
-                             try_get_pickle=try_get_pickle,
-                             **epoch_cost_function_params)
+    # epoch_cost_function_params = default_input_dict.copy()
+    # epoch_cost_function_params.pop("epochs")
+    # epoch_cost_function_params.pop("cost_function")
+    # run_epoch_cost_functions(X_train, X_test, y_train, y_test, default_layers,
+    #                          epochs, cost_functions,
+    #                          try_get_pickle=try_get_pickle,
+    #                          **epoch_cost_function_params)
 
-    epoch_activations_params = default_input_dict.copy()
-    epoch_activations_params.pop("epochs")
-    epoch_activations_params.pop("activation")
-    epoch_activations_params["cost_function"] = "log_loss"
-    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-                          epochs, activations,
-                          try_get_pickle=try_get_pickle,
-                          **epoch_activations_params)
+    # epoch_activations_params = default_input_dict.copy()
+    # epoch_activations_params.pop("epochs")
+    # epoch_activations_params.pop("activation")
+    # epoch_activations_params["cost_function"] = "log_loss"
+    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+    #                       epochs, activations,
+    #                       try_get_pickle=try_get_pickle,
+    #                       **epoch_activations_params)
     
-    epoch_activations_params["cost_function"] = "mse"
-    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-                          epochs, activations,
-                          try_get_pickle=try_get_pickle,
-                          **epoch_activations_params)
+    # epoch_activations_params["cost_function"] = "mse"
+    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+    #                       epochs, activations,
+    #                       try_get_pickle=try_get_pickle,
+    #                       **epoch_activations_params)
 
     # The following run produces near perfect accuracy
     # nn_core(X_train, X_test, y_train, y_test, default_layers, **default_input_dict)
@@ -217,7 +221,7 @@ def run_epoch_activations(X_train, X_test, y_train, y_test, layers,
     # Double for-loop for all results
     pickle_fname = "mlp_epoch_activations_{}_results.pkl".format(kwargs["cost_function"])
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {act: {} for act in activations}
@@ -253,7 +257,7 @@ def run_epoch_cost_functions(X_train, X_test, y_train, y_test, layers,
     # Double for-loop for all results
     pickle_fname = "mlp_epoch_cost_functions_results.pkl"
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {cf: {} for cf in cost_functions}
@@ -327,7 +331,7 @@ def run_lambda_mini_batches(X_train, X_test, y_train, y_test, layers,
     # Double for-loop for all results
     pickle_fname = "mlp_lambda_mini_batch_sizes_results.pkl"
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {lmbda: {mb: {} for mb in mini_batch_sizes} for lmbda in lmbdas}
@@ -373,7 +377,7 @@ def run_lambda_neurons(X_train, X_test, y_train, y_test, layers,
     # Double for-loop for all results
     pickle_fname = "mlp_lambda_neurons_results.pkl"
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {lmbda: {neuron: {} for neuron in neurons} for lmbda in lmbdas}
@@ -417,7 +421,7 @@ def run_neurons_eta(X_train, X_test, y_train, y_test, layers,
     # Double for-loop for all results
     pickle_fname = "mlp_neurons_eta_results.pkl"
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {n: {eta: {} for eta in learning_rates} for n in neurons}
@@ -459,7 +463,7 @@ def run_neurons_training_size(layers, neurons, training_sizes,
     # Double for-loop for all results
     pickle_fname = "mlp_neurons_training_size_results.pkl"
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {n: {ts: {} for ts in training_sizes} for n in neurons}
@@ -504,7 +508,7 @@ def run_lambda_eta(X_train, X_test, y_train, y_test, layers,
     # Double for-loop for all results
     pickle_fname = "mlp_lambda_eta_results.pkl"
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         data = load_pickle(pickle_fname)
     else:
         data = {lmbda: {eta: {} for eta in learning_rates} for lmbda in lmbdas}

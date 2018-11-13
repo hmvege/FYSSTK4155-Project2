@@ -138,22 +138,31 @@ The $R^2$ score of the neural network using L$^1$, L$^2$ and no regularization c
     \label{fig:mlp-r2}
 \end{figure}
 
+% TODO: rerun mlp regression with N_samples = 10000 as I run for too much :|
 
 \subsection{2D Ising model}
 As stated in the section about the 2D Ising model \ref{sec:2d-ising-model}, the classification will focus on evaluating the phases of different lattice configurations, and wetter or not it is below or above a critical temperature. We begin by listing the results from the logistic regression.
 \subsubsection{Classification through logistic regression}
-In logistic regression we investigated the behavior of the classification and compared it to that of SciKit Learn\cite{scikit-learn}. This gave the results found in figure \ref{fig:logreg-accuracy-sklearn-comparison}.
+In logistic regression we investigated the behavior of the classification and compared it to that of SciKit Learn\cite{scikit-learn}, using the standard logistic regression method\footnote{See \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html}{Logistic Regression documentation}} and 
+SciKit Learn's SGD(Stochastic Gradient Descent) implementation \footnote{See \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html}{SGD documentation}}. This gave the results found in figure \ref{fig:logreg-accuracy-sklearn-comparison}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/logistic_accuracy_sklearn_comparison.pdf}
-    \caption{Bootstrap.}
+    \caption{The accuracy for our implementation of logistic regression versus that of SciKit learn.}
     \label{fig:logreg-accuracy-sklearn-comparison}
 \end{figure}
 
 \subsubsection{Classification through neural networks}
-For classifying the states through a neural network, we looked at several different hyper parameters. First of, we start by comparing two different cost functions and their layer outputs,
+For classifying the states through a neural network, we looked at several different hyper parameters. All runs were made using $N_{samples}=10000$ except stated other wise. The training percent was 0.5. We start by comparing two different cost functions and their layer outputs,
 \begin{itemize}
     \item Cross entropy with softmax layer output.\husk{referer til funksjon her}
     \item MSE with sigmoidal layer output.\husk{siter her}
 \end{itemize}
+These cost functions following behavior for epochs seen in following figure ,
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_epoch_cost_functions.pdf}
+    \caption{A comparison between the MSE and (CE) Cross Entropy loss functions over 500 epochs. The output layer for MSE is sigmoidal, the output layer for CE is softmax. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \label{fig:mlp-}
+\end{figure}

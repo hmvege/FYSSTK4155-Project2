@@ -86,10 +86,14 @@ def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None,
             linestyles[len(linestyles)//2:], linestyles[:len(linestyles)//2],
             colors, markers[len(markers)//2:], markers[:len(markers)//2]):
 
+        lab = data[key]["label"]
+        if lab.lower() == "log_loss":
+            lab = "LogLoss"
+
         ax1.plot(data[key]["x"], data[key]["y"],
                  marker=mk2, ls=ls2[-1],
                  color=col,
-                 label=data[key]["label"])
+                 label=lab)
 
     ax1.set_xlabel(ylabel)
     ax1.set_ylabel(xlabel)
