@@ -288,13 +288,10 @@ class MultilayerPerceptron:
         delta_b = [np.empty(b.shape) for b in self.biases]
 
         # Gets initial delta value, first of the four equations
-        # delta = self._cost_function_derivative(self.activations[-1], y).T
-        # print(self._output_activation(z_list[-1]), self.activations[-1])
-        delta = self._cost.delta(self.activations[-1], y,
-                                 z_list[-2]).T
         # delta = self._cost.delta(self.activations[-1], y,
-        #                          self._output_activation(z_list[-1]).T).T
-
+        #                          self._output_activation_derivative(z_list[-1]).T).T
+        delta = self._cost.delta(self.activations[-1], y,
+                                 None).T
 
         # Sets last element before back-propagating
         delta_b[-1] = delta
@@ -373,9 +370,9 @@ class MultilayerPerceptron:
 
         for epoch in trange(epochs, desc="Epoch"):
 
-            if epoch==0:
-                tqdm.write("Cost: {}".format(
-                        self.cost(data_train, data_train_labels)))
+            # if epoch==0:
+            #     tqdm.write("Cost: {}".format(
+            #             self.cost(data_train, data_train_labels)))
 
             # Updates the learning rate
             eta_ = self._update_learning_rate(epoch, epochs)
@@ -529,9 +526,9 @@ def __test_mlp_mnist():
     # Activation options: "sigmoid", "identity", "relu", "tanh", "heaviside"
     activation = "sigmoid"
     # Cost function options: "mse", "log_loss", "exponential_cost"
-    cost_function = "log_loss"
+    cost_function = "mse"
     # Output activation options:  "identity", "sigmoid", "softmax"
-    output_activation = "softmax"
+    output_activation = "sigmoid"
     # Weight initialization options:
     # default(sigma=1/sqrt(N_samples)), large(sigma=1.0)
     weight_init = "default"

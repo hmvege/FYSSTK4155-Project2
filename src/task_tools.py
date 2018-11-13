@@ -310,3 +310,88 @@ def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
     print("Figure for lambda={} stored at {}.".format(lmbda, figure_path))
 
     plt.close(fig)
+
+
+def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
+                r2_ridge_train, r2_lasso_test, r2_lasso_train, figname,
+                figure_folder, verbose=False):
+    """Plots all r2 scores together."""
+    if verbose:
+        print("OLS R2 test:", r2_ols_test)
+        print("OLS R2 train:", r2_ols_train)
+        print("Ridge R2 test:", r2_ridge_test)
+        print("Ridge R2 train:", r2_ridge_train)
+        print("Lasso R2 test:", r2_lasso_test)
+        print("Lasso R2 train:", r2_lasso_train)
+
+    fig = plt.figure()
+
+    ax1 = fig.add_subplot(111)
+
+    # OLS
+    ax1.axhline(r2_ols_test, label=r"OLS test",
+                marker="", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
+                color="#7570b3")
+    ax1.axhline(r2_ols_train, label=r"OLS train",
+                marker="", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
+                color="#7570b3")
+
+    # Ridge
+    ax1.semilogx(lmbda_values, r2_ridge_test, label=r"Ridge test",
+                 marker="o", ls=(0, (5, 1)),  # Densely dashed
+                 color="#1b9e77")
+    ax1.semilogx(lmbda_values, r2_ridge_train, label=r"Ridge train",
+                 marker="x", ls=(0, (5, 1)),  # Densely dashed
+                 color="#1b9e77")
+
+    # Lasso
+    ax1.semilogx(lmbda_values, r2_lasso_test, label=r"Lasso test",
+                 marker="o", ls=(0, (3, 5, 1, 5)),  # Dashdotted
+                 color="#d95f02")
+    ax1.semilogx(lmbda_values, r2_lasso_train, label=r"Lasso train",
+                 marker="x", ls=(0, (3, 5, 1, 5)),  # Dashdotted
+                 color="#d95f02")
+
+    ax1.set_xlim(lmbda_values[0], lmbda_values[-1])
+    ax1.set_ylim(-0.05,1.05)
+    ax1.set_xlabel(r"$\lambda$")
+    ax1.set_ylabel(r"$R^2$")
+    ax1.legend()
+    ax1.grid(True)
+
+    figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
+    fig.savefig(figure_path)
+    print("Figure saved at {}".format(figure_path))
+
+
+def heatmap_plotter(x, y, z, figure_name, tick_param_fs=None, label_fs=None,
+                    vmin=None, vmax=None, xlabel=None, ylabel=None,
+                    cbartitle=None):
+    """Plots a heatmap surface."""
+    fig, ax = plt.subplots()
+
+    yheaders = ['%1.2e' % i for i in y]
+    xheaders = ['%1.1e' % i for i in x]
+
+    # X, Y = np.meshgrid(x,y)
+    # print (X.shape, Y.shape, z.shape)
+
+    heatmap = ax.pcolor(z, edgecolors="k", linewidth=2, vmin=vmin, vmax=vmax)
+    cbar = plt.colorbar(heatmap, ax=ax)
+    cbar.ax.tick_params(labelsize=tick_param_fs)
+    cbar.ax.set_title(cbartitle, fontsize=label_fs)
+
+    # # ax.set_title(method, fontsize=fs1)
+    ax.set_xticks(np.arange(z.shape[1]) + .5, minor=False)
+    ax.set_yticks(np.arange(z.shape[0]) + .5, minor=False)
+
+    ax.set_xticklabels(xheaders, rotation=90, fontsize=tick_param_fs)
+    ax.set_yticklabels(yheaders, fontsize=tick_param_fs)
+
+    ax.set_xlabel(xlabel, fontsize=label_fs)
+    ax.set_ylabel(ylabel, fontsize=label_fs)
+    plt.tight_layout()
+
+    fig.savefig(os.path.join("../fig", figure_name))
+    print("Figure saved at {}".format(figure_name))
+    plt.close(fig)

@@ -22,7 +22,7 @@ import sklearn.linear_model as sk_model
 import sklearn.metrics as sk_metrics
 import sklearn.utils as sk_utils
 
-from task_tools import load_pickle, plot_heatmap
+from task_tools import load_pickle, plot_heatmap, plot_all_r2
 
 
 def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
@@ -41,9 +41,6 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
 
     print("Train size:  ", X_train.shape)
     print("Test size:   ", X_test.shape)
-
-    # y_pred_list (80, 10000)
-    # y_test (80, 1)
 
     # Linear regression
     linreg = reg.OLSRegression()
@@ -463,49 +460,6 @@ def plot_bias_variance(x, bias, variance, mse, figname, figure_folder,
     print("Figure saved at {}".format(figure_path))
     plt.close(fig)
 
-
-def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
-                r2_ridge_train, r2_lasso_test, r2_lasso_train, figname,
-                figure_folder):
-    """Plots all r2 scores together."""
-
-    fig = plt.figure()
-
-    ax1 = fig.add_subplot(111)
-
-    # OLS
-    ax1.axhline(r2_ols_test, label=r"OLS test",
-                marker="o", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
-                color="#7570b3")
-    ax1.axhline(r2_ols_train, label=r"OLS train",
-                marker="x", ls=(0, (3, 1, 1, 1)),  # Densely dashdotted
-                color="#7570b3")
-
-    # Ridge
-    ax1.semilogx(lmbda_values, r2_ridge_test, label=r"Ridge test",
-                 marker="o", ls=(0, (5, 1)),  # Densely dashed
-                 color="#1b9e77")
-    ax1.semilogx(lmbda_values, r2_ridge_train, label=r"Ridge train",
-                 marker="x", ls=(0, (5, 1)),  # Densely dashed
-                 color="#1b9e77")
-
-    # Lasso
-    ax1.semilogx(lmbda_values, r2_lasso_test, label=r"Lasso test",
-                 marker="o", ls=(0, (3, 5, 1, 5)),  # Dashdotted
-                 color="#d95f02")
-    ax1.semilogx(lmbda_values, r2_lasso_train, label=r"Lasso train",
-                 marker="x", ls=(0, (3, 5, 1, 5)),  # Dashdotted
-                 color="#d95f02")
-
-    ax1.set_xlim(lmbda_values[0], lmbda_values[-1])
-    ax1.set_xlabel(r"$\lambda$")
-    ax1.set_ylabel(r"$R^2$")
-    ax1.legend()
-    ax1.grid(True)
-
-    figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
-    fig.savefig(figure_path)
-    print("Figure saved at {}".format(figure_path))
 
 
 if __name__ == '__main__':

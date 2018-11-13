@@ -11,7 +11,7 @@ from lib import neuralnetwork as nn
 
 from task_tools import load_pickle, save_pickle, print_parameters, \
     plot_accuracy_scores, retrieve_2d_ising_data, convert_output, \
-    nn_core
+    nn_core, heatmap_plotter
 
 
 def task1e(figure_path="../fig"):
@@ -23,7 +23,7 @@ def task1e(figure_path="../fig"):
     print("="*80)
     print("Task e: neural network classification")
     data_path = "../datafiles/MehtaIsingData"
-    data_size = 10000
+    data_size = 100
     training_size = 0.8
     learning_rate = 1.0
     max_iter = int(1e3)
@@ -73,7 +73,7 @@ def task1e(figure_path="../fig"):
     default_output_activation = "softmax"
     default_cost_function = "log_loss"
     default_learning_rate = "inverse"
-    default_eta0 = 0.1
+    default_eta0 = 0.001
     default_regularization = "l2"
     default_mini_batch_size = 20
     default_hidden_layer_size = 10
@@ -118,40 +118,47 @@ def task1e(figure_path="../fig"):
 
 
     # The following run produces near perfect accuracy
-    nn_core(X_train, X_test, y_train, y_test, default_layers, **default_input_dict)
+    # nn_core(X_train, X_test, y_train, y_test, default_layers, **default_input_dict)
 
 
-def run_lambda_mini_batches():
+
+def run_epoch_activations(X_train, X_test, y_train, y_test, layers,
+                   activation, figure_folder="../fig", **kwargs):
     pass
 
 
-def run_lambda_neurons():
+def run_epoch_cost_functions(X_train, X_test, y_train, y_test, layers,
+                   cost_function, figure_folder="../fig", **kwargs):
     pass
 
 
-def run_neurons_eta():
+def run_epoch_weight_init(X_train, X_test, y_train, y_test, layers,
+                   weight_init, figure_folder="../fig", **kwargs):
     pass
 
 
-def run_neurons_training_size():
+def run_lambda_mini_batches(X_train, X_test, y_train, y_test, layers,
+                   lmbdas=None, mini_batch_sizes=None,
+                   figure_folder="../fig", **kwargs):
     pass
 
 
-def run_epoch_activations():
+def run_lambda_neurons(X_train, X_test, y_train, y_test, layers,
+                   lmbdas=None, neurons=None,
+                   figure_folder="../fig", **kwargs):
     pass
 
 
-def run_epoch_output_activations():
+def run_neurons_eta(X_train, X_test, y_train, y_test, layers,
+                   neurons=None, training_rates=None,
+                   figure_folder="../fig", **kwargs):
     pass
 
 
-def run_epoch_cost_functions():
+def run_neurons_training_size(X_train, X_test, y_train, y_test, layers,
+                   neurons, training_sizes, 
+                   figure_folder="../fig", **kwargs):
     pass
-
-
-def run_epoch_weight_init():
-    pass
-
 
 def run_lambda_eta(X_train, X_test, y_train, y_test, layers,
                    lmbdas=None, learning_rates=None,
@@ -168,19 +175,37 @@ def run_lambda_eta(X_train, X_test, y_train, y_test, layers,
         data = load_pickle(pickle_fname)
     else:
         data = {lmbda: {eta: {} for eta in learning_rates} for lmbda in lmbdas}
-        for lmbda in lmbdas:
-            for eta in learning_rates:
+        for i, lmbda in enumerate(lmbdas):
+            for j, eta in enumerate(learning_rates):
                 print("Lambda: {} Eta: {}".format(lmbda, eta))
                 res_ = nn_core(X_train, X_test, y_train, y_test, layers,
-                               lmbda=lmbda, learning_rate=eta, **kwargs)
+                               lmbda=lmbda, return_weights=True,
+                               learning_rate=eta, **kwargs)
                 data[lmbda][eta] = res_
 
         save_pickle(pickle_fname, data)
 
-    plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
-                         [r"\gamma={0:.1e}".format(m) for m in momentums],
-                         "accuracy_momentum_scores", r"$\lambda$",
-                         r"Accuracy")
+    # Maps values to matrix
+    plot_data = np.empty((len(lmbdas), len(learning_rates)))
+
+    # Populates plot data
+    for i, lmbda in enumerate(lmbdas):
+        for j, eta in enumerate(learning_rates):
+            plot_data[i,j] = data[lmbda][eta][1]
+
+
+    print (lmbdas.shape, learning_rates.shape, plot_data.shape)
+
+    heatmap_plotter(lmbdas, learning_rates, plot_data.T, "mlp_lambda_eta.pdf", 
+                    tick_param_fs=8, label_fs=10,
+                    vmin=None, vmax=None, xlabel=r"$\lambda$", ylabel=r"$\eta$",
+                    cbartitle=r"Accuracy")
+
+    # plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
+    #                      [r"\gamma={0:.1e}".format(m) for m in momentums],
+    #                      "accuracy_momentum_scores", r"$\lambda$",
+    #                      r"Accuracy")
+
 
 
 def nn_loop_wrapper(loop_arg, store_pickle, pickle_fname, *args, **kwargs):

@@ -32,8 +32,9 @@ def sigmoid(x):
     # return 1.0/(1.0 + np.exp(-x))
 
 
-def sigmoid_derivative(x):
-    s = sigmoid(x)
+def sigmoid_derivative(z):
+    s = sigmoid(z)
+    # print(s)
     return s*(1-s)
 
 
@@ -51,17 +52,20 @@ def identity_derivative(x):
     return 1.0
 
 
-def softmax(x):
+def softmax(z):
     """The Softmax activation function. Assures that no outliers can 
     dominate too much.
+
+    Numerically stable sosftmax
+    https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
 
     Args:
         x (ndarray): weighted sum of inputs.
     """
-    z_exp = np.exp(x)
-    # print(x.shape, z_exp.shape)
-    z_exp_sum = np.sum(z_exp)
-    return z_exp/z_exp_sum
+
+    # z_exp = np.exp(x)
+    z_exp = np.exp((z - np.max(z)))
+    return z_exp/np.sum(z_exp)
 
 
 def softmax_derivative(x):
@@ -70,10 +74,10 @@ def softmax_derivative(x):
     Args:
         x (ndarray): weighted sum of inputs.
     """
-    z_exp = softmax(x)
-    z_id = np.einsum("i,j->ij", z_exp, np.eye(3))
-    z_ij = np.einsum("i,j->ij", z_exp, z_exp)
-    return z_id - z_ij
+
+    S = softmax(x).reshape(-1,1)
+    # return S - np.einsum("i...,j...->i...", S, S)
+    return (np.diagflat(S) - np.dot(S, S.T)).sum(axis=1,keepdims=True)
 
 
 def heaviside(x):
@@ -172,8 +176,8 @@ class MSECost(_BaseCost):
         return 0.5*np.mean(np.linalg.norm(a - y, axis=1)**2, axis=0)
 
     @staticmethod
-    def delta(a, y, x):
-        return (a - y) * x
+    def delta(a, y, a_prime):
+        return (a - y)# * a_prime
 
 
 class LogEntropyCost(_BaseCost):
@@ -187,11 +191,12 @@ class LogEntropyCost(_BaseCost):
         Return:
             (float): cost function output.
         """
-        return - np.mean(y*np.log(a) + (1 - y)*np.log(1 - a))
+        return - np.mean(y*np.log(a))# + (1 - y)*np.log(1 - a))
 
     @staticmethod
-    def delta(a, y, x):
-        return (a - y.reshape(a.shape))
+    def delta(a, y, a_prime):
+        return a - y # For softmax
+        # return (- y / a) * a_prime # General expr, still a bit bugged smh
 
 
 class ExponentialCost(_BaseCost):
@@ -209,9 +214,9 @@ class ExponentialCost(_BaseCost):
         return tau*np.exp(1/tau * np.sum((y-y_true)**2))
 
     @staticmethod
-    def delta(a, y, x, tua=0.1):
+    def delta(a, y, a_prime, tau=0.1):
         """Exponential cost function gradient."""
-        return 2/tau * (y-y_true)*exponential_cost(y, y_true, tau)
+        return 2/tau * (y-y_true)*exponential_cost(y, y_true, tau) * a_prime
 
 
 # =============================================================================
