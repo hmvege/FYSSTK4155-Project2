@@ -191,10 +191,10 @@ def task1e(figure_path="../fig"):
     epoch_activations_params.pop("epochs")
     epoch_activations_params.pop("activation")
     epoch_activations_params["cost_function"] = "log_loss"
-    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-                          epochs, activations,
-                          try_get_pickle=try_get_pickle,
-                          **epoch_activations_params)
+    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+    #                       epochs, activations,
+    #                       try_get_pickle=try_get_pickle,
+    #                       **epoch_activations_params)
 
     epoch_activations_params["cost_function"] = "mse"
     run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
