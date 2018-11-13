@@ -12,6 +12,30 @@ import sklearn.model_selection as sk_modsel
 import sklearn.utils as sk_utils
 import sklearn.metrics as sk_metrics
 
+import multiprocessing
+
+
+def _para_bs(X_train, y_train, X_test, y_test, reg):
+    # Bootstraps test data
+    # x_boot, y_boot = boot(x_train, y_train)
+
+    X_boot, y_boot = boot(X_train, y_train)
+    # X_boot, y_boot = sk_utils.resample(X_train, y_train)
+    # Sets up design matrix
+    # X_boot = self._design_matrix(x_boot)
+
+    # Fits the bootstrapped values
+    reg.fit(X_boot, y_boot)
+
+    # Tries to predict the y_test values the bootstrapped model
+    y_predict = reg.predict(X_test)
+
+    return [
+        sk_metrics.r2_score(y_test, y_predict),  # Calculates r2
+        y_predict.ravel(),
+        reg.coef_,  # Stores the prediction and beta coefs.
+    ]
+
 
 def boot(*data):
     """Strip-down version of the bootstrap method.
@@ -134,6 +158,26 @@ class BootstrapRegression:
         beta_coefs = []
 
         y_pred_list = np.empty((X_test.shape[0], N_bs))
+
+        # # Sets up jobs for parallel processing
+        # input_values = list(zip([X_train for i in range(N_bs)],
+        #                    [y_train for i in range(N_bs)],
+        #                    [X_test for i in range(N_bs)],
+        #                    [y_test for i in range(N_bs)],
+        #                    [cp.deepcopy(self.reg) for i in range(N_bs)]))
+        # print (input_values[0])
+        # # Initializes multiprocessing
+        # pool = multiprocessing.Pool(processes=4)
+
+        # # Runs parallel processes. Can this be done more efficiently?
+        # results = pool.map(_para_bs, input_values)
+        # print (results)
+        # # [sk_metrics.r2_score(y_test, y_predict),
+        # #     y_predict.ravel(),
+        # #     reg.coef_]
+
+        # # Garbage collection for multiprocessing instance
+        # pool.close()
 
         # Bootstraps
         for i_bs in tqdm(range(N_bs), desc="Bootstrapping"):
@@ -420,7 +464,7 @@ def __test_bias_variance_bootstrap():
         reg = OLSRegression()
         # reg = sk_model.LinearRegression(fit_intercept=False)
         results = SKLearnBootstrap(poly.fit_transform(cp.deepcopy(x_train)),
-                                   cp.deepcopy(y_train), reg, 
+                                   cp.deepcopy(y_train), reg,
                                    N_bs,
                                    X_test=poly.fit_transform(
                                        cp.deepcopy(x_test)),
@@ -468,8 +512,8 @@ def __test_basic_bootstrap():
 
     print("Non-BS: {0:.16f} +/- {1:.16f}".format(data.mean(), data.std()))
     bs_data = bs_data.mean(axis=0)
-    print("BS:     {0:.16f} +/- {1:.16f}".format(bs_data.mean(), 
-        bs_data.std()))
+    print("BS:     {0:.16f} +/- {1:.16f}".format(bs_data.mean(),
+                                                 bs_data.std()))
 
     plt.hist(data, label=r"Data, ${0:.3f}\pm{1:.3f}$".format(
         data.mean(), data.std()))
@@ -528,7 +572,7 @@ def __test_compare_bootstrap_manual_sklearn():
 
 
 if __name__ == '__main__':
-    __test_bootstrap_fit()
-    __test_bias_variance_bootstrap()
-    __test_basic_bootstrap()
+    # __test_bootstrap_fit()
+    # __test_bias_variance_bootstrap()
+    # __test_basic_bootstrap()
     __test_compare_bootstrap_manual_sklearn()
