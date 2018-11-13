@@ -40,12 +40,26 @@ C = \frac{1}{N} \sum\limits_{j} (y_j - a_j^L)^2
 \end{equation}
 where N are the total numbers of outputs in $j$ and $y$ are the true answers.
 
+Let us start by deriving the back propagation algorithm for $L$ layers. The final output will then be on the shape 
+\begin{align*}
+s
+\end{align*}
+
+\begin{align*}
+s
+\end{align*}
+
+\begin{align*}
+s
+\end{align*}
+
+
 \subsubsection{Mean square error}
 The mean square error cost function is given as 
 
 \subsubsection{Cross entropy}
 
-\subsubsection{Activation layers}
+\subsubsection{Activation layers} \label{sec:layer-acts}
 The hidden layer activations can greatly affect the outcome of the neural network. We will focus on four different hidden layer activations, the first being \textbf{sigmoidal activation}.
 \begin{align}
     \sigma (z) = \frac{1}{1 + \exp (-z)}
@@ -98,7 +112,7 @@ The \textbf{Heaviside} activation function is given as
 with its derivative
 \begin{align}
     \sigma'_\mathrm{Heaviside}(z) = 0
-    \label{eq:act-heaviside}
+    \label{eq:act-heaviside-der}
 \end{align}
 
 \subsubsection{Learning rate}
@@ -108,3 +122,10 @@ When updating the weights and biases with SGD(Stochastic gradient descent), we d
     \label{eq:inverse-eta}
 \end{align}
 This will force the step size to decrease toward 0 as we close in on the maximum number of epochs $N_\mathrm{epochs}$.
+
+\subsubsection{Weight initialization} \label{sec:nn-weights}
+When initializing weights and biases, we will look at two ways of how this can be done. The first is through a gaussian distribution, $\mathcal(0, 1)$ which we will call \textit{large}, as the biases will have large, spread-out distribution.
+
+Then, we will use a gaussian distribution but divided by the number of training samples, $\mathcal(0, 1/{N_\mathrm{train}})$, dubbing that one to be called \textit{default}, as this is the one we will by default use in our neural network.
+
+The effect of these two is essentially shrinking in the initial search space, and we should expect them to converge at large epoch times.
