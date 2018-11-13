@@ -38,13 +38,9 @@ The backpropegation is then summed up as following(heavily influenced by the wor
     \end{align*}
     where $k$ indicates the column of $\bm{w}^l$ as $j$ indicates the row.
 \end{itemize}
-Once all layers have been adjusted through back propagation, one can run through the whole network again and repeat the process. A common cost function may be the quadratic loss function(MSE) given by:
-\begin{equation}
-    \mathcal{C} = \frac{1}{N} \sum\limits_{j} (y_j - a_j^L)^2
-\end{equation}
-where N are the total numbers of outputs in $j$ and $y$ are the true answers.
+Once all layers have been adjusted through back propagation, one can run through the whole network again and repeat the process.
 
-Let us start by deriving the back propagation algorithm for $L$ layers and a general layer activation function $a^L(z)$. We start with some cost function $\CO(w^L, y)$, where $W^L$ is the output layer weights and $y$ is the \textit{true} values which we want to approach. In order to move towards optimal weights(and biases), we can perform a gradient descent by subtracting the gradient of the cost function w.r.t. the weights and biases. We begin by finding the gradient of the $\CO$ for $W^L$. Using the chain rule we get,
+In order to understand parts of the back propagation algorithm for $L$ layers and a general layer activation function $a^L(z)$, can take a quick look at how to proceed in deriving it. We start with some cost function $\CO(w^L, y)$, where $w^L$ is the output layer weights and $y$ is the \textit{true} values which we want to approach. In order to move towards optimal weights(and biases), we can perform a gradient descent by subtracting the gradient of the cost function w.r.t. the weights and biases. We begin by finding the gradient of the $\CO$ for $W^L$. Using the chain rule we get,
 \begin{align}
     \frac{\partial \mathcal{C}}{\partial w^L} &= \frac{\partial z^L}{\partial w^L} \frac{\partial a^L}{\partial z^L} \frac{\partial \CO}{\partial a^L}
     \label{eq:mlp-gradient-chain}
@@ -53,10 +49,14 @@ From this we simply have to find each of the partial derivatives. Without specif
 \begin{align*}
 \frac{\partial z^L}{\partial w^L} = a^{L-1}
 \end{align*}
-In order to find the full expression, let us look at the MSE cost function,
+From this, we quickly see that we need to properly defined the cost function in relation to the $\partial^L$ as we encountered earlier.
 
 \subsubsection{Mean square error(MSE) cost function}
-The mean square error cost function is given as (for one sample)
+A common cost function may be the quadratic loss function(MSE) given by.
+\begin{equation}
+    \mathcal{C}_\mathrm{MSE} = \frac{1}{2N} \sum\limits_{j} (y_j - a_j^L)^2
+\end{equation}
+where $N$ are the total numbers of outputs in $j$ and $y$ are the true answers. For a single training sample, this becomes,
 \begin{align}
     \mathcal{C}_\mathrm{MSE} = \frac{1}{2} (a^L - y)^2
     \label{eq:mse-mlp-cost}
