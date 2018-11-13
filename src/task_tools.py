@@ -96,7 +96,7 @@ def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None,
                  label=lab)
 
         print("Activation: {} accuracy mean {} accuracy std {}".format(
-            key, data[key["y"]][-50:].mean(), data[key["y"]][-50:].std()))
+            key, data[key]["y"][-50:].mean(), data[key]["y"][-50:].std()))
 
     ax1.set_xlabel(ylabel)
     ax1.set_ylabel(xlabel)
