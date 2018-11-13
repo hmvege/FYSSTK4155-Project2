@@ -3,7 +3,7 @@ Results for two different cases are being presented, one the one-dimensional Isi
 
 \subsection{1D Ising model}
 \subsubsection{Fitting with linear regression}
-For linear regression we got coefficients of $\bm{J}$ in \eqref{eq:1d-ising-linreg} as the following presented in figure \ref{fig:bias-var-franke},
+For linear regression we got coefficients of $\bm{J}$ in \eqref{eq:1d-ising-linreg} as the following presented in figure \ref{fig:reg-coef-heatmap},
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.9\textwidth}
@@ -22,7 +22,7 @@ For linear regression we got coefficients of $\bm{J}$ in \eqref{eq:1d-ising-linr
         \label{fig:linreg-hm-1e2}
     \end{subfigure}
     \caption{Heat map plots of the $\bm{J}$ in \eqref{eq:1d-ising-linreg} retrieved from OLS, Ridge and Lasso. Gathered using $N_\mathrm{train}=5000$.}
-    \label{fig:bias-var-franke}
+    \label{fig:reg-coef-heatmap}
 \end{figure}
 
 The $R^2$ score of the OLS, Ridge and Lasso can be seen in figure \ref{fig:linreg-r2},
@@ -228,11 +228,13 @@ The accuracy score\eqref{eq:mlp-accuracy} as a function of L$^2$ regularization 
     \label{fig:mlp-lambda-mb}
 \end{figure}
 
-After choosing following optimal parameters, we get 
+After choosing a set of optimal parameters seen in table \ref{tab:opt_ols_result}, we get the results that is seen in figure \ref{fig:mlp-epoch-activations-mse-optimal} with the MSE cost function, figure \ref{fig:mlp-epoch-activations-log-loss-optimal} with the CE cost function.
 \begin{table}[H]
     \centering
+    \caption{A set of optimal parameters}
     \begin{tabular}{l l} % 6 columns
         \specialrule{.1em}{.05em}{.05em}
+        Parameters & Values \\ \hline
         $N_\mathrm{neurons}$    & 10 \\
         $\lambda$               & 0.1 \\
         $N_\mathrm{mb}$         & 20 \\
@@ -240,20 +242,49 @@ After choosing following optimal parameters, we get
         $\eta$ (constant)       & 0.001 \\
         \specialrule{.1em}{.05em}{.05em}
     \end{tabular}
-    \caption{Based on the different fitting procedures, these fit parameters were determined to be the best. The polynomial fitted was of degree $6$.}
     \label{tab:opt_ols_result}
 \end{table}
 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_mse2.pdf}
-    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table .}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table \ref{tab:opt_ols_result}.}
     \label{fig:mlp-epoch-activations-mse-optimal}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_log_loss2.pdf}
-    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table.}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table \ref{tab:opt_ols_result}.}
+    \label{fig:mlp-epoch-activations-log-loss-optimal}
+\end{figure}
+
+Another set of optimal parameters were chosen, and we got 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l l} % 6 columns
+        \specialrule{.1em}{.05em}{.05em}
+        Parameters & Values \\ \hline
+        $N_\mathrm{neurons}$    & 10 \\
+        $\lambda$               & 0.1 \\
+        $N_\mathrm{mb}$         & 20 \\
+        $N_\mathrm{epochs}$     & 500 \\
+        $\eta$ (constant)       & 0.001 \\
+        \specialrule{.1em}{.05em}{.05em}
+    \end{tabular}
+    \label{tab:opt_ols_result2}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_mse_optimal3.pdf}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table \ref{tab:opt_ols_result2}.}
+    \label{fig:mlp-epoch-activations-mse-optimal}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_log_loss_optimal3.pdf}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table \ref{tab:opt_ols_result2}.}
     \label{fig:mlp-epoch-activations-log-loss-optimal}
 \end{figure}
