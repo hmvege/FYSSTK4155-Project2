@@ -33,7 +33,7 @@ def task1e(figure_path="../fig"):
     learning_rate = 1.0
     max_iter = int(1e3)
     verbose = False
-    try_get_pickle=True
+    try_get_pickle=False
 
     print("Neural Network classification")
 
@@ -127,22 +127,22 @@ def task1e(figure_path="../fig"):
     # weight_inits = ["default", "large"]
     # lambda_values = np.logspace(-5, 4, 10)[:5]
 
-    # lmbda_eta_params = default_input_dict.copy()
-    # lmbda_eta_params.pop("lmbda")
-    # lmbda_eta_params.pop("learning_rate")
-    # lmbda_eta_params["figure_folder"] = figure_path
-    # run_lambda_eta(X_train, X_test, y_train, y_test, default_layers,
-    #                lmbdas=lambda_values, learning_rates=learning_rates,
-    #                try_get_pickle=try_get_pickle,
-    #                **lmbda_eta_params)
+    lmbda_eta_params = default_input_dict.copy()
+    lmbda_eta_params.pop("lmbda")
+    lmbda_eta_params.pop("learning_rate")
+    lmbda_eta_params["figure_folder"] = figure_path
+    run_lambda_eta(X_train, X_test, y_train, y_test, default_layers,
+                   lmbdas=lambda_values, learning_rates=learning_rates,
+                   try_get_pickle=try_get_pickle,
+                   **lmbda_eta_params)
 
-    # lmbda_neurons_params = default_input_dict.copy()
-    # lmbda_neurons_params.pop("lmbda")
-    # lmbda_neurons_params["figure_folder"] = figure_path
-    # run_lambda_neurons(X_train, X_test, y_train, y_test, default_layers,
-    #                    lmbdas=lambda_values, neurons=layer_neurons,
-    #                    try_get_pickle=try_get_pickle,
-    #                    **lmbda_neurons_params)
+    lmbda_neurons_params = default_input_dict.copy()
+    lmbda_neurons_params.pop("lmbda")
+    lmbda_neurons_params["figure_folder"] = figure_path
+    run_lambda_neurons(X_train, X_test, y_train, y_test, default_layers,
+                       lmbdas=lambda_values, neurons=layer_neurons,
+                       try_get_pickle=try_get_pickle,
+                       **lmbda_neurons_params)
 
     lmbda_mini_batches_params = default_input_dict.copy()
     lmbda_mini_batches_params.pop("lmbda")

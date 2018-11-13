@@ -155,13 +155,14 @@ def task1d(figure_folder="../fig"):
 
         plot_heatmap(J_OLS, J_ridge, J_lasso, L_system_size, lmbda,
                      figure_folder,
-                     "mlp_ising_1d_heatmap_lambda{}.pdf".format(lmbda))
+                     "mlp_ising_1d_heatmap_lambda{}_N{}.pdf".format(
+                        lmbda, str(int(N_samples))))
 
     # Plots R2 scores
     plot_all_r2(lambda_values, ols_r2["test"], ols_r2["train"],
                 ridge_r2["test"], ridge_r2["train"], lasso_r2["test"],
                 lasso_r2["train"], "mlp_r2_ols_ridge_lasso", figure_folder, 
-                verbose=True)
+                verbose=True, file_addendum="{}".format(str(int(N_samples))))
 
 
 if __name__ == '__main__':

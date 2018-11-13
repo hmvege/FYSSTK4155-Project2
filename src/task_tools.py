@@ -350,7 +350,7 @@ def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
     cbar.ax.set_yticklabels(
         np.arange(-1.0, 1.0+0.25, 0.25), fontsize=yticksize)
     cbar.set_label(r'$J_{i,j}$', labelpad=-40,
-                   y=1.12,x=1.5, fontsize=fontsize, rotation=0)
+                   y=1.12, x=1.5, fontsize=fontsize, rotation=0)
 
     # plt.show()
     figure_path = os.path.join(
@@ -363,7 +363,7 @@ def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
 
 def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
                 r2_ridge_train, r2_lasso_test, r2_lasso_train, figname,
-                figure_folder, verbose=False):
+                figure_folder, verbose=False, file_addendum=""):
     """Plots all r2 scores together."""
     if verbose:
         print("OLS R2 test:", r2_ols_test)
@@ -408,7 +408,8 @@ def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
     ax1.legend()
     ax1.grid(True)
 
-    figure_path = os.path.join(figure_folder, "{}.pdf".format(figname))
+    figure_path = os.path.join(
+        figure_folder, "{}{}.pdf".format(figname, file_addendum))
     fig.savefig(figure_path)
     print("Figure saved at {}".format(figure_path))
 
