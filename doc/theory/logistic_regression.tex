@@ -1,7 +1,7 @@
 In project 1 we used linear regression to predict a continuous output from a set of inputs \cite{project1-eirik-joakim,project1-vege}. We used ordinary least squares regression (OLS), Ridge regression and Lasso regression, where the two latter impose a penalty to the OLS. In this project we will reuse the ideas and code of project 1, but we will also use neural networks to predict continuous variables. In addition we study situations where the outcome is discrete rather than continuous. This is a classification problem, and we will use logistic regression to model the probabilities of the classes.\\
 
 \subsection{Logistic regression}
-Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of the this weighted sum as the probabilities. For a classification problem with K classes, the model has the following form (Hastie et al. p.119), \\
+Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of the this weighted sum as the probabilities. For a classification problem with $K$ classes, the model has the following form \citep[p.119]{james2013introduction},
 \begin{equation}\label{eqT:logreg_def}
 \begin{split}
 \log\frac{Pr(G=1|X=x)}{Pr(G=K|X=x)} &= \beta_{10}\ +\ \beta_{1}^Tx\\
@@ -10,23 +10,24 @@ Just like a linear regression model, a logistic regression model computes a weig
 \log\frac{Pr(G=K-1|X=x)}{Pr(G=K|X=x)} &= \beta_{(K-1)0}\ +\ \beta_{K-1}^Tx\\
 \end{split}
 \end{equation}
-It is arbitrary which class is used in the denominator for the log-odds above. Taking the exponential on both sides and solving for $Pr(G=k|X=x)$ gives the following probabilities:\\
+It is arbitrary which class is used in the denominator for the log-odds above. Taking the exponential on both sides and solving for $Pr(G=k|X=x)$ gives the following probabilities,
 \begin{equation}\label{eqT:logreg_prob}
 \begin{split}
 Pr(G=k|X=x) &= \frac{exp(\beta_{k0}\ +\ \beta_{k}^Tx)}{1+\sum_{l=1}^{K-1}exp(\beta_{l0}\ +\ \beta_{l}^Tx)},\ k=1,\dots,K-1,\\
 Pr(G=K|X=x) &= \frac{1}{1+\sum_{l=1}^{K-1}exp(\beta_{l0}\ +\ \beta_{l}^Tx)},
 \end{split}
 \end{equation}
-and the probabilities sum to one. The output is then classified as the class with the highest probability.\\
+and the probabilities sum to one. The output is then classified as the class with the highest probability.
 
 \subsubsection{Fitting logistic regression model}
-The usual way of fitting logistic regression models is by maximum likelihood. The log-likelihood for N observations is defined as:\\
+The usual way of fitting logistic regression models is by maximum likelihood. The log-likelihood for N observations is defined as,
 \begin{equation}\label{eqT:likelihood_def}
 l(\theta)\ =\ \sum_{i=1}^{N}\log p_{g_i}(x_i;\theta),\\
 \end{equation}
 where $p_k(x_i;\theta)\ =\ Pr(G=k|X=x_i;\theta)$ and $\theta\ =\ \{\beta_{10}, \beta_1^T,\dots, \beta_{(K-1)0}, \beta_{K-1}^T\}$.
 
-One very common classification problem is a situation with binary outcomes, either it happens or it does not. As we see from Equation \ref{eqT:logreg_def} above, setting K=2 simplifies the model considerable, since there will now be only a single linear function. $\theta$ in Equation \ref{eqT:likelihood_def} will also be simplified: $\theta = \beta = \{\beta_{10}, \beta_1^T\}$. The two-class case is what is used in this project, and the following discussion will assume the outcome has two classes.\\
+One very common classification problem is a situation with binary outcomes, either it happens or it does not. As we see from Equation \ref{eqT:logreg_def} above, setting K=2 simplifies the model considerable, since there will now be only a single linear function. $\theta$ in Equation \ref{eqT:likelihood_def} will also be simplified: $\theta = \beta = \{\beta_{10}, \beta_1^T\}$. The two-class case is what is used in this project, and the following discussion will assume the outcome has two classes.
+
 We start by coding the two-class $g_i$ with a 0/1 response $y_i$, where $y_i$ = 1 when $g_i$ = 1, and $y_i$ = 0 when $g_i$ = 2. Next, we let $p_1(x;\theta)\ =\ p(x;\beta)$, and $p_2(x;\theta)\ =\ 1\ -\ p(x;\beta)$. The log-likelihood can then be written
 \begin{equation}\label{eqT:loglike_binary}
 \begin{split}
@@ -55,11 +56,11 @@ To minimize this cost function we used gradient descent. \sjekk{Gradient descent
 where $\bm{X}$ is the $N\times(p+1)$ matrix of $x_i$ values, $\bm{p}$ is the vector of fitted probabilities with $i$th element $p(x_i;\beta)$ and $\bm{y}$ is the vector of $y_i$ values. The new $\beta$ using gradient descent is then\\
 $\beta_{new} = \beta_{old}\ -\ \frac{\partial J(\beta)}{\partial \beta}lr$, where $lr$ is the learning rate (step size).} \husk{This is done iteratively until we reach the set max iterations or $\frac{\partial J(\beta)}{\partial \beta}$ is within a given tolerance of zero.}
 
-\sjekk{Like we introduced Lasso and Ridge regression to avoid overfitting in Project 1, we can add a penalty term to the cost function in Equation \ref{Geron_cost}. In our project we used two different penalties: $L1 = \lambda|\beta|$ and $L2 = \lambda||\beta||^2$. When fitting the model we need to include the derivatives of the penalty term in Equation \ref{eqT:diff_cost}.} \husk{The gradient with the penalty term is\\
+\sjekk{Like we introduced Lasso and Ridge regression to avoid overfitting in Project 1, we can add a penalty term to the cost function in Equation \ref{Geron_cost}. In our project we used two different penalties: $L1 = \lambda|\beta|$ and $L2 = \lambda||\beta||^2$. When fitting the model we need to include the derivatives of the penalty term in Equation \ref{eqT:diff_cost}.} \husk{The gradient with the penalty term is,
 \begin{equation}
 \begin{split}
 \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{sign(\beta)},\ for\ L1\ regularization\\
- &or\\
+ &\mathrm{or}\\
 \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{2\beta},\ for\ L2\ regularization. 
 \end{split}
 \end{equation}
