@@ -23,9 +23,9 @@ The backpropegation is then summed up as following(heavily influenced by the wor
 \begin{itemize}
     \item Compute the output error bmtor for the final layer (L) given by
     \begin{equation*}
-        \delta^L = \nabla_a C \odot \sigma^{'}(\bm{w}^T \cdot \bm{x} + b)
+        \delta^L = \nabla_a \mathcal{C} \odot \sigma^{'}(\bm{w}^T \cdot \bm{x} + b)
     \end{equation*}
-    where C is the cost function and $\nabla_a$ is a bmtor who has components that are the partial derivatives $\frac{\partial C}{\partial a_j^L}$ where $a_j$ is the j'th output found by using equation \eqref{eqT:activation} for $a$.
+    where $\mathcal{C}$ is the cost function and $\nabla_a$ is a bmtor who has components that are the partial derivatives $\frac{\partial \mathcal{C}}{\partial a_j^L}$ where $a_j$ is the j'th output found by using equation \eqref{eqT:activation} for $a$.
     \item Go back through all the previous layers l = L-1, L-2, ..., 2 and compute
     \begin{equation*}
         \delta^l ((\bm{w}^{l + 1})^T \delta^{l + 1}) \odot \sigma^{'}(\bm{w}^T \cdot \bm{x} + b)
@@ -33,14 +33,14 @@ The backpropegation is then summed up as following(heavily influenced by the wor
     this is where we back propagate the error.
     \item Finally, find the gradient of the cost function for the two parameters we want to change, $\bm{w}$ and $b$ by:
     \begin{align*}
-        \frac{\partial C}{\partial \bm{w}_{jk}^l} &= a_k^{l-1}\delta_{j}^{l} \\
-        \frac{\partial C}{\partial b_{j}^l} &= \delta_{j}^{l}
+        \frac{\partial \mathcal{C}}{\partial \bm{w}_{jk}^l} &= a_k^{l-1}\delta_{j}^{l} \\
+        \frac{\partial \mathcal{C}}{\partial b_{j}^l} &= \delta_{j}^{l}
     \end{align*}
     where $k$ indicates the column of $\bm{w}^l$ as $j$ indicates the row.
 \end{itemize}
-Once all layers have been adjusted through back propagation, one can run through the whole network again and repeat the process. A common cost function may be the quadratic loss function given by:
+Once all layers have been adjusted through back propagation, one can run through the whole network again and repeat the process. A common cost function may be the quadratic loss function(MSE) given by:
 \begin{equation}
-    C = \frac{1}{N} \sum\limits_{j} (y_j - a_j^L)^2
+    \mathcal{C} = \frac{1}{N} \sum\limits_{j} (y_j - a_j^L)^2
 \end{equation}
 where N are the total numbers of outputs in $j$ and $y$ are the true answers.
 

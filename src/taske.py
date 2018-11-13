@@ -144,24 +144,24 @@ def task1e(figure_path="../fig"):
     #                    try_get_pickle=try_get_pickle,
     #                    **lmbda_neurons_params)
 
-    lmbda_mini_batches_params = default_input_dict.copy()
-    lmbda_mini_batches_params.pop("lmbda")
-    lmbda_mini_batches_params.pop("mini_batch_size")
-    lmbda_mini_batches_params["figure_folder"] = figure_path
-    run_lambda_mini_batches(X_train, X_test, y_train, y_test, default_layers,
-                            lmbdas=lambda_values,
-                            mini_batch_sizes=mini_batch_sizes,
-                            try_get_pickle=try_get_pickle,
-                            **lmbda_mini_batches_params)
+    # lmbda_mini_batches_params = default_input_dict.copy()
+    # lmbda_mini_batches_params.pop("lmbda")
+    # lmbda_mini_batches_params.pop("mini_batch_size")
+    # lmbda_mini_batches_params["figure_folder"] = figure_path
+    # run_lambda_mini_batches(X_train, X_test, y_train, y_test, default_layers,
+    #                         lmbdas=lambda_values,
+    #                         mini_batch_sizes=mini_batch_sizes,
+    #                         try_get_pickle=try_get_pickle,
+    #                         **lmbda_mini_batches_params)
 
-    neurons_eta_params = default_input_dict.copy()
-    neurons_eta_params.pop("learning_rate")
-    neurons_eta_params["figure_folder"] = figure_path
-    run_neurons_eta(X_train, X_test, y_train, y_test, default_layers,
-                    neurons=layer_neurons,
-                    learning_rates=learning_rates,
-                    try_get_pickle=try_get_pickle,
-                    **neurons_eta_params)
+    # neurons_eta_params = default_input_dict.copy()
+    # neurons_eta_params.pop("learning_rate")
+    # neurons_eta_params["figure_folder"] = figure_path
+    # run_neurons_eta(X_train, X_test, y_train, y_test, default_layers,
+    #                 neurons=layer_neurons,
+    #                 learning_rates=learning_rates,
+    #                 try_get_pickle=try_get_pickle,
+    #                 **neurons_eta_params)
 
     # Currently running on mac
     # neurons_training_size_params = default_input_dict.copy()
@@ -179,28 +179,28 @@ def task1e(figure_path="../fig"):
     #                       try_get_pickle=try_get_pickle,
     #                       **epoch_weight_init_params)
 
-    # epoch_cost_function_params = default_input_dict.copy()
-    # epoch_cost_function_params.pop("epochs")
-    # epoch_cost_function_params.pop("cost_function")
-    # run_epoch_cost_functions(X_train, X_test, y_train, y_test, default_layers,
-    #                          epochs, cost_functions,
-    #                          try_get_pickle=try_get_pickle,
-    #                          **epoch_cost_function_params)
+    epoch_cost_function_params = default_input_dict.copy()
+    epoch_cost_function_params.pop("epochs")
+    epoch_cost_function_params.pop("cost_function")
+    run_epoch_cost_functions(X_train, X_test, y_train, y_test, default_layers,
+                             epochs, cost_functions,
+                             try_get_pickle=try_get_pickle,
+                             **epoch_cost_function_params)
 
-    # epoch_activations_params = default_input_dict.copy()
-    # epoch_activations_params.pop("epochs")
-    # epoch_activations_params.pop("activation")
-    # epoch_activations_params["cost_function"] = "log_loss"
-    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-    #                       epochs, activations,
-    #                       try_get_pickle=try_get_pickle,
-    #                       **epoch_activations_params)
+    epoch_activations_params = default_input_dict.copy()
+    epoch_activations_params.pop("epochs")
+    epoch_activations_params.pop("activation")
+    epoch_activations_params["cost_function"] = "log_loss"
+    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+                          epochs, activations,
+                          try_get_pickle=try_get_pickle,
+                          **epoch_activations_params)
     
-    # epoch_activations_params["cost_function"] = "mse"
-    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-    #                       epochs, activations,
-    #                       try_get_pickle=try_get_pickle,
-    #                       **epoch_activations_params)
+    epoch_activations_params["cost_function"] = "mse"
+    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+                          epochs, activations,
+                          try_get_pickle=try_get_pickle,
+                          **epoch_activations_params)
 
     # The following run produces near perfect accuracy
     # nn_core(X_train, X_test, y_train, y_test, default_layers, **default_input_dict)
