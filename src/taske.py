@@ -113,11 +113,11 @@ def task1e(figure_path="../fig"):
     output_activations = ["sigmoid", "identity", "softmax"]
     cost_functions = ["mse", "log_loss"]  # , "exponential_cost"]
     learning_rates = np.logspace(-6, -1, 6)
-    mini_batch_sizes = [5, 10, 20, 30, 40]
-    layer_neurons = [5, 10, 15, 20, 25, 30, 40]
+    mini_batch_sizes = [5, 10, 20, 30]
+    layer_neurons = [1, 5, 10, 20, 30, 40]
     training_sizes = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     weight_inits = ["default", "large"]
-    lambda_values = np.logspace(-4, 4, 9)
+    lambda_values = np.logspace(-4, 3, 8)
 
     # # Test run parameters!
     # learning_rates = np.logspace(-6, -1, 6)[:3]
