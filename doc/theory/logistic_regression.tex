@@ -1,7 +1,7 @@
 In project 1 we used linear regression to predict a continuous output from a set of inputs \cite{project1-eirik-joakim,project1-vege}. We used ordinary least squares regression (OLS), Ridge regression and Lasso regression, where the two latter impose a penalty to the OLS. In this project we will reuse the ideas and code of project 1, but we will also use neural networks to predict continuous variables. In addition we study situations where the outcome is discrete rather than continuous. This is a classification problem, and we will use logistic regression to model the probabilities of the classes.
 
 \subsection{Logistic regression}
-Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of the this weighted sum as the probabilities. For a classification problem with $K$ classes, the model has the following form \citep[p.119]{james2013introduction},
+Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of this weighted sum as the probabilities. For a classification problem with $K$ classes, the model has the following form \citep[p.119]{james2013introduction},
 \begin{equation}\label{eqT:logreg_def}
 \begin{split}
 \log\frac{Pr(G=1|X=x)}{Pr(G=K|X=x)} &= \beta_{10}\ +\ \beta_{1}^Tx\\
@@ -17,7 +17,7 @@ Pr(G=k|X=x) &= \frac{exp(\beta_{k0}\ +\ \beta_{k}^Tx)}{1+\sum_{l=1}^{K-1}exp(\be
 Pr(G=K|X=x) &= \frac{1}{1+\sum_{l=1}^{K-1}exp(\beta_{l0}\ +\ \beta_{l}^Tx)},
 \end{split}
 \end{equation}
-and the probabilities sum to one. The output is then classified as the class with the highest probability.
+and the probabilities sum to one. To classify the output we choose the class with the highest probability.
 
 \subsubsection{Fitting logistic regression model}
 The usual way of fitting logistic regression models is by maximum likelihood. The log-likelihood for N observations is defined as,
@@ -44,4 +44,4 @@ J(\beta) = -\frac{1}{N}\sum_{i=1}^N\{y_i\beta^Tx_i - \log(1+exp(\beta^Tx_i)).\}
 \end{equation}
 This is just the negative of Equation \ref{eqT:loglike_binary}, divided by the number of samples. This is our cost function, and dividing by the number of training samples finds the mean cost.
 
-As with all cost functions, the goal is to minimize it. This introduces it's own potential pitfalls such as overfitting. In order to avoid that, we can introduce regularizations. Let us begin by looking the optimization problem.
+As with all cost functions, the goal is to minimize it. This introduces it's own potential pitfalls such as overfitting. In order to avoid that, we can introduce regularizations. Let us begin by looking at the optimization problem.
