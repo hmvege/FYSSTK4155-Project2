@@ -1,87 +1,42 @@
-\documentclass[11pt]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage{mathtools}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{enumerate}
-
-% For proper referencing in article
-\usepackage{hyperref}
-\usepackage{url}
-
-% For figures and graphics'n stuff
-\usepackage{graphicx}
-\usepackage{caption}
-\usepackage{subcaption}
-% \usepackage{tabularx}
-\usepackage{float}
-
-% For proper appendices
-\usepackage[toc,page]{appendix}
-
-% Algorithm packages
-\usepackage{algorithm}
-\usepackage{algorithmicx}
-\usepackage{algpseudocode}
-
-% For bold math symbols
-\usepackage{bm}
-\usepackage{xcolor}
-
-% For customized hlines in tables
-\usepackage{ctable}
-
-% For having latex symbols in section titles
-\usepackage{epstopdf}
-
-% For proper citations
-% \usepackage[round, authoryear]{natbib}
-\usepackage[numbers]{natbib} 
-
-% For fixing large table height
-\usepackage{a4wide}
-
-% Remembrance and checking
-\newcommand{\husk}[1]{\color{red} #1 \color{black}}
-\newcommand{\sjekk}[1]{\color{violet} #1 \color{black}}
-
-\DeclareMathOperator{\sign}{sign}
-\DeclareMathOperator*{\argmin}{argmin}
-\DeclareMathOperator*{\CO}{\mathcal{C}}
-
-
-% \title{FYS-STK4155: Project 2}
-\title{Exploring the hyperspace of Machine Learning parameters}
-\author{Eirik Ramsli Hauge, Joakim Kalsnes, Hans Mathias Mamen Vege}
-\date{\today}
-
-\begin{document}
 \section{Discussion}
 
 \subsection{1D Ising model}
 \subsubsection{Fitting with linear regression}
-By examining the results from figure \ref{fig:bias-var-franke} illustrates the effect of different $\lambda$-values. The diagonal line illustrates the particle we are looking at and the pixels to its immediate left and right are the nearest neighbours. It is clear from this figure that even though we assumed that all particles interact with each other, only the neighbouring particles will have a profound effect on each other. For Lasso, it seems that the optimal $\lambda$ is either $10^{-3}$ or $10^{-1}$. This is agreeable with the results of Metha et al \cite{2018arXiv180308823M} who found $10^{-2}$ to be the optimal parameter. For Ridge and OLS we can not seem to see any big difference between the different $\lambda$'s. The inability to find the best $\lambda$ for OLS and Ridge and the fact that we do not have a clear optimal parameter for Lasso indicates that we should have gathered more data. \\ \\
-However, by looking at figure \ref{fig:linreg-r2} we can see that there is little change in the R2-score for different $\lambda$-values, indicating that it would not matter if we generated many more plots. They would most likely stay the same. It is also clear that Lasso is the most sensitive of the models, loosing ground to the other regression methods already at $\lambda = 10^{-1}$. The R2-score for Ridge starts to decline at about $\lambda = 10^{3}$, while OLS seems to maintain its quality over all $\lambda$'s. \\ \\
+By examining the results from figure \ref{fig:bias-var-franke} illustrates the effect of different $\lambda$-values. The diagonal line illustrates the particle we are looking at and the pixels to its immediate left and right are the nearest neighbours. It is clear from this figure that even though we assumed that all particles interact with each other, only the neighbouring particles will have a profound effect on each other. For Lasso, it seems that the optimal $\lambda$ is either $10^{-3}$ or $10^{-1}$. This is agreeable with the results of Metha et al \cite{2018arXiv180308823M} who found $10^{-2}$ to be the optimal parameter. For Ridge and OLS we can not seem to see any big difference between the different $\lambda$'s. The inability to find the best $\lambda$ for OLS and Ridge and the fact that we do not have a clear optimal parameter for Lasso indicates that we should have gathered more data. 
+
+However, by looking at figure \ref{fig:linreg-r2} we can see that there is little change in the R2-score for different $\lambda$-values, indicating that it would not matter if we generated many more plots. They would most likely stay the same. It is also clear that Lasso is the most sensitive of the models, loosing ground to the other regression methods already at $\lambda = 10^{-1}$. The R2-score for Ridge starts to decline at about $\lambda = 10^{3}$, while OLS seems to maintain its quality over all $\lambda$'s. 
+
 This trend is further confirmed by figure \ref{fig:fig:linreg-bias-variance-decomp-ridge} and \ref{fig:linreg-bias-variance-decomp-lasso} where we have used Bootstrap and $k$-fold validation to verify our results. As we can see, the variance stays about the same for all $\lambda$-values, but MSE and therefore, the bias increases. This shift in bias also happens around $\lambda = 10^{-1}$ for Lasso and $\lambda = 10^{3}$ for Ridge as the R2-score did as well.
+
 \subsubsection{Fitting with a neural network}
-Repeating the calculations using a neural net with zero hidden layers and the identity function as the activation function gives us the opportunity to repeat the above calculations using a neural net instead. As we can see from figure \ref{fig:mlp-coefs}, the difference in $N_{\text{train}}$ had little effect, but the change in $\lambda$ was significant. The change between OLS, Ridge and Lasso also represent a change in regularisation from no regularisation to L$^2$ to L$^1$ respectively. \\
+Repeating the calculations using a neural net with zero hidden layers and the identity function as the activation function gives us the opportunity to repeat the above calculations using a neural net instead. As we can see from figure \ref{fig:mlp-coefs}, the difference in $N_{\text{train}}$ had little effect, but the change in $\lambda$ was significant. The change between OLS, Ridge and Lasso also represent a change in regularisation from no regularisation to L$^2$ to L$^1$ respectively. 
+
 In contrast to the linear regression case, there is a difference between $\lambda = 10^{-3}$ and $\lambda = 10^{-1}$. The diagonal lines once removed which signifies the nearest neighbours are about as strong for both parameters, however, there is a noticeable decrease in noise for the $\lambda = 10^{-1}$ case. Furthermore, we must note that the use of the parameter $\lambda = 10^{1}$ is more devastating for Ridge than Lasso this time around. Lasso looses a lot of information, but for Ridge the significant of nearest neighbours disappears completely. The same trend is once again evident for the R2-score plotted in figure \ref{fig:mlp-r2}. However, with this representation we can see that increasing $N_{\text{train}}$ decreases the difference between the test and train data. This is as expected.
 
-The difference in \ref{fig:mlp-coefs} and in \ref{fig:reg-coef-heatmap} is due to the way SciKit-Learn optimizes the Lasso function. Since we are utlizing SciKit-Learn in our Lasso regression, the way it uses coordinate descent as its optimization method, it only finds one part of the diagonal.
+The difference between \ref{fig:mlp-coefs} and \ref{fig:reg-coef-heatmap} is due to the way SciKit-Learn optimizes the Lasso function. Since we are utlizing SciKit-Learn in our Lasso regression, the way it uses coordinate descent as its optimization method, it only finds one part of the diagonal.
+
 \subsection{2D Ising model}
 \subsubsection{Classification through logistic regression}
 From figure \ref{fig:logreg-accuracy-sklearn-comparison} we can compare the accuracy of our implemented logistic regression method to that of SKLearn. Furthermore, we can compare our results to those of Metha et al. \cite{2018arXiv180308823M}. What is peculiar in our case is that SKlearn with Stochastic Gradient Descent (SGD) is very varied over the different $\lambda$-values, while Metha et al. have quite stable values. Both standard SKlearn and the implemented methods have stable accuracies, with the implemented train being the clear winner. A reason for this unexpected variation in accuracy for SGD might be that we perform the analyses on less data than those of Metha et al. causing our SGD to jump more randomly back and forth for higher $\lambda$-values. If the experiment was to be repeated we would double check that the SKlearn with SGD was correctly used and give it more data. Our implemented data have performed better than those of Metha et al., which is positive. However, this might also indicate that we have implemented something wrong and are just lucky. If this experiment were to be repeated we would also double check our implementation and run it over more data to truly test if we are just lucky or if our method is actually better.
+
 \subsubsection{Classification through neural networks}
-To find the optimal solution using the neural net we implemented many different features to our Neural Net (NN). All these results can be viewed in figures \ref{fig:mlp-cost-function-comparison} - \ref{fig:mlp-epoch-activations-log-loss}. We then moved on to trying to find the optimal parameters in figures \ref{fig:mlp-eta-lambda} - \ref{fig:mlp-lambda-mb}. \\ \\
-Our initial results in figure \ref{fig:mlp-cost-function-comparison} gives us a comparison of using either MSE or LogLoss as a cost function. The latter cost function ca nthen be directly compared to our logistic regression results in figure \ref{fig:logreg-accuracy-sklearn-comparison}. As we can see, the LogLoss accuracy increases significantly over the first 20-30 epochs before varying until we reach some more than 300 epochs. After this the accuracy is almost 1.0 which seems a bit to good to be true. The MSE stays at around 0.75, which is quite comparable to the results of the logistic regression above. \\
-Comparing the initial weights between the default and large as in figure \ref{fig:mlp-epoch-init-weights}, we see a similar trend. For smaller number of epochs, the accuracy increases quite drastically until it becomes stable a bit before the 100 epochs mark. Once the stable accuracy is reached, the Large initial weights perform best, however, there is not that big of a difference. These results are also comparable to the logistic regression above and seem to be a bit worse than the implemented train, but better than the implemented test. \\ \\
-Furthermore, figures \ref{fig:mlp-epoch-activations-mse} and \ref{fig:mlp-epoch-activations-log-loss} indicates that changing the activation function will have an effect on the accuracy as well. This is to be expected. The Heaviside function was added for historical reasons and even though it is the loser when both cost functions are considered, it is clear why this function was the initial function which was used at the advent of Neural Nets and made scientists want more. In our modern times the other functions are more used and Relu is the clear accuracy winner for MSE and the Sigmoid and Relu are so close that they are almost indistinguishable for cross entropy. This indicates that Relu should be the optimal activation function, regardless of cost function. \\
-No Neural Net is only made up of the activation and cost function, we also need to do an in-depth analyses of the different variables. From figure \ref{fig:mlp-eta-lambda} it seems as though a smaller $\lambda$ and larger is $\eta$ is generally better until we reach a limit. From this figure it seems as though a learning rate of $\eta = 1.0e-02$ and $\lambda = 1.0e-02$ gives us the optimal accuracy. \\ 
-However, there are more concerns to take into account. Figure \ref{fig:mlp-lambda-neurons} seems to point towards a decrease in $\lambda$ and an increase in neurons is almost always better. It is also clear that even though it seems to increase, it also seems to reach a plateau where further increases in neurons and decreases in $\lambda$ may have an effect. As this will also increase computational time, it seems as though $\lambda = 1.0e-02$ and 30 neurons gives us the optimal balance between high accuracy and decreased computational time. \\
-Similarly, figure \ref{fig:mlp-neurons-ts} can be interpreted as training sets around 0.5 and large number of neurons gives us the optimal accuracy. It also seems as though the number of neurons is the most significant parameter of these two as all neuron columns seem to have quite similar accuracy, independent of training size, compared to the difference in accuracy of the training size rows. In this case it seems as though a training size of 0.5 with 20 or 30 neurons would be optimal. \\
-Given the changes in learning rate compared to number of neurons displayed in figure \ref{fig:mlp-neurons-eta}, we see similar tendencies. An increase in neurons and an increase in learning rate is positive. However, the effect of increasing learning rate decreases once we pass $\eta = 1.0e-02$. The optimal learning rate is therefore $\eta = 1.0e-02$, but the accuracy seems to be quite similar for number of neurons from five and above. \\ 
-Finally, \ref{fig:mlp-lambda-mb} gives us quite unambiguous results. As $\lambda = 1.0e-02$ has been dominating the previous results, it is tempting to see the same here as well. And there are indications that a batch size of 30 and $\lambda = 1.0e-02$ are the optimal values, however, there are no trends significant enough to say this with certainty. \\ \\
+To find the optimal solution using the neural net we implemented many different features to our Neural Net (NN). All these results can be viewed in figures \ref{fig:mlp-cost-function-comparison} - \ref{fig:mlp-epoch-activations-log-loss}. We then moved on to trying to find the optimal parameters in figures \ref{fig:mlp-eta-lambda} - \ref{fig:mlp-lambda-mb}. 
+
+Our initial results in figure \ref{fig:mlp-cost-function-comparison} gives us a comparison of using either MSE or LogLoss as a cost function. The latter cost function ca nthen be directly compared to our logistic regression results in figure \ref{fig:logreg-accuracy-sklearn-comparison}. As we can see, the LogLoss accuracy increases significantly over the first 20-30 epochs before varying until we reach some more than 300 epochs. After this the accuracy is almost 1.0 which seems a bit to good to be true. The MSE stays at around 0.75, which is quite comparable to the results of the logistic regression above. 
+
+Comparing the initial weights between the default and large as in figure \ref{fig:mlp-epoch-init-weights}, we see a similar trend. For smaller number of epochs, the accuracy increases quite drastically until it becomes stable a bit before the 100 epochs mark. Once the stable accuracy is reached, the Large initial weights perform best, however, there is not that big of a difference. These results are also comparable to the logistic regression above and seem to be a bit worse than the implemented train, but better than the implemented test. 
+
+Furthermore, figures \ref{fig:mlp-epoch-activations-mse} and \ref{fig:mlp-epoch-activations-log-loss} indicates that changing the activation function will have an effect on the accuracy as well. This is to be expected. The Heaviside function was added for historical reasons and even though it is the loser when both cost functions are considered, it is clear why this function was the initial function which was used at the advent of Neural Nets and made scientists want more. In our modern times the other functions are more used and Relu is the clear accuracy winner for MSE and the Sigmoid and Relu are so close that they are almost indistinguishable for cross entropy. This indicates that Relu should be the optimal activation function, regardless of cost function. 
+
+No Neural Net is only made up of the activation and cost function, we also need to do an in-depth analyses of the different variables. From figure \ref{fig:mlp-eta-lambda} it seems as though a smaller $\lambda$ and larger is $\eta$ is generally better until we reach a limit. From this figure it seems as though a learning rate of $\eta = 1.0e-02$ and $\lambda = 1.0e-02$ gives us the optimal accuracy. 
+ 
+However, there are more concerns to take into account. Figure \ref{fig:mlp-lambda-neurons} seems to point towards a decrease in $\lambda$ and an increase in neurons is almost always better. It is also clear that even though it seems to increase, it also seems to reach a plateau where further increases in neurons and decreases in $\lambda$ may have an effect. As this will also increase computational time, it seems as though $\lambda = 1.0e-02$ and 30 neurons gives us the optimal balance between high accuracy and decreased computational time. 
+
+Similarly, figure \ref{fig:mlp-neurons-ts} can be interpreted as training sets around 0.5 and large number of neurons gives us the optimal accuracy. It also seems as though the number of neurons is the most significant parameter of these two as all neuron columns seem to have quite similar accuracy, independent of training size, compared to the difference in accuracy of the training size rows. In this case it seems as though a training size of 0.5 with 20 or 30 neurons would be optimal. 
+
+Given the changes in learning rate compared to number of neurons displayed in figure \ref{fig:mlp-neurons-eta}, we see similar tendencies. An increase in neurons and an increase in learning rate is positive. However, the effect of increasing learning rate decreases once we pass $\eta = 1.0e-02$. The optimal learning rate is therefore $\eta = 1.0e-02$, but the accuracy seems to be quite similar for number of neurons from five and above. 
+ 
+Finally, \ref{fig:mlp-lambda-mb} gives us quite unambiguous results. As $\lambda = 1.0e-02$ has been dominating the previous results, it is tempting to see the same here as well. And there are indications that a batch size of 30 and $\lambda = 1.0e-02$ are the optimal values, however, there are no trends significant enough to say this with certainty. 
+
 \subsection{Future works}
 For future works it would be desirable to look further into why our logistic implementation outperforms those of SKlearn and why the SGD method varies as it does. It would also be preferable to find better results for how many mini batches would be optimal for Neural Nets. One can also do better analyses by increasing the amount of data, but this is also left to the future and future, more powerful computers.
-\end{document}

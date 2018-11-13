@@ -259,15 +259,16 @@ After choosing a set of optimal parameters seen in table \ref{tab:opt_ols_result
     \label{fig:mlp-epoch-activations-log-loss-optimal}
 \end{figure}
 
-Another set of optimal parameters were chosen, and we got 
+Another set of optimal parameters were chosen a listed in table \ref{tab:opt_ols_result2} provided us with the figures seen in \ref{fig:mlp-epoch-activations-mse-optimal} and \ref{fig:mlp-epoch-activations-log-loss-optimal}. 
+% Taking the last 50 accuracy scores gives as with tanh activation function, Accuracy$=0.999(21)$.
 \begin{table}[H]
     \centering
     \begin{tabular}{l l} % 6 columns
         \specialrule{.1em}{.05em}{.05em}
         Parameters & Values \\ \hline
-        $N_\mathrm{neurons}$    & 10 \\
+        $N_\mathrm{neurons}$    & 20 \\
         $\lambda$               & 0.1 \\
-        $N_\mathrm{mb}$         & 20 \\
+        $N_\mathrm{mb}$         & 30 \\
         $N_\mathrm{epochs}$     & 500 \\
         $\eta$ (constant)       & 0.001 \\
         \specialrule{.1em}{.05em}{.05em}
