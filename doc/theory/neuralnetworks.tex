@@ -21,11 +21,11 @@ After initial calculation of the outer layer, you will most likely have an answe
 
 The backpropegation is then summed up as following(heavily influenced by the work of \citet{Nielsen}),
 \begin{itemize}
-    \item Compute the output error bmtor for the final layer (L) given by
+    \item Compute the output error vector for the final layer (L) given by
     \begin{equation*}
         \delta^L = \nabla_a \mathcal{C} \odot \sigma^{'}(\bm{w}^T \cdot \bm{x} + b)
     \end{equation*}
-    where $\mathcal{C}$ is the cost function and $\nabla_a$ is a bmtor who has components that are the partial derivatives $\frac{\partial \mathcal{C}}{\partial a_j^L}$ where $a_j$ is the j'th output found by using equation \eqref{eqT:activation} for $a$.
+    where $\mathcal{C}$ is the cost function and $\nabla_a$ is a vector who has components that are the partial derivatives $\frac{\partial \mathcal{C}}{\partial a_j^L}$ where $a_j$ is the j'th output found by using equation \eqref{eqT:activation} for $a$.
     \item Go back through all the previous layers l = L-1, L-2, ..., 2 and compute
     \begin{equation*}
         \delta^l ((\bm{w}^{l + 1})^T \delta^{l + 1}) \odot \sigma^{'}(\bm{w}^T \cdot \bm{x} + b)
@@ -97,6 +97,11 @@ we can write the initial gradient $\delta^L$ as
 \begin{align}
     \delta^L = y - a^L
 \end{align}
+If we set the number of output classes to be 2 such that we get binary classification, we get the cost functions for logistic regression,
+\begin{align*}
+    \mathcal{C}_{lg} = - \left( y \log p + (1 - y)\log (1 - p)\right)
+\end{align*}
+for one sample.
 
 \subsubsection{Activation layers} \label{sec:layer-acts}
 The hidden layer activations can greatly affect the outcome of the neural network. We will focus on four different hidden layer activations, the first being \textbf{sigmoidal activation}.

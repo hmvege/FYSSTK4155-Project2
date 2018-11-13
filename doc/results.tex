@@ -29,7 +29,7 @@ The $R^2$ score of the OLS, Ridge and Lasso can be seen in figure \ref{fig:linre
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/r2_ols_ridge_lasso.pdf}
-    \caption{$R^2$ score for different Ordinary Least Squares(OLS), Ridge and Lasso regression. Retrieved $N_\mathrm{train}=5000$ on a 1D Ising model of size $L=20$.}
+    \caption{$R^2$ score for different Ordinary Least Squares(OLS), Ridge and Lasso regression. Retrieved $N_\mathrm{train}=5000$ and $N_\mathrm{test}=5000$ on a 1D Ising model of size $L=20$.}
     \label{fig:linreg-r2}
 \end{figure}
 
@@ -72,7 +72,7 @@ The bias-variance decomposition for Ridge and Lasso using bootstrap and cross va
 \end{figure}
 
 \subsubsection{Fitting with a neural network}
-By setting the output activation function to the identity and by having zero hidden layers, we are essentially performing a regression analysis on the 1D Ising model. We generate the same amount of data by inputing the same RNG(random number generator) seed. A fit using $N_\mathrm{train}=400$ and $N_\mathrm{train}=5000$ for $\lambda=10^{-3}, 10^{-1}, 10^1$ can be seen in figure \ref{fig:mlp_coefs}.
+By setting the output activation function to the identity and by having zero hidden layers, we are essentially performing a regression analysis on the 1D Ising model. We generate the same amount of data by inputing the same RNG(random number generator) seed. A fit using $N_\mathrm{train}=400$, $N_\mathrm{train}=5000$ and $N_\mathrm{test}=5000$ for $\lambda=10^{-3}, 10^{-1}, 10^1$ can be seen in figure \ref{fig:mlp_coefs}.
 
 \begin{figure}[H]
     \centering
@@ -172,7 +172,7 @@ We then wish to to investigate the effects of having different initial weights. 
     \label{fig:mlp-epoch-init-weights}
 \end{figure}
 
-skriv inn lambda ting her !=")#(097 21841 \\\\}∆∑◊∂"
+% skriv inn lambda ting her !=")#(097 21841 \\\\}∆∑◊∂"
 
 An investigation into different layer activations\ref{sec:layer-acts} was performed for both the MSE- and the CE-cost function. The results from MSE can be seen in figure 
 \begin{figure}[H]
@@ -226,4 +226,34 @@ The accuracy score\eqref{eq:mlp-accuracy} as a function of L$^2$ regularization 
     \includegraphics[scale=1.0]{../fig/mlp_lambda_mini_batch_size.pdf}
     \caption{The accuracy score as function of the  L$^2$ regularization strength $\lambda$ and the mini batch size in the SGD\ref{alg:sgd}. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation and the inverse learning rate \eqref{eq:inverse-eta} with $\eta_0=0.001$.}
     \label{fig:mlp-lambda-mb}
+\end{figure}
+
+After choosing following optimal parameters, we get 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l l} % 6 columns
+        \specialrule{.1em}{.05em}{.05em}
+        $N_\mathrm{neurons}$    & 10 \\
+        $\lambda$               & 0.1 \\
+        $N_\mathrm{mb}$         & 20 \\
+        $N_\mathrm{epochs}$     & 500 \\
+        $\eta$ (constant)       & 0.001 \\
+        \specialrule{.1em}{.05em}{.05em}
+    \end{tabular}
+    \caption{Based on the different fitting procedures, these fit parameters were determined to be the best. The polynomial fitted was of degree $6$.}
+    \label{tab:opt_ols_result}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_mse2.pdf}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table .}
+    \label{fig:mlp-epoch-activations-mse-optimal}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_log_loss2.pdf}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table.}
+    \label{fig:mlp-epoch-activations-log-loss-optimal}
 \end{figure}

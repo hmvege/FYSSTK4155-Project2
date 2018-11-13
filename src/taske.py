@@ -86,7 +86,7 @@ def task1e(figure_path="../fig"):
     default_eta0 = 0.001
     # TODO: Different regularization runs as well?
     default_regularization = "l2"
-    default_mini_batch_size = 20
+    default_mini_batch_size = 10
     default_hidden_layer_size = 10
     default_weight_init = "default"
     default_lambda_value = 0.1
@@ -191,10 +191,10 @@ def task1e(figure_path="../fig"):
     epoch_activations_params.pop("epochs")
     epoch_activations_params.pop("activation")
     epoch_activations_params["cost_function"] = "log_loss"
-    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-    #                       epochs, activations,
-    #                       try_get_pickle=try_get_pickle,
-    #                       **epoch_activations_params)
+    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+                          epochs, activations,
+                          try_get_pickle=try_get_pickle,
+                          **epoch_activations_params)
 
     epoch_activations_params["cost_function"] = "mse"
     run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
@@ -236,7 +236,7 @@ def run_epoch_activations(X_train, X_test, y_train, y_test, layers,
 
         save_pickle(pickle_fname, data)
 
-    figname = "mlp_epoch_activations_{}.pdf".format(kwargs["cost_function"])
+    figname = "mlp_epoch_activations_{}_optimal.pdf".format(kwargs["cost_function"])
 
     plot_epoch_accuracy(data, r"Epoch", r"Accuracy",
                         figname, vmin=0.0, vmax=1.0)
