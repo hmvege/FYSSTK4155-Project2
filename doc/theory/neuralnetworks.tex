@@ -129,3 +129,11 @@ When initializing weights and biases, we will look at two ways of how this can b
 Then, we will use a gaussian distribution but divided by the number of training samples, $\mathcal(0, 1/{N_\mathrm{train}})$, dubbing that one to be called \textit{default}, as this is the one we will by default use in our neural network.
 
 The effect of these two is essentially shrinking in the initial search space, and we should expect them to converge at large epoch times.
+
+\subsubsection{Measuring the performance}
+The performance of a neural network(or any classifier), can in its simplest form be measured by the accuracy, which is defined as
+\begin{align}
+    \mathrm{Accuracy} = \frac{\sum^{n}_{i=1}I(t_i = y_i)}{n},
+    \label{eq:mlp-accuracy}
+\end{align}
+where $n$ is the number of samples we are testing against, $I$ is the indicater function, which returns 1 if the prediction $t_i$ equals the true values $y_i$.

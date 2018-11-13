@@ -1,28 +1,29 @@
 As well as in logistic regression as in neural networks, minimizing(or maximizing depending on your setup) the cost function is a central problem, and can to some extent be stated as \textit{the} problem. Having a method which is both efficient and converges towards the minimum is, luckily, not a new problem in computer science. In the logistic regression optimization, three main methods will be utilized, while in the neural network we will focus on the stochastic conjugate gradient descent. For logistic regression we will use an learning rate optimized gradient descent method, and 
 
-For two of the four optimizers, we will use SciPy's library\cite{scipy} and simply refer the reader to their implementation.
+For two of the four optimizers - that is Newtons Conjugate Gradient\cite{} and Conjugate Gradient\cite{Press:2007:NRE:1403886}, we will use SciPy's library\cite{scipy} and simply refer the reader to their implementation.
 
-% \subsubsection{Gradient descent}
-% Gradient descent is set up in a general fashion as,
-% \begin{algorithm}[H]
-%     \caption{Gradient descent}
-%     \label{alg:gd}
-%     \begin{algorithmic}[1]
-%         \State \
-%         \While{$i < N_\mathrm{max}$ and $||\nabla\mathcal{C}(\bm{w})||<\varepsilon$}
-%             \State Build a new data set $\bm{X}_{\mathcal{L},\mathrm{bs}}=\{y_{i,\mathrm{bs}},\bm{x}_{i,\mathrm{bs}}\}$ with $n$ randomly drawn with replacement values, from the training set $\bm{X}_{\mathcal{L},\mathrm{train}}$.
-%             \State Fit the bootstrapped dataset to a given model.
-%             \State Evaluate the model on on the test set $\bm{X}_{\mathcal{L},\mathrm{test}}$.
-%             \State Store relevant results.
-%         \EndFor
-%     \end{algorithmic}
-% \end{algorithm}
-
-
-\subsubsection{Newton-Conjugate Gradient}
-The 
-
-\subsubsection{Conjugate gradient}
+\subsubsection{Gradient descent}
+Gradient descent is set up in a general fashion as, utilizing an optimized learning rate $\eta_k$ find and a scaling parameter $\gamma$. The scaling parameter $\gamma$ is introduced in order to prevent results from blowing up.
+\begin{algorithm}[H]
+    \caption{Gradient descent.}
+    \label{alg:gd}
+    \begin{algorithmic}[1]
+        \State Input: $\bm{X}$, $\bm{y}$, $\bm{w}_0$, $\eta$
+        \State Set initial weights, $\bm{w} = \bm{w}_0$
+        \State Set previous gradient with current, $\nabla_0 = \nabla_1$
+        \While{$i < N_\mathrm{max}$ and $||\nabla\mathcal{C}(\bm{w})||<\varepsilon$}
+            \State $z = \bm{X}\cdot \bm{w}$
+            \State $p = \sigma(z)$
+            \State $\nabla_0 = \nabla_1$, set previous gradient to current.
+            \State $\nabla_1 = - \bm{X}^T \cdot (\bm{y} - \bm{p}) / \gamma + \lambda f_L(\bm{w}) / \gamma$
+            \State $\bm{w}_0 = \bm{w}$
+            \State Update learning parameter, $\eta_k$
+            \State $\bm{w} = \bm{w}_0 - \eta_k \nabla_1$, update weights.
+        \EndWhile
+        \State Return $\bm{w}$
+    \end{algorithmic}
+\end{algorithm}
+The full implementation with the optimized learning rate $\eta_k$ can be seen in the article \citet{optimal-learning-rate}.
 
 \subsubsection{Stochastic gradient descent}
 

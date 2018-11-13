@@ -163,15 +163,15 @@ These cost functions following behavior for epochs seen in following figure \ref
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_cost_functions.pdf}
-    \caption{A comparison between the MSE and (CE) Cross Entropy loss functions over 500 epochs. The output layer for MSE is sigmoidal, the output layer for CE is softmax. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \caption{A comparison in accuracy scores between the MSE and (CE) Cross Entropy loss functions over 500 epochs. The output layer for MSE is sigmoidal, the output layer for CE is softmax. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
     \label{fig:mlp-cost-function-comparison}
 \end{figure}
 
-We then wish to to investigate the effects of having different initial weights. Given the initial weights \textit{large} and \textit{default} as listed in \ref{sec:nn-weights}, we get the results as seen in figure \ref{fig:mlp-epoch-init-weights},
+We then wish to to investigate the effects of having different initial weights. Given the initial weights \textit{large} and \textit{default} as listed in section \ref{sec:nn-weights}, we get the results as seen in figure \ref{fig:mlp-epoch-init-weights},
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_weight_inits.pdf}
-    \caption{A comparison between the initial weights \textit{large} and \textit{default} as listed in \ref{sec:nn-weights}. The run was for 500 epochs. The cost function was set to cross entropy and had softmax output activation. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \caption{A comparison in accuracy scores between the initial weights \textit{large} and \textit{default} as listed in section \ref{sec:nn-weights}. The run was for 500 epochs. The cost function was set to cross entropy and had softmax output activation. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
     \label{fig:mlp-epoch-init-weights}
 \end{figure}
 
@@ -179,12 +179,25 @@ An investigation into different layer activations\ref{sec:layer-acts} was perfor
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_mse.pdf}
-    \caption{A comparison between the hidden layer activation functions\ref{sec:layer-acts} for MSE as cost function. The run was for 500 epochs. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function. The run was for 500 epochs. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
     \label{fig:mlp-epoch-activations-mse}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_log_loss.pdf}
-    \caption{A comparison between the hidden layer activation functions\ref{sec:layer-acts} for cross entropy as cost function. The run was for 500 epochs. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function. The run was for 500 epochs. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
     \label{fig:mlp-epoch-activations-log-loss}
 \end{figure}
+
+We then move on to an investigation for different L$^2$ regularization strengths $\lambda$ versus different constant learning rates $\eta$. A run with 500 epochs, cross entropy and sigmoidal hidden layer activation can be seen in figure \ref{fig:mlp-eta-lambda},
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_lambda_eta.pdf}
+    \caption{The accuracy as function of the L$^2$ regularization parameter $\lambda$ and constant training rate $\eta$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation. The hidden layer was 10 neurons large.}
+    \label{fig:mlp-eta-lambda}
+\end{figure}
+
+Add results on lambda vs neurons
+Add results on lambda vs minibatches
+Add results on neurons vs eta
+Add results on neurons vs training size
