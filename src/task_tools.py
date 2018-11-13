@@ -10,6 +10,30 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from lib import ising_1d as ising
 from lib import neuralnetwork as nn
 
+linestyles = [
+    ('solid',               (0, ())),
+    ('loosely dotted',      (0, (1, 10))),
+    ('dotted',              (0, (1, 5))),
+    ('densely dotted',      (0, (1, 1))),
+
+    ('loosely dashed',      (0, (5, 10))),
+    ('dashed',              (0, (5, 5))),
+    ('densely dashed',      (0, (5, 1))),
+
+    ('loosely dashdotted',  (0, (3, 10, 1, 10))),
+    ('dashdotted',          (0, (3, 5, 1, 5))),
+    ('densely dashdotted',  (0, (3, 1, 1, 1))),
+
+    ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
+    ('dashdotdotted',         (0, (3, 5, 1, 5, 1, 5))),
+    ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))]
+
+colors = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e",
+          "#e6ab02", "#a6761d", "#666666"]
+
+markers = [".", "o", "v", "^", "1", "s", "*", "x", "+", "D", "p", ">", "<"]
+
+
 
 def read_t(t="all", root="."):
     """Loads an ising model data set."""
@@ -45,32 +69,42 @@ def print_parameters(**kwargs):
         print("{0:20s}: {1:20s}".format(key.capitalize(), str(val)))
 
 
+def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None, vmax=None, figure_folder="../fig"):
+    """Plots accuracy scores for given data dict elements."""
+
+    fig = plt.figure()
+
+    ax1 = fig.add_subplot(111)
+
+    for key, ls1, ls2, col, mk1, mk2 in zip(data.keys(),
+            linestyles[len(linestyles)//2:], linestyles[:len(linestyles)//2],
+            colors, markers[len(markers)//2:], markers[:len(markers)//2]):
+
+        ax1.plot(data[key]["x"], data[key]["y"],
+                     marker=mk2, ls=ls2[-1],
+                     color=col,
+                     label=data[key]["label"])
+
+    ax1.set_xlabel(ylabel)
+    ax1.set_ylabel(xlabel)
+
+    ax1.set_ylim(vmin, vmax)
+
+    ax1.grid(True)
+    ax1.legend(fontsize=8)
+
+    figure_path = os.path.join(figure_folder, figname)
+    fig.savefig(figure_path)
+    print("Figure saved at {}".format(figure_path))
+    plt.close(fig)
+
+
+
+
 def plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
                          labels, figname, xlabel, ylabel,
                          figure_folder="../fig"):
     """General accuracy plotter."""
-    linestyles = [
-        ('solid',               (0, ())),
-        ('loosely dotted',      (0, (1, 10))),
-        ('dotted',              (0, (1, 5))),
-        ('densely dotted',      (0, (1, 1))),
-
-        ('loosely dashed',      (0, (5, 10))),
-        ('dashed',              (0, (5, 5))),
-        ('densely dashed',      (0, (5, 1))),
-
-        ('loosely dashdotted',  (0, (3, 10, 1, 10))),
-        ('dashdotted',          (0, (3, 5, 1, 5))),
-        ('densely dashdotted',  (0, (3, 1, 1, 1))),
-
-        ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
-        ('dashdotdotted',         (0, (3, 5, 1, 5, 1, 5))),
-        ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))]
-
-    colors = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e",
-              "#e6ab02", "#a6761d", "#666666"]
-
-    markers = [".", "o", "v", "^", "1", "s", "*", "x", "+", "D", "p", ">", "<"]
 
     fig = plt.figure()
 
@@ -268,6 +302,17 @@ def nn_core(X_train, X_test, y_train, y_test,
 
     return res
 
+def convert_nn_core_to_dict(data):
+    return {
+        "train": data[0],
+        "test": data[1],
+        "train_epochs": data[2],
+        "test_epochs": data[3],
+        "weights": data[4],
+        "biases": data[5],
+        "epoch_evaluations": data[6],
+    }
+
 
 def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
                  filename):
@@ -366,12 +411,28 @@ def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
 
 def heatmap_plotter(x, y, z, figure_name, tick_param_fs=None, label_fs=None,
                     vmin=None, vmax=None, xlabel=None, ylabel=None,
-                    cbartitle=None):
+                    cbartitle=None, x_tick_mode="exp", y_tick_mode="exp"):
     """Plots a heatmap surface."""
     fig, ax = plt.subplots()
 
-    yheaders = ['%1.2e' % i for i in y]
-    xheaders = ['%1.1e' % i for i in x]
+    if x_tick_mode == "exp":
+        xheaders = ['%1.1e' % i for i in x]
+    elif x_tick_mode == "int":
+        xheaders = ['%d' % int(i) for i in x]
+    elif x_tick_mode == "float":
+        xheaders = ['%1.2f' % i for i in x]
+    else:
+        xheaders = ['%g' % i for i in x]
+
+
+    if y_tick_mode == "exp":
+        yheaders = ['%1.1e' % i for i in y]
+    elif y_tick_mode == "int":
+        yheaders = ['%d' % int(i) for i in y]
+    elif y_tick_mode == "float":
+        yheaders = ['%1.2f' % i for i in y]
+    else:
+        yheaders = ['%g' % i for i in y]
 
     # X, Y = np.meshgrid(x,y)
     # print (X.shape, Y.shape, z.shape)
