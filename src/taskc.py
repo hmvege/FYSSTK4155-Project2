@@ -40,7 +40,7 @@ def task1c(sk=False, figure_folder="../fig"):
     print("Task c: Logistic regression classification")
 
     training_size = 0.8
-    data_size = 10000
+    data_size = 1000
     # options: float, inverse
     learning_rate = "inverse"
     max_iter = int(1e3)

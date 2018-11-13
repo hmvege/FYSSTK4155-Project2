@@ -15,7 +15,7 @@ Once all neurons have been calculated in a layer, we can move on to the next and
 
 After initial calculation of the outer layer, you will most likely have an answer that is completely rubbish. It is clear that we have to optimize the neural net. As each neurons activation function is calculated using equation \eqref{eqT:activation}, we can see that we can optimize the weights between the neurons and the bias between the layers. This is done through a method called backwards propagation where one uses the cost function to identify the magnitude of the error (the cost) of a neural net and then one goes backwards through the neural net to update the weights and biases.
 
-The basic procedure of back propagation is this (heavily influenced by the work of \citet{Nielsen}):
+The basic procedure of back propagation is this (heavily influenced by the work of \citet{Nielsen})
 \begin{itemize}
 \item Compute the output error vector for the final layer (L) given by
 \begin{equation*}
@@ -39,3 +39,8 @@ Once all layers have been adjusted through back propagation, one can run through
 C = \frac{1}{N} \sum\limits_{j} (y_j - a_j^L)^2
 \end{equation}
 where N are the total numbers of outputs in $j$ and $y$ are the true answers.
+
+\subsubsection{Mean square error}
+The mean square error cost function is given as 
+
+\subsubsection{Cross entropy}

@@ -2,7 +2,7 @@ The Ising model is a way of modeling phase transitions at finite temperatures of
 
 Periodic boundary conditions is given in both cases, such that $j=N=0$, where $j$ is the lattice site and $N$ is the lattice size.
 
-\subsubsection{1-dimensional Ising model}
+\subsubsection{1-dimensional Ising model} \label{sec:1d-ising-model}
 Energy for a 1 dimensional Ising model is given as
 \begin{align}
     E = - J\sum^N_{j=1} s_j s_{j+1}
@@ -21,7 +21,7 @@ where $i$ is the index over lattice configurations. The coupling strength $J_{j,
 \end{align}
 where $\bm{X}^i$ is the design matrix consisting of all two-body interactions $\{s^i_j s^i_k\}^N_{j,k=1}$, and $\bm{J}$ the weight matrix we wish to find later using machine learning techniques.
 
-\subsubsection{2-dimensional Ising model}
+\subsubsection{2-dimensional Ising model} \label{sec:2d-ising-model}
 The 2D Ising model has its energy stated as,
 \begin{align}
     E = - J\sum^N_{<kl>} s_k s_l,
