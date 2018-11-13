@@ -153,8 +153,8 @@ SciKit Learn's SGD(Stochastic Gradient Descent) implementation \footnote{See \hr
 \subsubsection{Classification through neural networks}
 For classifying the states through a neural network, we looked at several different hyper parameters. All runs were made using $N_{samples}=10000$ except stated other wise. The training percent was 0.5. We start by comparing two different cost functions and their layer outputs,
 \begin{itemize}
-    \item Cross entropy with softmax layer output.\husk{referer til funksjon her}
-    \item MSE with sigmoidal layer output.\husk{siter her}
+    \item Cross entropy with softmax layer output\eqref{eq:ce-mlp-cost}
+    \item MSE with sigmoidal layer output.\eqref{eq:mse-mlp-cost}
 \end{itemize}
 These cost functions following behavior for epochs seen in following figure \ref{fig:mlp-cost-function-comparison},
 \begin{figure}[H]
@@ -194,7 +194,7 @@ We then move on to an investigation for different L$^2$ regularization strengths
     \label{fig:mlp-eta-lambda}
 \end{figure}
 
-A comparison of the accuracy score\eqref{eq:mlp-accuracy} as a function L$^2$ regularization parameter and hidden layer size(the neurons) can be viewed in figure \ref{fig:mlp-lambda-neurons}.
+A comparison of the accuracy score\eqref{eq:mlp-accuracy} as a function of L$^2$ regularization parameter and hidden layer size(the neurons) can be viewed in figure \ref{fig:mlp-lambda-neurons}.
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_lambda_neurons.pdf}
@@ -210,13 +210,18 @@ The accuracy score\eqref{eq:mlp-accuracy} as a function of the hidden layer size
     \label{fig:mlp-neurons-ts}
 \end{figure}
 
-Add results on lambda vs minibatches
-Add results on neurons vs eta
-
 The accuracy score\eqref{eq:mlp-accuracy} as a function of the hidden layer size(the neurons) and the learning rate $\eta$, can be viewed in figure \ref{fig:mlp-neurons-ts}.
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_neurons_eta.pdf}
     \caption{The accuracy score as function of the number of neurons and the learning rate $\eta$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
     \label{fig:mlp-neurons-eta}
+\end{figure}
+
+The accuracy score\eqref{eq:mlp-accuracy} as a function of L$^2$ regularization strength $\lambda$ and the mini batch size in the SGD\ref{alg:sgd}, can be viewed in figure \ref{fig:mlp-lambda-mb}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=1.0]{../fig/mlp_lambda_mini_batch_size.pdf}
+    \caption{The accuracy score as function of the  L$^2$ regularization strength $\lambda$ and the mini batch size in the SGD\ref{alg:sgd}. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation and the inverse learning rate \eqref{eq:inverse-eta}.}
+    \label{fig:mlp-lambda-mb}
 \end{figure}
