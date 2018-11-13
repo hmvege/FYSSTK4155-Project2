@@ -1,3 +1,37 @@
+The Ising model is a way of modeling phase transitions at finite temperatures of magnetic systems. When modeling, we set up a chain or a lattice of particles and allow them to have either spin up or spin down. From this, one can sample energy and magnetization, and measure several quantities such as the heat capacity or magnetic susceptibility. Our focus will be on prediction the energy coupling constant for a 1D lattice, and the phase of a 2D-lattice.
+
+Periodic boundary conditions is given in both cases, such that $j=N=0$, where $j$ is the lattice site and $N$ is the lattice size.
+
 \subsubsection{1-dimensional Ising model}
+Energy for a 1 dimensional Ising model is given as
+\begin{align}
+    E = - J\sum^N_{j=1} s_j s_{j+1}
+    \label{eq:1d-ising-energy}
+\end{align}
+where the $N$ is number of particles(or lattice size). Our goal will be to predict $J$, but in order to do so, we must recast the problem as linear regression problem.
+
+We begin by labeling each site as coupled with $J$.
+\begin{align}
+    E_\mathrm{model}[\bm{s}^i] = -\sum^N_{j=1} \sum^N_{k=1} J_{j,k} s^i_j s^i_k,
+    \label{eq:1d-ising-linreg}
+\end{align}
+where $i$ is the index over lattice configurations. The coupling strength $J_{j,k}$  can now be cast as a matrix, and we end up with
+\begin{align}
+    E_\mathrm{model}^i \equiv \bm{X}^i \cdot \bm{J},
+\end{align}
+where $\bm{X}^i$ is the design matrix consisting of all two-body interactions $\{s^i_j s^i_k\}^N_{j,k=1}$, and $\bm{J}$ the weight matrix we wish to find later using machine learning techniques.
+
 \subsubsection{2-dimensional Ising model}
-Some text if not it wont compile
+The 2D Ising model has its energy stated as,
+\begin{align}
+    E = - J\sum^N_{<kl>} s_k s_l,
+    \label{eq:2d-ising-energy}
+\end{align}
+where $<kl>$ indicates a sum over the nearest neighbors. That is, written out,
+\begin{align}
+    E = - J\sum^N_{i,j} 2 s_{i,j} (s_{i+1,j} + s_{i-1,j} + s_{i,j+1} + s_{i,j-1}),
+    \label{eq:2d-ising-energy-shortened}
+\end{align}
+where we have used the symmetry that $s_i s_{i+1,j}=s_{i+1,j} s_{i,j}$. $J$ as as before a coupling constant, but will not be of our main focus when studying the 2D Ising model. This time, we will focus on its property of exhibiting phase transitions. Below a critical temperature of $T_C \approx 2.269$ found analytically by \citep{onsager1944crystal}, the lattice will exhibit a ordered state, one in which the spins is \textit{locked} or \textit{frozen} into place. Above $T_C$ the lattice exhibit a disordered phase, as the spins will be fluctuating randomly.
+
+We will investigate the classification of states below $T<2.0$ and $T>2.5$. The phase for states between we will dub as being in a \textit{critical phase}.
