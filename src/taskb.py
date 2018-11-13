@@ -25,6 +25,12 @@ import sklearn.utils as sk_utils
 from task_tools import load_pickle, plot_heatmap, plot_all_r2
 
 
+from matplotlib import rc, rcParams
+rc("text", usetex=True)
+rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
+rcParams["font.family"] += ["serif"]
+
+
 def task1b(pickle_fname, N_samples=10000, training_size=0.1, N_bs=100,
            L_system_size=20, figure_folder="../fig"):
     """Task b of project 2"""

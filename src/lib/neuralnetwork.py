@@ -12,6 +12,8 @@ except ModuleNotFoundError:
         AVAILABLE_OUTPUT_ACTIVATIONS, AVAILABLE_COST_FUNCTIONS, \
         AVAILABLE_REGULARIZATIONS
 
+
+
 # TODO: vectorize mini batch procedure.
 # TODO: parallize the mini batch procedure.
 # TODO: implement the use of all cost functions for any output activation.

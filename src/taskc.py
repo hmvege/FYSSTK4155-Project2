@@ -28,6 +28,12 @@ from task_tools import read_t, load_pickle, save_pickle, print_parameters, \
     plot_accuracy_scores, retrieve_2d_ising_data
 
 
+from matplotlib import rc, rcParams
+rc("text", usetex=True)
+rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
+rcParams["font.family"] += ["serif"]
+
+
 def task1c(sk=False, figure_folder="../fig"):
     """Task c) of project 2."""
     print("="*80)
@@ -310,7 +316,7 @@ def run_lambda_momentum(X_train, X_test, y_train, y_test,
         train_accuracy_values.append(train_accuracy)
 
     plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
-                         [r"\gamma={0:.1e}".format(m) for m in momentums],
+                         [r"$\gamma={0:.1e}$".format(m) for m in momentums],
                          "accuracy_momentum_scores", r"$\lambda$",
                          r"Accuracy")
 

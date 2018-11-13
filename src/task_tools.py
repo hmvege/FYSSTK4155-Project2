@@ -6,9 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-
 from lib import ising_1d as ising
 from lib import neuralnetwork as nn
+
+from matplotlib import rc, rcParams
+rc("text", usetex=True)
+rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
+rcParams["font.family"] += ["serif"]
+
 
 linestyles = [
     ('solid',               (0, ())),
@@ -32,7 +37,6 @@ colors = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e",
           "#e6ab02", "#a6761d", "#666666"]
 
 markers = [".", "o", "v", "^", "1", "s", "*", "x", "+", "D", "p", ">", "<"]
-
 
 
 def read_t(t="all", root="."):
@@ -69,21 +73,23 @@ def print_parameters(**kwargs):
         print("{0:20s}: {1:20s}".format(key.capitalize(), str(val)))
 
 
-def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None, vmax=None, figure_folder="../fig"):
+def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None,
+                        vmax=None, figure_folder="../fig"):
     """Plots accuracy scores for given data dict elements."""
 
     fig = plt.figure()
 
     ax1 = fig.add_subplot(111)
 
-    for key, ls1, ls2, col, mk1, mk2 in zip(data.keys(),
+    for key, ls1, ls2, col, mk1, mk2 in zip(
+            data.keys(),
             linestyles[len(linestyles)//2:], linestyles[:len(linestyles)//2],
             colors, markers[len(markers)//2:], markers[:len(markers)//2]):
 
         ax1.plot(data[key]["x"], data[key]["y"],
-                     marker=mk2, ls=ls2[-1],
-                     color=col,
-                     label=data[key]["label"])
+                 marker=mk2, ls=ls2[-1],
+                 color=col,
+                 label=data[key]["label"])
 
     ax1.set_xlabel(ylabel)
     ax1.set_ylabel(xlabel)
@@ -97,8 +103,6 @@ def plot_epoch_accuracy(data, ylabel, xlabel, figname, vmin=None, vmax=None, fig
     fig.savefig(figure_path)
     print("Figure saved at {}".format(figure_path))
     plt.close(fig)
-
-
 
 
 def plot_accuracy_scores(lmbdas, train_accuracy_values, test_accuracy_values,
@@ -217,8 +221,8 @@ def nn_core(X_train, X_test, y_train, y_test,
             weight_init=None,
             epochs=None,
             mini_batch_size=None,
-            tolerance=None, 
-            return_weights=False, 
+            tolerance=None,
+            return_weights=False,
             verbose=False):
     """Method for retrieveing data for a given set of hyperparameters
 
@@ -262,7 +266,6 @@ def nn_core(X_train, X_test, y_train, y_test,
                                   regularization=regularization,
                                   alpha=lmbda)
 
-
     MLP.train(X_train, y_train,
               data_test=X_test,
               data_test_labels=y_test,
@@ -276,7 +279,7 @@ def nn_core(X_train, X_test, y_train, y_test,
     res = []
 
     if (not isinstance(X_test, type(None))) and \
-        (not isinstance(y_test, type(None))):
+            (not isinstance(y_test, type(None))):
 
         # Accuracy score for our implementation
         train_accuracy = MLP.score(X_train, y_train)
@@ -293,7 +296,7 @@ def nn_core(X_train, X_test, y_train, y_test,
                 train_accuracy, test_accuracy))
 
         res += [train_accuracy, test_accuracy, train_accuracy_epochs,
-               test_accuracy_epochs]
+                test_accuracy_epochs]
 
     if return_weights:
         res.append(MLP.weights)
@@ -301,6 +304,7 @@ def nn_core(X_train, X_test, y_train, y_test,
         res.append(MLP.epoch_evaluations)
 
     return res
+
 
 def convert_nn_core_to_dict(data):
     return {
@@ -398,7 +402,7 @@ def plot_all_r2(lmbda_values, r2_ols_test, r2_ols_train, r2_ridge_test,
                  color="#d95f02")
 
     ax1.set_xlim(lmbda_values[0], lmbda_values[-1])
-    ax1.set_ylim(-0.05,1.05)
+    ax1.set_ylim(-0.05, 1.05)
     ax1.set_xlabel(r"$\lambda$")
     ax1.set_ylabel(r"$R^2$")
     ax1.legend()
@@ -423,7 +427,6 @@ def heatmap_plotter(x, y, z, figure_name, tick_param_fs=None, label_fs=None,
         xheaders = ['%1.2f' % i for i in x]
     else:
         xheaders = ['%g' % i for i in x]
-
 
     if y_tick_mode == "exp":
         yheaders = ['%1.1e' % i for i in y]

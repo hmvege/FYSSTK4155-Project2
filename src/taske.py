@@ -13,6 +13,11 @@ from task_tools import load_pickle, save_pickle, print_parameters, \
     plot_accuracy_scores, retrieve_2d_ising_data, convert_output, \
     nn_core, heatmap_plotter, plot_epoch_accuracy, convert_nn_core_to_dict
 
+from matplotlib import rc, rcParams
+rc("text", usetex=True)
+rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
+rcParams["font.family"] += ["serif"]
+
 
 def task1e(figure_path="../fig"):
     """Task e) of project 2.

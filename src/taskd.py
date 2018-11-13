@@ -14,6 +14,11 @@ from lib import ising_1d as ising
 from task_tools import load_pickle, save_pickle, print_parameters, \
     convert_output, nn_core, plot_heatmap, plot_all_r2
 
+from matplotlib import rc, rcParams
+rc("text", usetex=True)
+rc("font", **{"family": "sans-serif", "serif": ["Computer Modern"]})
+rcParams["font.family"] += ["serif"]
+
 
 def task1d(figure_folder="../fig"):
     """Task d) of project 2.
@@ -23,7 +28,7 @@ def task1d(figure_folder="../fig"):
     print("="*80)
     print("Task d: neural network regression")
     training_size = 0.5
-    L_system_size = 40
+    L_system_size = 20
     N_samples = 800 # One run with 400
     # N_samples = 200000 # One run with 10000
 

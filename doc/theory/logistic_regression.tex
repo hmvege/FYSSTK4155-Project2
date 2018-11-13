@@ -1,7 +1,7 @@
 In project 1 we used linear regression to predict a continuous output from a set of inputs (\husk{reference project1}). We used ordinary least squares regression (OLS), Ridge regression and Lasso regression, where the two latter impose a penalty to the OLS. In this project we will reuse the ideas and code of project 1, but we will also use neural networks to predict continuous variables. In addition we study situations where the outcome is discrete rather than continuous. This is a classification problem, and we will use logistic regression to model the probabilities of the classes.\\
 
 \subsection{Logistic regression}
-Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of the this weighted sum as the probabilities. For a classification problem with K classes, the model has the following form (Hastie et al. p.119):\\
+Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of the this weighted sum as the probabilities. For a classification problem with K classes, the model has the following form (Hastie et al. p.119), \\
 \begin{equation}\label{eqT:logreg_def}
 \begin{split}
 log\frac{Pr(G=1|X=x)}{Pr(G=K|X=x)} &= \beta_{10}\ +\ \beta_{1}^Tx\\
@@ -24,7 +24,8 @@ The usual way of fitting logistic regression models is by maximum likelihood. Th
 \begin{equation}\label{eqT:likelihood_def}
 l(\theta)\ =\ \sum_{i=1}^{N}logp_{g_i}(x_i;\theta),\\
 \end{equation}
-where $p_k(x_i;\theta)\ =\ Pr(G=k|X=x_i;\theta)$ and $\theta\ =\ \{\beta_{10}, \beta_1^T,....., \beta_{(K-1)0}, \beta_{K-1}^T\}$.\\ \\
+where $p_k(x_i;\theta)\ =\ Pr(G=k|X=x_i;\theta)$ and $\theta\ =\ \{\beta_{10}, \beta_1^T,....., \beta_{(K-1)0}, \beta_{K-1}^T\}$.
+
 One very common classification problem is a situation with binary outcomes, either it happens or it does not. As we see from Equation \ref{eqT:logreg_def} above, setting K=2 simplifies the model considerable, since there will now be only a single linear function. $\theta$ in Equation \ref{eqT:likelihood_def} will also be simplified: $\theta = \beta = \{\beta_{10}, \beta_1^T\}$. The two-class case is what is used in this project, and the following discussion will assume the outcome has two classes.\\
 We start by coding the two-class $g_i$ with a 0/1 response $y_i$, where $y_i$ = 1 when $g_i$ = 1, and $y_i$ = 0 when $g_i$ = 2. Next, we let $p_1(x;\theta)\ =\ p(x;\beta)$, and $p_2(x;\theta)\ =\ 1\ -\ p(x;\beta)$. The log-likelihood can then be written
 \begin{equation}\label{eqT:loglike_binary}
@@ -40,8 +41,10 @@ This is the equation we want to maximize to find the best fit. Following the app
 \begin{equation}\label{Geron_cost}
 J(\beta) = -\frac{1}{N}\sum_{i=1}^N\{y_i\beta^Tx_i - log(1+exp(\beta^Tx_i)).\}
 \end{equation}
-This is just the negative of Equation \ref{eqT:loglike_binary}, divided by the number of samples. This is our cost function, and dividing by the number of training samples finds the mean cost.\\ \\
-To minimize this cost function we used gradient descent. \sjekk{Gradient descent measures the local gradient of the cost function, with regards to $\beta$ in our case. Since the gradient goes in the direction of fastest increase, we will go in the opposite direction, i.e. negative gradient. We start by choosing random values for $\beta$ (since our cost function is convex any choice should give correct results), calculate the gradient, update the $\beta$ values, and do this iteratively until the algorithm converges to a minimum. The size of the steps is important, and is determined by the learning rate. If the learning rate is too small, we will need many iterations which is time consuming. However, if the learning rate is too high, we might overshoot and miss the minimum. One way to choose the learning rate is too let it depend on the size of the gradient. If the gradient is large, i.e a steep slope, the learning rate can be relatively high. When the gradient is small, the learning rate is also small.}\\ \\
+This is just the negative of Equation \ref{eqT:loglike_binary}, divided by the number of samples. This is our cost function, and dividing by the number of training samples finds the mean cost.
+
+To minimize this cost function we used gradient descent. \sjekk{Gradient descent measures the local gradient of the cost function, with regards to $\beta$ in our case. Since the gradient goes in the direction of fastest increase, we will go in the opposite direction, i.e. negative gradient. We start by choosing random values for $\beta$ (since our cost function is convex any choice should give correct results), calculate the gradient, update the $\beta$ values, and do this iteratively until the algorithm converges to a minimum. The size of the steps is important, and is determined by the learning rate. If the learning rate is too small, we will need many iterations which is time consuming. However, if the learning rate is too high, we might overshoot and miss the minimum. One way to choose the learning rate is too let it depend on the size of the gradient. If the gradient is large, i.e a steep slope, the learning rate can be relatively high. When the gradient is small, the learning rate is also small.}
+
 \sjekk{Returning to the logistic regression problem, the derivative of the cost function is
 \begin{equation}\label{eqT:diff_cost}
 \begin{split}
@@ -50,7 +53,8 @@ To minimize this cost function we used gradient descent. \sjekk{Gradient descent
 \end{split}
 \end{equation}
 where $\bm{X}$ is the $N\times(p+1)$ matrix of $x_i$ values, $\bm{p}$ is the vector of fitted probabilities with $i$th element $p(x_i;\beta)$ and $\bm{y}$ is the vector of $y_i$ values. The new $\beta$ using gradient descent is then\\
-$\beta_{new} = \beta_{old}\ -\ \frac{\partial J(\beta)}{\partial \beta}lr$, where $lr$ is the learning rate (step size).} \husk{This is done iteratively until we reach the set max iterations or $\frac{\partial J(\beta)}{\partial \beta}$ is within a given tolerance of zero.}\\ \\
+$\beta_{new} = \beta_{old}\ -\ \frac{\partial J(\beta)}{\partial \beta}lr$, where $lr$ is the learning rate (step size).} \husk{This is done iteratively until we reach the set max iterations or $\frac{\partial J(\beta)}{\partial \beta}$ is within a given tolerance of zero.}
+
 \sjekk{Like we introduced Lasso and Ridge regression to avoid overfitting in Project 1, we can add a penalty term to the cost function in Equation \ref{Geron_cost}. In our project we used two different penalties: $L1 = \lambda|\beta|$ and $L2 = \lambda||\beta||^2$. When fitting the model we need to include the derivatives of the penalty term in Equation \ref{eqT:diff_cost}.} \husk{The gradient with the penalty term is\\
 \begin{equation}
 \begin{split}
