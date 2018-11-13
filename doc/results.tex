@@ -1,26 +1,82 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{enumerate}
+
+% For proper referencing in article
+\usepackage{hyperref}
+\usepackage{url}
+
+% For figures and graphics'n stuff
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+% \usepackage{tabularx}
+\usepackage{float}
+
+% For proper appendices
+\usepackage[toc,page]{appendix}
+
+% Algorithm packages
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+% For bold math symbols
+\usepackage{bm}
+\usepackage{xcolor}
+
+% For customized hlines in tables
+\usepackage{ctable}
+
+% For having latex symbols in section titles
+\usepackage{epstopdf}
+
+% For proper citations
+% \usepackage[round, authoryear]{natbib}
+\usepackage[numbers]{natbib} 
+
+% For fixing large table height
+\usepackage{a4wide}
+
+% Remembrance and checking
+\newcommand{\husk}[1]{\color{red} #1 \color{black}}
+\newcommand{\sjekk}[1]{\color{violet} #1 \color{black}}
+
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\CO}{\mathcal{C}}
+
+
+% \title{FYS-STK4155: Project 2}
+\title{Exploring the hyperspace of Machine Learning parameters}
+\author{Eirik Ramsli Hauge, Joakim Kalsnes, Hans Mathias Mamen Vege}
+\date{\today}
+
+\begin{document}
 \section{Results}
 Results for two different cases are being presented, one the one-dimensional Ising Model and another for the the two-dimensional Ising model. We begin with looking at the. 1D Ising model.
 
 \subsection{1D Ising model}
 \subsubsection{Fitting with linear regression}
-For linear regression we got coefficients of $\bm{J}$ in \eqref{eq:1d-ising-linreg} as the following,
-\begin{figure}
+For linear regression we got coefficients of $\bm{J}$ in \eqref{eq:1d-ising-linreg} as the following presented in figure \ref{fig:bias-var-franke},
+\begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.5\textwidth}
-        \centering
-        \includegraphics[scale=0.8]{../fig/{regression_ising_1d_heatmap_lambda0.001}.pdf}
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=1]{../fig/{regression_ising_1d_heatmap_lambda0.001}.pdf}
         \caption{$\lambda=10^{-3}$}
         \label{fig:linreg-hm-1e-3}
     \end{subfigure} \\
-    \begin{subfigure}[b]{0.5\textwidth}
-        \centering
-        \includegraphics[scale=0.8]{../fig/{regression_ising_1d_heatmap_lambda0.1}.pdf}
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=1]{../fig/{regression_ising_1d_heatmap_lambda0.1}.pdf}
         \caption{$\lambda=10^{-1}$}
         \label{fig:linreg-hm-1e-1}
     \end{subfigure} \\
-    \begin{subfigure}[b]{0.5\textwidth}
-        \centering
-        \includegraphics[scale=0.8]{../fig/{regression_ising_1d_heatmap_lambda10.0}.pdf}
+    \begin{subfigure}[b]{0.9\textwidth}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=1]{../fig/{regression_ising_1d_heatmap_lambda10.0}.pdf}
     \caption{$\lambda=10^{1}$}
         \label{fig:linreg-hm-1e2}
     \end{subfigure}
@@ -79,39 +135,39 @@ By setting the output activation function to the identity and by having zero hid
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.5\textwidth}
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
-        \includegraphics[scale=0.5]{../fig/{mlp_ising_1d_heatmap_lambda0.0001_N800}.pdf}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=0.6]{../fig/{mlp_ising_1d_heatmap_lambda0.0001_N800}.pdf}
         \caption{$N_\mathrm{train}=400$, $\lambda=10^{-3}$}
         \label{fig:mlp-reg-heatmap400-lmb-3}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.5\textwidth}
+    \end{subfigure} \qquad \qquad \qquad
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
-        \includegraphics[scale=0.5]{../fig/{mlp_ising_1d_heatmap_lambda0.0001_N100000}.pdf}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=0.6]{../fig/{mlp_ising_1d_heatmap_lambda0.0001_N100000}.pdf}
         \caption{$N_\mathrm{train}=5000$, $\lambda=10^{-3}$}
         \label{fig:mlp-reg-heatmap5000-lmb-3}
     \end{subfigure} \\
-        \begin{subfigure}[b]{0.5\textwidth}
+        \begin{subfigure}[b]{0.4\textwidth}
         \centering
-        \includegraphics[scale=0.5]{../fig/{mlp_ising_1d_heatmap_lambda0.1_N800}.pdf}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=0.6]{../fig/{mlp_ising_1d_heatmap_lambda0.1_N800}.pdf}
         \caption{$N_\mathrm{train}=400$, $\lambda=10^{-1}$}
         \label{fig:mlp-reg-heatmap400-lmb-1}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.5\textwidth}
+    \end{subfigure} \qquad \qquad \qquad
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
-        \includegraphics[scale=0.5]{../fig/{mlp_ising_1d_heatmap_lambda0.1_N100000}.pdf}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=0.6]{../fig/{mlp_ising_1d_heatmap_lambda0.1_N100000}.pdf}
         \caption{$N_\mathrm{train}=5000$, $\lambda=10^{-1}$}
         \label{fig:mlp-reg-heatmap5000-lmb-1}
     \end{subfigure} \\
-        \begin{subfigure}[b]{0.5\textwidth}
+        \begin{subfigure}[b]{0.4\textwidth}
         \centering
-        \includegraphics[scale=0.5]{../fig/{mlp_ising_1d_heatmap_lambda10.0_N800}.pdf}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=0.6]{../fig/{mlp_ising_1d_heatmap_lambda10.0_N800}.pdf}
         \caption{$N_\mathrm{train}=400$, $\lambda=10^1$}
         \label{fig:mlp-reg-heatmap400-lmb1}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.5\textwidth}
+    \end{subfigure} \qquad \qquad \qquad
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
-        \includegraphics[scale=0.5]{../fig/{mlp_ising_1d_heatmap_lambda10.0_N100000}.pdf}
+        \includegraphics[trim={1.5cm 3.5cm 0 3.5cm},clip, scale=0.6]{../fig/{mlp_ising_1d_heatmap_lambda10.0_N100000}.pdf}
         \caption{$N_\mathrm{train}=5000$, $\lambda=10^1$}
         \label{fig:mlp-reg-heatmap5000-lmb1}
     \end{subfigure} \\
@@ -134,7 +190,7 @@ The $R^2$ score of the neural network using L$^1$, L$^2$ and no regularization c
         \caption{$N_\mathrm{train}=5000$}
         \label{fig:mlp-r2-5000}
     \end{subfigure}
-    \caption{$R^2$ score for the neural network using L$^1$, L$^2$ and no regularization. Retrieved $N_\mathrm{train}=400$ on the left and $N_\mathrm{train}=5000$ on the right, for a 1D Ising model of size $L=20$.}
+    \caption{$R^2$ score for the neural network using L$^1$ (Lasso), L$^2$ (Ridge) and no regularization (OLS). Retrieved $N_\mathrm{train}=400$ on the left and $N_\mathrm{train}=5000$ on the right, for a 1D Ising model of size $L=20$.}
     \label{fig:mlp-r2}
 \end{figure}
 
@@ -201,3 +257,5 @@ Add results on lambda vs neurons
 Add results on lambda vs minibatches
 Add results on neurons vs eta
 Add results on neurons vs training size
+
+\end{document}
