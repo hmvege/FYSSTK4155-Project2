@@ -335,12 +335,12 @@ def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
 
     axarr[1].imshow(J_ridge, **cmap_args)
     axarr[1].set_title(
-        r'$\mathrm{Ridge}, \lambda=%.4f$' % (lmbda), fontsize=fontsize)
+        r'$\mathrm{Ridge}, \lambda=%.1e$' % (lmbda), fontsize=fontsize)
     axarr[1].tick_params(labelsize=labelsize)
 
     im = axarr[2].imshow(J_lasso, **cmap_args)
     axarr[2].set_title(
-        r'$\mathrm{LASSO}, \lambda=%.4f$' % (lmbda), fontsize=fontsize)
+        r'$\mathrm{Lasso}, \lambda=%.1e$' % (lmbda), fontsize=fontsize)
     axarr[2].tick_params(labelsize=labelsize)
 
     divider = make_axes_locatable(axarr[2])
@@ -350,7 +350,7 @@ def plot_heatmap(J_leastsq, J_ridge, J_lasso, L, lmbda, figure_folder,
     cbar.ax.set_yticklabels(
         np.arange(-1.0, 1.0+0.25, 0.25), fontsize=yticksize)
     cbar.set_label(r'$J_{i,j}$', labelpad=-40,
-                   y=1.12, fontsize=fontsize, rotation=0)
+                   y=1.12,x=1.5, fontsize=fontsize, rotation=0)
 
     # plt.show()
     figure_path = os.path.join(

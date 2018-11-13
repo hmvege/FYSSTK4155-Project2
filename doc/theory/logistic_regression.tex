@@ -1,19 +1,19 @@
-In project 1 we used linear regression to predict a continuous output from a set of inputs (\husk{reference project1}). We used ordinary least squares regression (OLS), Ridge regression and Lasso regression, where the two latter impose a penalty to the OLS. In this project we will reuse the ideas and code of project 1, but we will also use neural networks to predict continuous variables. In addition we study situations where the outcome is discrete rather than continuous. This is a classification problem, and we will use logistic regression to model the probabilities of the classes.\\
+In project 1 we used linear regression to predict a continuous output from a set of inputs \cite{project1-eirik-joakim,project1-vege}. We used ordinary least squares regression (OLS), Ridge regression and Lasso regression, where the two latter impose a penalty to the OLS. In this project we will reuse the ideas and code of project 1, but we will also use neural networks to predict continuous variables. In addition we study situations where the outcome is discrete rather than continuous. This is a classification problem, and we will use logistic regression to model the probabilities of the classes.\\
 
 \subsection{Logistic regression}
 Just like a linear regression model, a logistic regression model computes a weighted sum of the predictor variables, written in matrix notation as $\bm{X}^T\beta$. However, the logistic regression returns the logistic of the this weighted sum as the probabilities. For a classification problem with K classes, the model has the following form (Hastie et al. p.119), \\
 \begin{equation}\label{eqT:logreg_def}
 \begin{split}
-log\frac{Pr(G=1|X=x)}{Pr(G=K|X=x)} &= \beta_{10}\ +\ \beta_{1}^Tx\\
-log\frac{Pr(G=2|X=x)}{Pr(G=K|X=x)} &= \beta_{20}\ +\ \beta_{2}^Tx\\
+\log\frac{Pr(G=1|X=x)}{Pr(G=K|X=x)} &= \beta_{10}\ +\ \beta_{1}^Tx\\
+\log\frac{Pr(G=2|X=x)}{Pr(G=K|X=x)} &= \beta_{20}\ +\ \beta_{2}^Tx\\
 &\vdots\\
-log\frac{Pr(G=K-1|X=x)}{Pr(G=K|X=x)} &= \beta_{(K-1)0}\ +\ \beta_{K-1}^Tx\\
+\log\frac{Pr(G=K-1|X=x)}{Pr(G=K|X=x)} &= \beta_{(K-1)0}\ +\ \beta_{K-1}^Tx\\
 \end{split}
 \end{equation}
 It is arbitrary which class is used in the denominator for the log-odds above. Taking the exponential on both sides and solving for $Pr(G=k|X=x)$ gives the following probabilities:\\
 \begin{equation}\label{eqT:logreg_prob}
 \begin{split}
-Pr(G=k|X=x) &= \frac{exp(\beta_{k0}\ +\ \beta_{k}^Tx)}{1+\sum_{l=1}^{K-1}exp(\beta_{l0}\ +\ \beta_{l}^Tx)},\ k=1,...,K-1,\\
+Pr(G=k|X=x) &= \frac{exp(\beta_{k0}\ +\ \beta_{k}^Tx)}{1+\sum_{l=1}^{K-1}exp(\beta_{l0}\ +\ \beta_{l}^Tx)},\ k=1,\dots,K-1,\\
 Pr(G=K|X=x) &= \frac{1}{1+\sum_{l=1}^{K-1}exp(\beta_{l0}\ +\ \beta_{l}^Tx)},
 \end{split}
 \end{equation}
@@ -22,24 +22,24 @@ and the probabilities sum to one. The output is then classified as the class wit
 \subsubsection{Fitting logistic regression model}
 The usual way of fitting logistic regression models is by maximum likelihood. The log-likelihood for N observations is defined as:\\
 \begin{equation}\label{eqT:likelihood_def}
-l(\theta)\ =\ \sum_{i=1}^{N}logp_{g_i}(x_i;\theta),\\
+l(\theta)\ =\ \sum_{i=1}^{N}\log p_{g_i}(x_i;\theta),\\
 \end{equation}
-where $p_k(x_i;\theta)\ =\ Pr(G=k|X=x_i;\theta)$ and $\theta\ =\ \{\beta_{10}, \beta_1^T,....., \beta_{(K-1)0}, \beta_{K-1}^T\}$.
+where $p_k(x_i;\theta)\ =\ Pr(G=k|X=x_i;\theta)$ and $\theta\ =\ \{\beta_{10}, \beta_1^T,\dots, \beta_{(K-1)0}, \beta_{K-1}^T\}$.
 
 One very common classification problem is a situation with binary outcomes, either it happens or it does not. As we see from Equation \ref{eqT:logreg_def} above, setting K=2 simplifies the model considerable, since there will now be only a single linear function. $\theta$ in Equation \ref{eqT:likelihood_def} will also be simplified: $\theta = \beta = \{\beta_{10}, \beta_1^T\}$. The two-class case is what is used in this project, and the following discussion will assume the outcome has two classes.\\
 We start by coding the two-class $g_i$ with a 0/1 response $y_i$, where $y_i$ = 1 when $g_i$ = 1, and $y_i$ = 0 when $g_i$ = 2. Next, we let $p_1(x;\theta)\ =\ p(x;\beta)$, and $p_2(x;\theta)\ =\ 1\ -\ p(x;\beta)$. The log-likelihood can then be written
 \begin{equation}\label{eqT:loglike_binary}
 \begin{split}
-l(\beta) &= \sum_{i=1}^N\{y_ilogp(x_i;\beta)+(1-y_i)log(1-p(x_i;\beta))\}\\
- &= \sum_{i=1}^N\{y_ilog\frac{p(x_i;\beta)}{1-p(x_i;\beta)}+log(1-p(x_i;\beta))\}\\
- &= \sum_{i=1}^N\{y_i\beta^Tx_i + log(1-\frac{1}{1+exp(-\beta^Tx_i)}\}\\
- &= \sum_{i=1}^N\{y_i\beta^Tx_i + log(\frac{exp(1}{1+exp(\beta^Tx_i)}\}\\
- &= \sum_{i=1}^N\{y_i\beta^Tx_i - log(1+exp(\beta^Tx_i))\}.
+l(\beta) &= \sum_{i=1}^N\{y_i\log p(x_i;\beta)+(1-y_i)\log(1-p(x_i;\beta))\}\\
+ &= \sum_{i=1}^N\{y_i\log\frac{p(x_i;\beta)}{1-p(x_i;\beta)}+\log(1-p(x_i;\beta))\}\\
+ &= \sum_{i=1}^N\{y_i\beta^Tx_i + \log(1-\frac{1}{1+exp(-\beta^Tx_i)}\}\\
+ &= \sum_{i=1}^N\{y_i\beta^Tx_i + \log(\frac{exp(1}{1+exp(\beta^Tx_i)}\}\\
+ &= \sum_{i=1}^N\{y_i\beta^Tx_i - \log(1+exp(\beta^Tx_i))\}.
 \end{split}
 \end{equation}
 This is the equation we want to maximize to find the best fit. Following the approach in Géron's book (\husk{reference}), we chose the equivalent approach of minimizing the following\\
 \begin{equation}\label{Geron_cost}
-J(\beta) = -\frac{1}{N}\sum_{i=1}^N\{y_i\beta^Tx_i - log(1+exp(\beta^Tx_i)).\}
+J(\beta) = -\frac{1}{N}\sum_{i=1}^N\{y_i\beta^Tx_i - \log(1+exp(\beta^Tx_i)).\}
 \end{equation}
 This is just the negative of Equation \ref{eqT:loglike_binary}, divided by the number of samples. This is our cost function, and dividing by the number of training samples finds the mean cost.
 
