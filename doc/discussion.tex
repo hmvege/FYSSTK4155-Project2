@@ -1,62 +1,3 @@
-\documentclass[11pt]{article}
-
-\usepackage[utf8]{inputenc}
-\usepackage{mathtools}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{enumerate}
-
-% For proper referencing in article
-\usepackage{hyperref}
-\usepackage{url}
-
-% For figures and graphics'n stuff
-\usepackage{graphicx}
-\usepackage{caption}
-\usepackage{subcaption}
-% \usepackage{tabularx}
-\usepackage{float}
-
-% For proper appendices
-\usepackage[toc,page]{appendix}
-
-% Algorithm packages
-\usepackage{algorithm}
-\usepackage{algorithmicx}
-\usepackage{algpseudocode}
-
-% For bold math symbols
-\usepackage{bm}
-\usepackage{xcolor}
-
-% For customized hlines in tables
-\usepackage{ctable}
-
-% For having latex symbols in section titles
-\usepackage{epstopdf}
-
-% For proper citations
-% \usepackage[round, authoryear]{natbib}
-\usepackage[numbers]{natbib} 
-
-% For fixing large table height
-\usepackage{a4wide}
-
-% Remembrance and checking
-\newcommand{\husk}[1]{\color{red} #1 \color{black}}
-\newcommand{\sjekk}[1]{\color{violet} #1 \color{black}}
-
-\DeclareMathOperator{\sign}{sign}
-\DeclareMathOperator*{\argmin}{argmin}
-\DeclareMathOperator*{\CO}{\mathcal{C}}
-
-
-% \title{FYS-STK4155: Project 2}
-\title{Exploring the hyperspace of Machine Learning parameters}
-\author{Eirik Ramsli Hauge, Joakim Kalsnes, Hans Mathias Mamen Vege}
-\date{\today}
-
-\begin{document}
 \section{Discussion}
 
 \subsection{1D Ising model}
@@ -82,6 +23,6 @@ However, there are more concerns to take into account. Figure \ref{fig:mlp-lambd
 Similarly, figure \ref{fig:mlp-neurons-ts} can be interpreted as training sets around 0.5 and large number of neurons gives us the optimal accuracy. It also seems as though the number of neurons is the most significant parameter of these two as all neuron columns seem to have quite similar accuracy, independent of training size, compared to the difference in accuracy of the training size rows. In this case it seems as though a training size of 0.5 with 20 or 30 neurons would be optimal. \\
 Given the changes in learning rate compared to number of neurons displayed in figure \ref{fig:mlp-neurons-eta}, we see similar tendencies. An increase in neurons and an increase in learning rate is positive. However, the effect of increasing learning rate decreases once we pass $\eta = 1.0e-02$. The optimal learning rate is therefore $\eta = 1.0e-02$, but the accuracy seems to be quite similar for number of neurons from five and above. \\ 
 Finally, \ref{fig:mlp-lambda-mb} gives us quite unambiguous results. As $\lambda = 1.0e-02$ has been dominating the previous results, it is tempting to see the same here as well. And there are indications that a batch size of 30 and $\lambda = 1.0e-02$ are the optimal values, however, there are no trends significant enough to say this with certainty. \\ \\
+Figures \ref{fig:mlp-epoch-activations-mse-optimal} - \ref{fig:mlp-epoch-activations-log-loss-optimal} is a repeat of figures \ref{fig:mlp-cost-function-comparison} and \ref{fig:mlp-epoch-activations-log-loss} with optimal settings. We can see that with the optimal settings, $\tanh$ is the superior activation function. This indicates that neural nets with $\tanh$ as activation function will most likely be the optimal method for solving the classification problems presented in this experiment.
 \subsection{Future works}
 For future works it would be desirable to look further into why our logistic implementation outperforms those of SKlearn and why the SGD method varies as it does. It would also be preferable to find better results for how many mini batches would be optimal for Neural Nets. One can also do better analyses by increasing the amount of data, but this is also left to the future and future, more powerful computers.
-\end{document}
