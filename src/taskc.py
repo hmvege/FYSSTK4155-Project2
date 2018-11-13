@@ -49,6 +49,7 @@ def task1c(sk=False, figure_folder="../fig"):
     mini_batch_size = 20
     data_path = "../datafiles/MehtaIsingData"
     verbose=True
+    try_get_pickle=True
 
     # Available solvers:
     # ["lr-gd", "gd", "cg", "sga", "sga-mb", "nr", "newton-cg"]
@@ -59,7 +60,7 @@ def task1c(sk=False, figure_folder="../fig"):
     penalty = "elastic_net"
 
     # Define regularisation parameter
-    lmbdas = np.logspace(-5, 5, 11)
+    lmbdas = np.logspace(-4, 3, 8)
 
     X, y = retrieve_2d_ising_data(data_path, data_size)
 
@@ -85,6 +86,7 @@ def task1c(sk=False, figure_folder="../fig"):
                       mini_batch_size=mini_batch_size,
                       max_iter=max_iter,
                       tolerance=tolerance,
+                      try_get_pickle=try_get_pickle,
                       verbose=verbose)
 
     run_lambda_penalty(X_train, X_test, y_train, y_test,
@@ -98,6 +100,7 @@ def task1c(sk=False, figure_folder="../fig"):
                        mini_batch_size=mini_batch_size,
                        max_iter=max_iter,
                        tolerance=tolerance,
+                       try_get_pickle=try_get_pickle,
                        verbose=verbose)
 
     run_lambda_solver(X_train, X_test, y_train, y_test,
@@ -110,6 +113,7 @@ def task1c(sk=False, figure_folder="../fig"):
                       mini_batch_size=mini_batch_size,
                       max_iter=max_iter,
                       tolerance=tolerance,
+                      try_get_pickle=try_get_pickle,
                       verbose=verbose)
 
     run_lambda_learning_rate_comparison(X_train, X_test, y_train, y_test,
@@ -124,6 +128,7 @@ def task1c(sk=False, figure_folder="../fig"):
                                         mini_batch_size=mini_batch_size,
                                         max_iter=max_iter,
                                         tolerance=tolerance,
+                                        try_get_pickle=try_get_pickle,
                                         verbose=verbose)
 
     run_lambda_momentum(X_train, X_test, y_train, y_test,
@@ -136,12 +141,14 @@ def task1c(sk=False, figure_folder="../fig"):
                         mini_batch_size=mini_batch_size,
                         max_iter=max_iter,
                         tolerance=tolerance,
+                        try_get_pickle=try_get_pickle,
                         verbose=verbose)
 
 
 def run_lambda_penalty(X_train, X_test, y_train, y_test,
                        lmbdas=None,
                        penalties=None,
+                       try_get_pickle=True,
                        figure_folder="../fig",
                        **kwargs):
 
@@ -162,7 +169,7 @@ def run_lambda_penalty(X_train, X_test, y_train, y_test,
                         "_solver{}_lrinverse_mom0.0_tol1e-06."
                         "pkl".format(penalty, kwargs["solver"]))
 
-        if os.path.isfile(pickle_fname):
+        if os.path.isfile(pickle_fname) and try_get_pickle:
             res_ = load_pickle(pickle_fname)
         else:
             res_ = logreg_core(X_train, X_test, y_train, y_test,
@@ -186,6 +193,7 @@ def run_lambda_penalty(X_train, X_test, y_train, y_test,
 def run_lambda_solver(X_train, X_test, y_train, y_test,
                       lmbdas=None,
                       solvers=None,
+                      try_get_pickle=True,
                       figure_folder="../fig",
                       **kwargs):
 
@@ -207,7 +215,7 @@ def run_lambda_solver(X_train, X_test, y_train, y_test,
                         "pkl".format(kwargs["penalty"], solver,
                                      kwargs["learning_rate"]))
 
-        if os.path.isfile(pickle_fname):
+        if os.path.isfile(pickle_fname) and try_get_pickle:
             res_ = load_pickle(pickle_fname)
         else:
             res_ = logreg_core(X_train, X_test, y_train, y_test,
@@ -233,6 +241,7 @@ def run_lambda_solver(X_train, X_test, y_train, y_test,
 def run_lambda_learning_rate_comparison(X_train, X_test, y_train, y_test,
                                         lmbdas=None,
                                         learning_rates=None,
+                                        try_get_pickle=True,
                                         figure_folder="../fig",
                                         **kwargs):
 
@@ -254,7 +263,7 @@ def run_lambda_learning_rate_comparison(X_train, X_test, y_train, y_test,
                         "pkl".format(kwargs["solver"],
                                      kwargs["penalty"], str(lr)))
 
-        if os.path.isfile(pickle_fname):
+        if os.path.isfile(pickle_fname) and try_get_pickle:
             res_ = load_pickle(pickle_fname)
         else:
             res_ = logreg_core(X_train, X_test, y_train, y_test,
@@ -280,6 +289,7 @@ def run_lambda_learning_rate_comparison(X_train, X_test, y_train, y_test,
 def run_lambda_momentum(X_train, X_test, y_train, y_test,
                         lmbdas=None,
                         momentums=None,
+                        try_get_pickle=True,
                         figure_folder="../fig",
                         **kwargs):
 
@@ -299,7 +309,7 @@ def run_lambda_momentum(X_train, X_test, y_train, y_test,
                         "_solverlr-gd_lrinverse_mom{}_tol1e-06."
                         "pkl".format(kwargs["penalty"], str(momentum)))
 
-        if os.path.isfile(pickle_fname):
+        if os.path.isfile(pickle_fname) and try_get_pickle:
             res_ = load_pickle(pickle_fname)
         else:
             res_ = logreg_core(X_train, X_test, y_train, y_test,
@@ -332,6 +342,7 @@ def run_sk_comparison(X_train, X_test, y_train, y_test,
                       max_iter=None,
                       tolerance=None,
                       verbose=False,
+                      try_get_pickle=True,
                       figure_folder="../fig"):
     """Runs a comparison between sk learn and our method."""
 
@@ -351,7 +362,7 @@ def run_sk_comparison(X_train, X_test, y_train, y_test,
                     "_solverlr-gd_lrinverse_mom0.0_tol1e-06"
                     ".pkl".format(penalty))
 
-    if os.path.isfile(pickle_fname):
+    if os.path.isfile(pickle_fname) and try_get_pickle:
         res_ = load_pickle(pickle_fname)
     else:
         res_ = logreg_core(X_train, X_test, y_train, y_test,

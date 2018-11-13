@@ -29,8 +29,8 @@ def task1d(figure_folder="../fig"):
     print("Task d: neural network regression")
     training_size = 0.5
     L_system_size = 20
-    N_samples = 800 # One run with 400
-    # N_samples = 200000 # One run with 10000
+    # N_samples = 800 # One run with 400
+    N_samples = 100000 # One run with 5000
 
     states, energies = ising.generate_1d_ising_data(L_system_size, N_samples)
 

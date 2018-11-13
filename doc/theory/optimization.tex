@@ -1,0 +1,50 @@
+As well as in logistic regression as in neural networks, minimizing(or maximizing depending on your setup) the cost function is a central problem, and can to some extent be stated as \textit{the} problem. Having a method which is both efficient and converges towards the minimum is, luckily, not a new problem in computer science. In the logistic regression optimization, three main methods will be utilized, while in the neural network we will focus on the stochastic conjugate gradient descent. For logistic regression we will use an learning rate optimized gradient descent method, and 
+
+For two of the four optimizers, we will use SciPy's library\cite{scipy} and simply refer the reader to their implementation.
+
+% \subsubsection{Gradient descent}
+% Gradient descent is set up in a general fashion as,
+% \begin{algorithm}[H]
+%     \caption{Gradient descent}
+%     \label{alg:gd}
+%     \begin{algorithmic}[1]
+%         \State \
+%         \While{$i < N_\mathrm{max}$ and $||\nabla\mathcal{C}(\bm{w})||<\varepsilon$}
+%             \State Build a new data set $\bm{X}_{\mathcal{L},\mathrm{bs}}=\{y_{i,\mathrm{bs}},\bm{x}_{i,\mathrm{bs}}\}$ with $n$ randomly drawn with replacement values, from the training set $\bm{X}_{\mathcal{L},\mathrm{train}}$.
+%             \State Fit the bootstrapped dataset to a given model.
+%             \State Evaluate the model on on the test set $\bm{X}_{\mathcal{L},\mathrm{test}}$.
+%             \State Store relevant results.
+%         \EndFor
+%     \end{algorithmic}
+% \end{algorithm}
+
+
+\subsubsection{Newton-Conjugate Gradient}
+The 
+
+\subsubsection{Conjugate gradient}
+
+\subsubsection{Stochastic gradient descent}
+
+
+To minimize this cost function we use gradient descent. \husk{Gradient descent measures the local gradient of the cost function, with regards to $\beta$ in our case. Since the gradient goes in the direction of fastest increase, we will go in the opposite direction, i.e. negative gradient. We start by choosing random values for $\beta$ (since our cost function is convex any choice should give correct results), calculate the gradient, update the $\beta$ values, and do this iteratively until the algorithm converges to a minimum. The size of the steps is important, and is determined by the learning rate. If the learning rate is too small, we will need many iterations which is time consuming. However, if the learning rate is too high, we might overshoot and miss the minimum. One way to choose the learning rate is too let it depend on the size of the gradient. If the gradient is large, i.e a steep slope, the learning rate can be relatively high. When the gradient is small, the learning rate is also small.}
+
+\sjekk{Returning to the logistic regression problem, the derivative of the cost function is
+\begin{equation}\label{eqT:diff_cost}
+\begin{split}
+\frac{\partial J(\beta)}{\partial \beta} &=-\frac{1}{N}\bm{X}^T(\bm{y}-\bm{p})\\
+ &= \frac{1}{N}\bm{X}^T(\bm{p}-\bm{y}),
+\end{split}
+\end{equation}
+where $\bm{X}$ is the $N\times(p+1)$ matrix of $x_i$ values, $\bm{p}$ is the vector of fitted probabilities with $i$th element $p(x_i;\beta)$ and $\bm{y}$ is the vector of $y_i$ values. The new $\beta$ using gradient descent is then\\
+$\beta_{new} = \beta_{old}\ -\ \frac{\partial J(\beta)}{\partial \beta}lr$, where $lr$ is the learning rate (step size).} \husk{This is done iteratively until we reach the set max iterations or $\frac{\partial J(\beta)}{\partial \beta}$ is within a given tolerance of zero.}
+
+% \sjekk{Like we introduced Lasso and Ridge regression to avoid overfitting in Project 1, we can add a penalty term to the cost function in Equation \ref{eq:Geron_cost}. In our project we used two different penalties: $L1 = \lambda|\beta|$ and $L2 = \lambda||\beta||^2$. When fitting the model we need to include the derivatives of the penalty term in Equation \ref{eqT:diff_cost}.} \husk{The gradient with the penalty term is,
+% \begin{equation}
+% \begin{split}
+% \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{sign(\beta)},\ for\ L1\ regularization\\
+%  &\mathrm{or}\\
+% \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{2\beta},\ for\ L2\ regularization. 
+% \end{split}
+% \end{equation}
+% }

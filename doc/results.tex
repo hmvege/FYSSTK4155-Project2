@@ -1,6 +1,27 @@
 \section{Results}
-Results for two differnt cases are being presented, one the one-dimensional Ising Model and another for the the two-dimensional Ising model.
+Results for two differnt cases are being presented, one the one-dimensional Ising Model and another for the the two-dimensional Ising model. We begin with looking at the. 1D Ising model.
 
-\subsection{\texorpdfstring{$1D$}{1D} Ising model}
+\subsection{1D Ising model}
+\subsubection{Estimating weights with linear regression}
+For linear regression we got the results given in figure 
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{../fig/}
+        \caption{A plot of $R^2$ versus noise and $\lambda$}
+        \label{fig:franke_heatmat_r2_ridge}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{../fig/franke3_ridge_mse_deg5_dtyperegression_heatmap.pdf}
+        \caption{A plot of MSE versus noise and $\lambda$}
+        \label{fig:franke_heatmat_mse_ridge}
+    \end{subfigure}
+    \caption{A plot of how MSE and $R^2$ varies as function of noise and $\lambda$ with Ridge regression.}
+    \label{fig:mse_r2_heatmaps_ff_ridge}
+\end{figure}
+\subsubection{Estimating weights with neural networks}
 
-\subsection{\texorpdfstring{$2D$}{2D} Ising model}
+
+\subsection{2D Ising model}

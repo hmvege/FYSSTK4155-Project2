@@ -1,0 +1,65 @@
+Like we introduced Lasso and Ridge regression to avoid over fitting in Project 1, we can add a penalty term to the cost function in equation \eqref{eq:Geron_cost}.
+
+\subsubsection{\texorpdfstring{$L^1$}{L1} regularization}
+The $L^1$ regularization utilizes the Taxi-cab metric, 
+\begin{align*}
+    ||\bm{a}||_1 = |a_0| + \dots + |a_{n-1}| = \sum^{n-1}_{i=0}|a_i|,
+\end{align*}
+and is defined as 
+\begin{align}
+    \lambda||\bm{w}||_1,
+    \label{eq:l1-reg}
+\end{align}
+with $\bm{w}$ being the weight matrix. This is equivalent with $\beta$ as seen in the logistic regression. Its derivative is given as,
+\begin{align}
+    \lambda \sign{(\bm{w})}
+    \label{eq:l1-reg-derivative}
+\end{align}
+where $\sign$ is simple the sign of $\bm{w}$.
+
+For logistic regression, this becomes in the gradient of the Geron cost function \eqref{eq:Geron_cost},
+\begin{align}
+    \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{\sign(\beta)}
+    \label{eq:geron-cost-l1}
+\end{align}
+
+% In our project we used two different penalties: $L^1 = \lambda|\beta|$ and $L^2 = \lambda||\beta||^2$. When fitting the model we need to include the derivatives of the penalty term in Equation \ref{eqT:diff_cost}.} \husk{The gradient with the penalty term is,
+% \begin{equation}
+% \begin{split}
+% \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{sign(\beta)},\ for\ L1\ regularization\\
+%  &\mathrm{or}\\
+% \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{2\beta},\ for\ L2\ regularization. 
+% \end{split}
+% \end{equation}
+% }
+
+\subsubsection{\texorpdfstring{$L^2$}{L2} regularization}
+The $L^2$ regularization is given as the Euclidean norm of the weight matrix,
+\begin{align}
+    ||\bm{a}||_2 = \left(\sum^{n-1}_{i=0} a_i^2 \right)^{1/2},
+\end{align}
+and is given as
+\begin{align}
+    \lambda||\bm{w}||^2_2,
+    \label{eq:l2-reg}
+\end{align}
+with its following derivative
+\begin{align}
+    \lambda\cdot{2\bm{w}}.
+    \label{eq:l2-reg-derivative}
+\end{align}
+The 2 in front is often offset by redefining the $L^2$ norm with a factor half, and will not affect the final outcome.
+
+Implementing the $L^2$ norm in the gradient of the Geron cost function\eqref{eq:Geron_cost}, we get
+\begin{align}
+    \frac{\partial J(\beta)}{\partial \beta} &=\frac{1}{N}\bm{X}^T(\bm{p}-\bm{y})\ + \lambda\cdot{2\beta}
+    \label{eq:geron-cost-l2}
+\end{align}
+
+\subsubsection{Elastic net regularization}
+Elastic net regularization utilizes a linear combination of $L^1$ and $L^2$ regularization, and consists of adding a term
+\begin{align}
+    \lambda_1 ||\bm{w}||_1 + \lambda_2 + ||\bm{w}||_2^2
+    \label{eq:elastic_net}
+\end{align}
+The derivative of this w.r.t. $\bm{w}$ is simply the combined derivatives of $L^1$ and $L^2$. For our purposes we will set $\lambda_1=\lambda_2$ in order to avoid having the hyper parameter space become too large.
