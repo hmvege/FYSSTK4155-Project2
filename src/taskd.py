@@ -28,7 +28,7 @@ def task1d(figure_folder="../fig"):
     print("="*80)
     print("Task d: neural network regression")
     training_size = 0.5
-    L_system_size = 40
+    L_system_size = 20
     N_samples = 800 # One run with 400
     # N_samples = 200000 # One run with 10000
 
