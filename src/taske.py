@@ -190,16 +190,16 @@ def task1e(figure_path="../fig"):
     epoch_activations_params.pop("epochs")
     epoch_activations_params.pop("activation")
     epoch_activations_params["cost_function"] = "log_loss"
-    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-                          epochs, activations,
-                          try_get_pickle=try_get_pickle,
-                          **epoch_activations_params)
-
-    # epoch_activations_params["cost_function"] = "mse"
     # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
     #                       epochs, activations,
     #                       try_get_pickle=try_get_pickle,
     #                       **epoch_activations_params)
+
+    epoch_activations_params["cost_function"] = "mse"
+    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+                          epochs, activations,
+                          try_get_pickle=try_get_pickle,
+                          **epoch_activations_params)
 
     # The following run produces near perfect accuracy
     # nn_core(X_train, X_test, y_train, y_test, default_layers, **default_input_dict)
@@ -235,7 +235,7 @@ def run_epoch_activations(X_train, X_test, y_train, y_test, layers,
 
         save_pickle(pickle_fname, data)
 
-    figname = "mlp_epoch_activations_{}_optimal2.pdf".format(kwargs["cost_function"])
+    figname = "mlp_epoch_activations_{}_optimal3.pdf".format(kwargs["cost_function"])
 
     plot_epoch_accuracy(data, r"Epoch", r"Accuracy",
                         figname, vmin=0.0, vmax=1.0)
