@@ -179,8 +179,8 @@ def retrieve_2d_ising_data(data_path, data_size):
     # divide data into ordered, critical and disordered, as is done in Metha
     X_ordered = input_data[:70000, :]
     Y_ordered = labels_data[:70000]
-    X_critical = input_data[70000:100000, :]
-    Y_critical = labels_data[70000:100000]
+    # X_critical = input_data[70000:100000, :]
+    # Y_critical = labels_data[70000:100000]
     X_disordered = input_data[100000:, :]
     Y_disordered = labels_data[100000:]
 

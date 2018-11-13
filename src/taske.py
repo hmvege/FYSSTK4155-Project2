@@ -23,8 +23,8 @@ def task1e(figure_path="../fig"):
     print("="*80)
     print("Task e: neural network classification")
     data_path = "../datafiles/MehtaIsingData"
-    data_size = 100
-    training_size = 0.8
+    data_size = 10000
+    training_size = 0.5
     learning_rate = 1.0
     max_iter = int(1e3)
     verbose = False
@@ -85,7 +85,7 @@ def task1e(figure_path="../fig"):
     default_hidden_layer_size = 10
     default_weight_init = "default"
     default_lambda_value = 0.0
-    default_epochs = 40  # Change to 500 for production run
+    default_epochs = 500  # Change to 500 for production run
     default_layers = [input_layer_shape, default_hidden_layer_size,
                       output_layer_shape]
 
@@ -108,19 +108,19 @@ def task1e(figure_path="../fig"):
     output_activations = ["sigmoid", "identity", "softmax"]
     cost_functions = ["mse", "log_loss"]  # , "exponential_cost"]
     learning_rates = np.logspace(-6, -1, 6)
-    mini_batch_sizes = [5, 10, 20, 30, 40, 50]
-    layer_neurons = [5, 10, 15, 20, 25, 30, 40, 50]
+    mini_batch_sizes = [5, 10, 20, 30, 40]
+    layer_neurons = [5, 10, 15, 20, 25, 30, 40]
     training_sizes = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     weight_inits = ["default", "large"]
     lambda_values = np.logspace(-5, 4, 10)
 
-    # Test run parameters!
-    learning_rates = np.logspace(-6, -1, 6)[:3]
-    mini_batch_sizes = [5, 10, 20]  # , 30, 40, 50]
-    layer_neurons = [5, 10, 15, 20]  # , 25, 30, 40, 50]
-    training_sizes = [0.1, 0.2, 0.3, 0.4]  # , 0.5, 0.6, 0.7, 0.8, 0.9]
-    weight_inits = ["default", "large"]
-    lambda_values = np.logspace(-5, 4, 10)[:5]
+    # # Test run parameters!
+    # learning_rates = np.logspace(-6, -1, 6)[:3]
+    # mini_batch_sizes = [5, 10, 20]  # , 30, 40, 50]
+    # layer_neurons = [5, 10, 15, 20]  # , 25, 30, 40, 50]
+    # training_sizes = [0.1, 0.2, 0.3, 0.4]  # , 0.5, 0.6, 0.7, 0.8, 0.9]
+    # weight_inits = ["default", "large"]
+    # lambda_values = np.logspace(-5, 4, 10)[:5]
 
     # lmbda_eta_params = default_input_dict.copy()
     # lmbda_eta_params.pop("lmbda")

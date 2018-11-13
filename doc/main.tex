@@ -1,18 +1,37 @@
 \documentclass[11pt]{article}
 
 \usepackage[utf8]{inputenc}
-\usepackage[toc,page]{appendix}
-\usepackage{hyperref}
-\usepackage{amsmath}
 \usepackage{mathtools}
+\usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{enumerate}
+
+% For proper referencing in article
+\usepackage{hyperref}
 \usepackage{url}
+
+% For figures and graphics'n stuff
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% For proper appendices
+\usepackage[toc,page]{appendix}
+
+% Algorithm packages
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+% For bold math symbols
+\usepackage{bm}
+\usepackage{xcolor}
+
+% For customized hlines in tables
+\usepackage{ctable}
 
 % For having latex symbols in section titles
 \usepackage{epstopdf}
-
-% Remembrance 
-% \newcommand{\husk}[1]{\color{red}#1\color{black}}
 
 % For proper citations
 % \usepackage[round, authoryear]{natbib}
@@ -20,6 +39,13 @@
 
 % For fixing large table height
 \usepackage{a4wide}
+
+% Remembrance and checking
+\newcommand{\husk}[1]{\color{red} #1 \color{black}}
+\newcommand{\sjekk}[1]{\color{violet} #1 \color{black}}
+
+
+\DeclareMathOperator*{\argmin}{argmin}
 
 
 \title{FYS-STK4155: Project 2}
