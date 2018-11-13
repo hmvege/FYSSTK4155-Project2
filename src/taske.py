@@ -112,7 +112,7 @@ def task1e(figure_path="../fig"):
     layer_neurons = [5, 10, 15, 20, 25, 30, 40]
     training_sizes = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     weight_inits = ["default", "large"]
-    lambda_values = np.logspace(-5, 4, 10)
+    lambda_values = np.logspace(-4, 4, 9)
 
     # # Test run parameters!
     # learning_rates = np.logspace(-6, -1, 6)[:3]
@@ -122,14 +122,14 @@ def task1e(figure_path="../fig"):
     # weight_inits = ["default", "large"]
     # lambda_values = np.logspace(-5, 4, 10)[:5]
 
-    # lmbda_eta_params = default_input_dict.copy()
-    # lmbda_eta_params.pop("lmbda")
-    # lmbda_eta_params.pop("learning_rate")
-    # lmbda_eta_params["figure_folder"] = figure_path
-    # run_lambda_eta(X_train, X_test, y_train, y_test, default_layers,
-    #                lmbdas=lambda_values, learning_rates=learning_rates,
-    #                try_get_pickle=try_get_pickle,
-    #                **lmbda_eta_params)
+    lmbda_eta_params = default_input_dict.copy()
+    lmbda_eta_params.pop("lmbda")
+    lmbda_eta_params.pop("learning_rate")
+    lmbda_eta_params["figure_folder"] = figure_path
+    run_lambda_eta(X_train, X_test, y_train, y_test, default_layers,
+                   lmbdas=lambda_values, learning_rates=learning_rates,
+                   try_get_pickle=try_get_pickle,
+                   **lmbda_eta_params)
 
     lmbda_neurons_params = default_input_dict.copy()
     lmbda_neurons_params.pop("lmbda")

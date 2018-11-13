@@ -26,7 +26,7 @@ from task_tools import load_pickle, plot_heatmap, plot_all_r2
 
 
 def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
-           L_system_size=20, figure_folder="../fig"):
+           L_system_size=40, figure_folder="../fig"):
     """Task b of project 2"""
     print("="*80)
     print("Task b")
@@ -37,7 +37,7 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
         sk_modsel.train_test_split(states, energies, test_size=1-training_size,
                                    shuffle=False)
 
-    lambda_values = np.logspace(-4, 5, 10)
+    lambda_values = np.logspace(-4, 4, 9)
 
     print("Train size:  ", X_train.shape)
     print("Test size:   ", X_test.shape)
@@ -232,7 +232,7 @@ def task1b(pickle_fname, N_samples=1000, training_size=0.1, N_bs=200,
 
 def task1b_bias_variance_analysis(pickle_fname, figure_folder="../fig"):
     """Plot different bias/variance values"""
-    lambda_values = np.logspace(-4, 5, 10)
+    lambda_values = np.logspace(-4, 4, 9)
     data = load_pickle(pickle_fname)
 
     def select_value(input_list, data_to_select, with_train=False):

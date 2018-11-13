@@ -23,7 +23,7 @@ def task1d(figure_folder="../fig"):
     print("="*80)
     print("Task d: neural network regression")
     training_size = 0.5
-    L_system_size = 20
+    L_system_size = 40
     N_samples = 800 # One run with 400
     # N_samples = 200000 # One run with 10000
 
@@ -54,7 +54,7 @@ def task1d(figure_folder="../fig"):
     default_epochs = 200
     default_layers = [input_layer_shape, output_layer_shape]
 
-    lambda_values = np.logspace(-4, 5, 10)
+    lambda_values = np.logspace(-4, 4, 9)
     # lambda_values = [0.01]
     verbose = False
 
