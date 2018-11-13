@@ -73,7 +73,6 @@ def task1e(figure_path="../fig"):
     # Weight initialization options:
     # default(sigma=1/sqrt(N_samples)), large(sigma=1.0)
     weight_init = "default"
-    alpha = 0.0
     mini_batch_size = 20
     epochs = 500  # Production run should have 500
     eta = "inverse"  # Options: float, 'inverse'
@@ -82,14 +81,14 @@ def task1e(figure_path="../fig"):
     default_activation = "sigmoid"
     default_output_activation = "softmax"
     default_cost_function = "log_loss"
-    default_learning_rate = 0.001
+    default_learning_rate = 0.01
     default_eta0 = 0.001
     # TODO: Different regularization runs as well?
     default_regularization = "l2"
-    default_mini_batch_size = 10
-    default_hidden_layer_size = 10
+    default_mini_batch_size = 30
+    default_hidden_layer_size = 20
     default_weight_init = "default"
-    default_lambda_value = 0.1
+    default_lambda_value = 0.01
     default_epochs = 500  # Change to 500 for production run
     default_layers = [input_layer_shape, default_hidden_layer_size,
                       output_layer_shape]
@@ -236,7 +235,7 @@ def run_epoch_activations(X_train, X_test, y_train, y_test, layers,
 
         save_pickle(pickle_fname, data)
 
-    figname = "mlp_epoch_activations_{}_optimal.pdf".format(kwargs["cost_function"])
+    figname = "mlp_epoch_activations_{}_optimal3.pdf".format(kwargs["cost_function"])
 
     plot_epoch_accuracy(data, r"Epoch", r"Accuracy",
                         figname, vmin=0.0, vmax=1.0)

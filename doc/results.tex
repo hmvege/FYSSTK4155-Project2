@@ -233,9 +233,10 @@ After choosing following optimal parameters, we get
     \centering
     \begin{tabular}{l l} % 6 columns
         \specialrule{.1em}{.05em}{.05em}
+        Parameters & Values \\ \hline
         $N_\mathrm{neurons}$    & 10 \\
         $\lambda$               & 0.1 \\
-        $N_\mathrm{mb}$         & 20 \\
+        $N_\mathrm{mb}$         & 10 \\
         $N_\mathrm{epochs}$     & 500 \\
         $\eta$ (constant)       & 0.001 \\
         \specialrule{.1em}{.05em}{.05em}
@@ -247,7 +248,7 @@ After choosing following optimal parameters, we get
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_mse2.pdf}
-    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table .}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function using \textit{optimal parameters}. The optimal parameters can be viewed in table \ref{tab:opt_ols_result}.}
     \label{fig:mlp-epoch-activations-mse-optimal}
 \end{figure}
 
