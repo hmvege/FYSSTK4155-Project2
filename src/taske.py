@@ -82,14 +82,14 @@ def task1e(figure_path="../fig"):
     default_activation = "sigmoid"
     default_output_activation = "softmax"
     default_cost_function = "log_loss"
-    default_learning_rate = "inverse"
+    default_learning_rate = 0.001
     default_eta0 = 0.001
     # TODO: Different regularization runs as well?
     default_regularization = "l2"
     default_mini_batch_size = 20
     default_hidden_layer_size = 10
     default_weight_init = "default"
-    default_lambda_value = 0.0
+    default_lambda_value = 0.1
     default_epochs = 500  # Change to 500 for production run
     default_layers = [input_layer_shape, default_hidden_layer_size,
                       output_layer_shape]
@@ -179,23 +179,23 @@ def task1e(figure_path="../fig"):
     #                       try_get_pickle=try_get_pickle,
     #                       **epoch_weight_init_params)
 
-    epoch_cost_function_params = default_input_dict.copy()
-    epoch_cost_function_params.pop("epochs")
-    epoch_cost_function_params.pop("cost_function")
-    run_epoch_cost_functions(X_train, X_test, y_train, y_test, default_layers,
-                             epochs, cost_functions,
-                             try_get_pickle=try_get_pickle,
-                             **epoch_cost_function_params)
+    # epoch_cost_function_params = default_input_dict.copy()
+    # epoch_cost_function_params.pop("epochs")
+    # epoch_cost_function_params.pop("cost_function")
+    # run_epoch_cost_functions(X_train, X_test, y_train, y_test, default_layers,
+    #                          epochs, cost_functions,
+    #                          try_get_pickle=try_get_pickle,
+    #                          **epoch_cost_function_params)
 
     epoch_activations_params = default_input_dict.copy()
     epoch_activations_params.pop("epochs")
     epoch_activations_params.pop("activation")
     epoch_activations_params["cost_function"] = "log_loss"
-    run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
-                          epochs, activations,
-                          try_get_pickle=try_get_pickle,
-                          **epoch_activations_params)
-    
+    # run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
+    #                       epochs, activations,
+    #                       try_get_pickle=try_get_pickle,
+    #                       **epoch_activations_params)
+
     epoch_activations_params["cost_function"] = "mse"
     run_epoch_activations(X_train, X_test, y_train, y_test, default_layers,
                           epochs, activations,

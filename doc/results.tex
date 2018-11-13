@@ -172,18 +172,19 @@ We then wish to to investigate the effects of having different initial weights. 
     \label{fig:mlp-epoch-init-weights}
 \end{figure}
 
-% skriv inn lambda ting her !=")#(097 21841 $\{\\\\}∆∑◊∂\}$"
+skriv inn lambda ting her !=")#(097 21841 \\\\}∆∑◊∂"
+
 An investigation into different layer activations\ref{sec:layer-acts} was performed for both the MSE- and the CE-cost function. The results from MSE can be seen in figure 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_mse.pdf}
-    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function. The run was for 500 epochs. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for MSE as cost function. The run was for 500 epochs. The learning rate was set with the inverse learning rate \eqref{eq:inverse-eta} with an $\eta_0=0.001$ and $\lambda=0.0$.}
     \label{fig:mlp-epoch-activations-mse}
 \end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_epoch_activations_log_loss.pdf}
-    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function. The run was for 500 epochs. The learning parameter was $\eta=0.001$ and we used the inverse learning rate\eqref{eq:inverse-eta}.}
+    \caption{A comparison in accuracy scores between the hidden layer activation functions(see section \ref{sec:layer-acts}) for cross entropy as cost function. The run was for 500 epochs. The learning rate was set with the inverse learning rate \eqref{eq:inverse-eta} with an $\eta_0=0.001$ and $\lambda=0.0$.}
     \label{fig:mlp-epoch-activations-log-loss}
 \end{figure}
 
@@ -199,7 +200,7 @@ A comparison of the accuracy score\eqref{eq:mlp-accuracy} as a function of L$^2$
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_lambda_neurons.pdf}
-    \caption{The accuracy score as function of the L$^2$ regularization parameter $\lambda$ and the number of neurons. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
+    \caption{The accuracy score as function of the L$^2$ regularization parameter $\lambda$ and the number of neurons. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation. The learning rate was set with the inverse learning rate \eqref{eq:inverse-eta} with an $\eta_0=0.001$.}
     \label{fig:mlp-lambda-neurons}
 \end{figure}
 
@@ -207,7 +208,7 @@ The accuracy score\eqref{eq:mlp-accuracy} as a function of the hidden layer size
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_neurons_training_size.pdf}
-    \caption{The accuracy score as function of the number of neurons and the training data size percentage of $N_\mathrm{samples}=10000$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
+    \caption{The accuracy score as function of the number of neurons and the training data size percentage of $N_\mathrm{samples}=10000$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation. The learning rate was set with the inverse learning rate \eqref{eq:inverse-eta} with an $\eta_0=0.001$ and $\lambda=0.0$. }
     \label{fig:mlp-neurons-ts}
 \end{figure}
 
@@ -215,7 +216,7 @@ The accuracy score\eqref{eq:mlp-accuracy} as a function of the hidden layer size
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_neurons_eta.pdf}
-    \caption{The accuracy score as function of the number of neurons and the learning rate $\eta$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation.}
+    \caption{The accuracy score as function of the number of neurons and the learning rate $\eta$. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation. The regularization strength was set to $\lambda=0.0$}.
     \label{fig:mlp-neurons-eta}
 \end{figure}
 
@@ -223,6 +224,6 @@ The accuracy score\eqref{eq:mlp-accuracy} as a function of L$^2$ regularization 
 \begin{figure}[H]
     \centering
     \includegraphics[scale=1.0]{../fig/mlp_lambda_mini_batch_size.pdf}
-    \caption{The accuracy score as function of the  L$^2$ regularization strength $\lambda$ and the mini batch size in the SGD\ref{alg:sgd}. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation and the inverse learning rate \eqref{eq:inverse-eta}.}
+    \caption{The accuracy score as function of the  L$^2$ regularization strength $\lambda$ and the mini batch size in the SGD\ref{alg:sgd}. The run was for 500 epochs and with cross entropy as cost function, softmax output and sigmoidal hidden layer activation and the inverse learning rate \eqref{eq:inverse-eta} with $\eta_0=0.001$.}
     \label{fig:mlp-lambda-mb}
 \end{figure}
